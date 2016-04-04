@@ -8,7 +8,7 @@
         http://www.springframework.org/schema/context
         http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
-    <context:component-scan base-package="org.baddev.currency.exchange"/>
+    <context:component-scan base-package="org.baddev.currency"/>
     <context:property-placeholder location="
         classpath:schedule.properties,
         classpath:api_sources.properties,
@@ -19,7 +19,7 @@
     <task:scheduler id="myScheduler"/>
 
     <!-- import -->
-    <bean id="fetcherContext" class="org.baddev.currency.fetcher.config.FetcherConfig"/>
-    <import resource="dao-applicationContext.xml"/>
+    <bean id="fetcherContext" class="org.baddev.currency.fetcher.FetcherConfig"/>
+    <import resource="classpath:jooq-applicationContext.xml"/>
 
 </beans>

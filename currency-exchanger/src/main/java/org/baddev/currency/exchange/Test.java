@@ -1,7 +1,7 @@
 package org.baddev.currency.exchange;
 
-import org.baddev.currency.exchange.job.ExchangeJob;
 import org.baddev.currency.exchange.impl.nbu.NBUScheduledExchanger;
+import org.baddev.currency.exchange.job.ExchangeJob;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
@@ -11,7 +11,7 @@ public class Test {
 
     public static void main(String[] args) {
         ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("exchanger-applicationContext.xml");
-        ExchangeJob c = ctx.getBean("NBUCounter", NBUScheduledExchanger.class);
+        ExchangeJob c = ctx.getBean("NBUExchanger", NBUScheduledExchanger.class);
         while (true){
             try {
                 Thread.sleep(1000);

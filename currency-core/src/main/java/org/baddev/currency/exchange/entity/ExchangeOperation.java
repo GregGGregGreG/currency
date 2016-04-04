@@ -155,7 +155,6 @@ public class ExchangeOperation implements Identity<Long> {
             return this;
         }
 
-
         public ExchangeOperation build() {
             return new ExchangeOperation(this);
         }

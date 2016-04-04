@@ -112,8 +112,9 @@
     <modules>
         <module>currency-fetcher</module>
         <module>currency-exchanger</module>
-        <module>exchange-dao</module>
+        <module>currency-dao</module>
         <module>currency-core</module>
+        <module>schema-gen</module>
     </modules>
     
 </project>
