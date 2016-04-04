@@ -25,25 +25,12 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.baddev</groupId>
-            <artifactId>currency-fetcher</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
         </dependency>
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
     </dependencies>
 
