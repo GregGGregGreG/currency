@@ -23,7 +23,7 @@
     </bean>
 
     <!-- Configure jOOQ's TransactionProvider as a proxy to Spring's transaction manager -->
-    <bean id="transactionProvider" class="org.baddev.currency.ui.currency.jooq.config.SpringTransactionProvider">
+    <bean id="transactionProvider" class="org.baddev.currency.jooq.config.SpringTransactionProvider">
         <property name="txMgr" ref="transactionManager"/>
     </bean>
 
@@ -43,7 +43,7 @@
         <constructor-arg ref="config"/>
     </bean>
 
-    <bean id="exceptionTranslator" class="org.baddev.currency.ui.currency.jooq.config.JOOQ2SpringExceptionTranslator"/>
+    <bean id="exceptionTranslator" class="org.baddev.currency.jooq.config.JOOQ2SpringExceptionTranslator"/>
 
     <!-- Invoking an internal, package-private constructor for the example
          Implement your own Configuration for more reliable behaviour -->
