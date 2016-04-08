@@ -5,7 +5,10 @@ import org.baddev.currency.core.exchange.exception.CurrencyNotFoundException;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.joda.time.LocalDate;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;
 
 /**
@@ -17,21 +20,27 @@ public class ExchangeOperation implements Identity<Long> {
 
     @XmlAttribute
     private Long id;
-    @XmlElement
-    private String amountLiterCode;
+    private String amountCurrencyCode;
     private double amount;
-    private String exchangedAmountLiterCode;
+    private String exchangedAmountCurrencyCode;
     private double exchangedAmount;
     private LocalDate date;
+
+    public static final String P_ID = "id";
+    public static final String P_AM_CD = "amountCurrencyCode";
+    public static final String P_AM = "amount";
+    public static final String P_EXC_AM_CD = "exchangedAmountCurrencyCode";
+    public static final String P_EXC_AM = "exchangedAmount";
+    public static final String P_DATE = "date";
 
     public ExchangeOperation() {
     }
 
     private ExchangeOperation(Builder builder) {
         setId(builder.id);
-        setAmountLiterCode(builder.amountCurrencyLiterCode);
+        setAmountCurrencyCode(builder.amountCurrencyCode);
         setAmount(builder.amount);
-        setExchangedAmountLiterCode(builder.exchangedAmountCurrencyLiterCode);
+        setExchangedAmountCurrencyCode(builder.exchangedAmountCurrencyCode);
         setExchangedAmount(builder.exchangedAmount);
         setDate(builder.date);
     }
@@ -64,20 +73,20 @@ public class ExchangeOperation implements Identity<Long> {
         this.amount = amount;
     }
 
-    public String getAmountLiterCode() {
-        return amountLiterCode;
+    public String getAmountCurrencyCode() {
+        return amountCurrencyCode;
     }
 
-    public void setAmountLiterCode(String amountLiterCode) {
-        this.amountLiterCode = amountLiterCode;
+    public void setAmountCurrencyCode(String amountCurrencyCode) {
+        this.amountCurrencyCode = amountCurrencyCode;
     }
 
-    public String getExchangedAmountLiterCode() {
-        return exchangedAmountLiterCode;
+    public String getExchangedAmountCurrencyCode() {
+        return exchangedAmountCurrencyCode;
     }
 
-    public void setExchangedAmountLiterCode(String exchangedAmountLiterCode) {
-        this.exchangedAmountLiterCode = exchangedAmountLiterCode;
+    public void setExchangedAmountCurrencyCode(String exchangedAmountCurrencyCode) {
+        this.exchangedAmountCurrencyCode = exchangedAmountCurrencyCode;
     }
 
     public double getExchangedAmount() {
@@ -91,13 +100,13 @@ public class ExchangeOperation implements Identity<Long> {
     public double exchange(Collection<ExchangeRate> rates) throws CurrencyNotFoundException {
         ExchangeRate exc = null;
         for (ExchangeRate ex : rates) {
-            if (ex.getLiterCode().equals(this.amountLiterCode)) {
+            if (ex.getCurrencyCode().equals(this.amountCurrencyCode)) {
                 exc = ex;
                 break;
             }
         }
         if (exc == null) {
-            throw new CurrencyNotFoundException("Currency " + amountLiterCode + " not found.");
+            throw new CurrencyNotFoundException("Currency " + amountCurrencyCode + " not found.");
         }
         exchangedAmount = exc.getRate() * amount;
         return exchangedAmount;
@@ -106,9 +115,9 @@ public class ExchangeOperation implements Identity<Long> {
     public String toString() {
         final StringBuilder sb = new StringBuilder("ExchangeOperation{");
         sb.append("id=").append(id);
-        sb.append(", amountLiterCode='").append(amountLiterCode).append('\'');
+        sb.append(", amountCurrencyCode='").append(amountCurrencyCode).append('\'');
         sb.append(", amount=").append(amount);
-        sb.append(", exchangedAmountLiterCode='").append(exchangedAmountLiterCode).append('\'');
+        sb.append(", exchangedAmountCurrencyCode='").append(exchangedAmountCurrencyCode).append('\'');
         sb.append(", exchangedAmount=").append(exchangedAmount);
         sb.append(", date=").append(date);
         sb.append('}');
@@ -117,9 +126,9 @@ public class ExchangeOperation implements Identity<Long> {
 
     public static final class Builder {
         private Long id;
-        private String amountCurrencyLiterCode;
+        private String amountCurrencyCode;
         private double amount;
-        private String exchangedAmountCurrencyLiterCode;
+        private String exchangedAmountCurrencyCode;
         private double exchangedAmount;
         private LocalDate date;
 
@@ -132,7 +141,7 @@ public class ExchangeOperation implements Identity<Long> {
         }
 
         public Builder from(String val) {
-            amountCurrencyLiterCode = val;
+            amountCurrencyCode = val;
             return this;
         }
 
@@ -142,7 +151,7 @@ public class ExchangeOperation implements Identity<Long> {
         }
 
         public Builder to(String val) {
-            exchangedAmountCurrencyLiterCode = val;
+            exchangedAmountCurrencyCode = val;
             return this;
         }
 

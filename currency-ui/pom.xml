@@ -85,6 +85,14 @@
             <artifactId>vaadin-client</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
         <!--
 		  Needed when using the widgetset optimizer (custom ConnectorBundleLoaderFactory).
 		  

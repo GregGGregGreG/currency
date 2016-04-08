@@ -12,6 +12,8 @@ import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
 import org.baddev.currency.core.exchange.job.Exchanger;
 import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
+import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
+import org.baddev.currency.dao.exchange.ExchangeOperationDao;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.ui.view.RatesView;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,18 +29,24 @@ import javax.servlet.annotation.WebServlet;
 public class MyUI extends UI {
 
     @NBU
-    private ExchangeRateFetcher fetcher;
+    private ExchangeRateFetcher<BaseExchangeRate> fetcher;
     @Autowired
     private Exchanger exchanger;
     @Autowired
-    SpringViewProvider viewProvider;
+    private SpringViewProvider viewProvider;
+    @Autowired
+    private ExchangeOperationDao exchangeDao;
 
-    public ExchangeRateFetcher getFetcher() {
+    public ExchangeRateFetcher<BaseExchangeRate> fetcher() {
         return fetcher;
     }
 
-    public Exchanger getExchanger() {
+    public Exchanger exchanger() {
         return exchanger;
+    }
+
+    public ExchangeOperationDao exchangeDao() {
+        return exchangeDao;
     }
 
     public static MyUI current(){

@@ -99,13 +99,13 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher {
 
     private ExchangeRate filter(Currency currency, Collection<ExchangeRate> rates){
         return rates.stream()
-                .filter(rate -> rate.getLiterCode().equals(currency.getCurrencyCode()))
+                .filter(rate -> rate.getCurrencyCode().equals(currency.getCurrencyCode()))
                 .findFirst()
                 .orElseThrow(NoRatesLocallyFoundException::new);
     }
 
     private Collection<ExchangeRate> extract(XMLSource source){
-        source.setBuffering();
+//        source.setBuffering();
         List<ExchangeRate> extracted = Arrays
                 .asList(source.getNodes("/exchange/currency", NBUExchangeRate.class));
         log.info("Fetched and extracted [{}] records", extracted.size());

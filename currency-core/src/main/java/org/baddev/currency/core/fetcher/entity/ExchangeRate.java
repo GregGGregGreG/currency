@@ -8,11 +8,11 @@ import org.joda.time.LocalDate;
  */
 public interface ExchangeRate extends Identity<Long> {
 
-    String getBaseLiterCode();
+    String getBaseCurrencyCode();
 
-    String getLiterCode();
+    String getCurrencyCode();
 
-    LocalDate getExchangeDate();
+    LocalDate getDate();
 
     Double getRate();
 

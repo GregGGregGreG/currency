@@ -58,8 +58,7 @@ public class NBUExchangeRate implements ExchangeRate {
         this.id = id;
     }
 
-    @Override
-    public String getBaseLiterCode() {
+    public String getBaseCurrencyCode() {
         return baseLiterCode;
     }
 
@@ -67,8 +66,7 @@ public class NBUExchangeRate implements ExchangeRate {
         this.baseLiterCode = baseLiterCode;
     }
 
-    @Override
-    public String getLiterCode() {
+    public String getCurrencyCode() {
         return literCode;
     }
 
@@ -77,7 +75,7 @@ public class NBUExchangeRate implements ExchangeRate {
     }
 
     @Override
-    public LocalDate getExchangeDate() {
+    public LocalDate getDate() {
         return exchangeDate;
     }
 

@@ -45,8 +45,8 @@ public class JooqExchangeOperationDao implements ExchangeOperationDao {
     @Override
     public void save(ExchangeOperation record) {
         dsl.insertInto(EXCHANGE_OPERATION)
-                .set(EXCHANGE_OPERATION.FROM_CURRENCY_CODE, record.getAmountLiterCode())
-                .set(EXCHANGE_OPERATION.TO_CURRENCY_CODE, record.getExchangedAmountLiterCode())
+                .set(EXCHANGE_OPERATION.FROM_CURRENCY_CODE, record.getAmountCurrencyCode())
+                .set(EXCHANGE_OPERATION.TO_CURRENCY_CODE, record.getExchangedAmountCurrencyCode())
                 .set(EXCHANGE_OPERATION.FROM_AMOUNT, record.getAmount())
                 .set(EXCHANGE_OPERATION.TO_AMOUNT, record.getExchangedAmount())
                 .set(EXCHANGE_OPERATION.DATE, ConverterUtils.toSqlDate(record.getDate()))

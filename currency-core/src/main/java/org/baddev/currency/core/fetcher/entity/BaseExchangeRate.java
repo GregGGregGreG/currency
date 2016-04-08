@@ -8,19 +8,25 @@ import org.joda.time.LocalDate;
 public class BaseExchangeRate implements ExchangeRate {
 
     private long id;
-    private String baseLiterCode;
-    private String literCode;
-    private LocalDate exchangeDate;
+    private String baseCurrencyCode;
+    private String currencyCode;
+    private LocalDate date;
     private double rate;
+
+    public static final String P_ID = "id";
+    public static final String P_BASE_CD = "baseCurrencyCode";
+    public static final String P_CD = "currencyCode";
+    public static final String P_DATE = "date";
+    public static final String P_RATE = "rate";
 
     public BaseExchangeRate() {
     }
 
     private BaseExchangeRate(Builder builder) {
         id = builder.id;
-        setBaseLiterCode(builder.baseLiterCode);
-        setLiterCode(builder.literCode);
-        setExchangeDate(builder.exchangeDate);
+        setBaseCurrencyCode(builder.baseCurrencyCode);
+        setCurrencyCode(builder.currencyCode);
+        setDate(builder.date);
         setRate(builder.rate);
     }
 
@@ -28,31 +34,29 @@ public class BaseExchangeRate implements ExchangeRate {
         return new Builder();
     }
 
-    @Override
-    public String getBaseLiterCode() {
-        return baseLiterCode;
+    public String getBaseCurrencyCode() {
+        return baseCurrencyCode;
     }
 
-    public void setBaseLiterCode(String baseLiterCode) {
-        this.baseLiterCode = baseLiterCode;
+    public void setBaseCurrencyCode(String baseCurrencyCode) {
+        this.baseCurrencyCode = baseCurrencyCode;
     }
 
-    @Override
-    public String getLiterCode() {
-        return literCode;
+    public String getCurrencyCode() {
+        return currencyCode;
     }
 
-    public void setLiterCode(String literCode) {
-        this.literCode = literCode;
+    public void setCurrencyCode(String currencyCode) {
+        this.currencyCode = currencyCode;
     }
 
     @Override
-    public LocalDate getExchangeDate() {
-        return exchangeDate;
+    public LocalDate getDate() {
+        return date;
     }
 
-    public void setExchangeDate(LocalDate exchangeDate) {
-        this.exchangeDate = exchangeDate;
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     @Override
@@ -83,9 +87,9 @@ public class BaseExchangeRate implements ExchangeRate {
 
         if (id != that.id) return false;
         if (Double.compare(that.rate, rate) != 0) return false;
-        if (!baseLiterCode.equals(that.baseLiterCode)) return false;
-        if (!literCode.equals(that.literCode)) return false;
-        return exchangeDate.equals(that.exchangeDate);
+        if (!baseCurrencyCode.equals(that.baseCurrencyCode)) return false;
+        if (!currencyCode.equals(that.currencyCode)) return false;
+        return date.equals(that.date);
     }
 
     @Override
@@ -93,9 +97,9 @@ public class BaseExchangeRate implements ExchangeRate {
         int result;
         long temp;
         result = (int) (id ^ (id >>> 32));
-        result = 31 * result + baseLiterCode.hashCode();
-        result = 31 * result + literCode.hashCode();
-        result = 31 * result + exchangeDate.hashCode();
+        result = 31 * result + baseCurrencyCode.hashCode();
+        result = 31 * result + currencyCode.hashCode();
+        result = 31 * result + date.hashCode();
         temp = Double.doubleToLongBits(rate);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
@@ -105,9 +109,9 @@ public class BaseExchangeRate implements ExchangeRate {
     public String toString() {
         final StringBuilder sb = new StringBuilder("BaseExchangeRate{");
         sb.append("id=").append(id);
-        sb.append(", baseLiterCode='").append(baseLiterCode).append('\'');
-        sb.append(", literCode='").append(literCode).append('\'');
-        sb.append(", exchangeDate=").append(exchangeDate);
+        sb.append(", baseCurrencyCode='").append(baseCurrencyCode).append('\'');
+        sb.append(", currencyCode='").append(currencyCode).append('\'');
+        sb.append(", date=").append(date);
         sb.append(", rate=").append(rate);
         sb.append('}');
         return sb.toString();
@@ -115,9 +119,9 @@ public class BaseExchangeRate implements ExchangeRate {
 
     public static final class Builder {
         private long id;
-        private String baseLiterCode;
-        private String literCode;
-        private LocalDate exchangeDate;
+        private String baseCurrencyCode;
+        private String currencyCode;
+        private LocalDate date;
         private double rate;
 
         private Builder() {
@@ -128,18 +132,18 @@ public class BaseExchangeRate implements ExchangeRate {
             return this;
         }
 
-        public Builder baseLiterCode(String val) {
-            baseLiterCode = val;
+        public Builder baseCurrencyCode(String val) {
+            baseCurrencyCode = val;
             return this;
         }
 
-        public Builder literCode(String val) {
-            literCode = val;
+        public Builder currencyCode(String val) {
+            currencyCode = val;
             return this;
         }
 
-        public Builder exchangeDate(LocalDate val) {
-            exchangeDate = val;
+        public Builder date(LocalDate val) {
+            date = val;
             return this;
         }
 

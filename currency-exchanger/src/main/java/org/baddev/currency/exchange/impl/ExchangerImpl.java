@@ -30,7 +30,7 @@ public class ExchangerImpl implements Exchanger {
             throws CurrencyNotFoundException {
         double excAmount = operation.exchange(rates);
         log.info("Exchanged amount: [{}]{}", excAmount,
-                operation.getExchangedAmountLiterCode());
+                operation.getExchangedAmountCurrencyCode());
         exchangeDao.save(operation);
         return excAmount;
     }
