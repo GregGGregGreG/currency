@@ -4,6 +4,7 @@ import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.data.util.GeneratedPropertyContainer;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.ui.*;
 import org.baddev.currency.ui.MyUI;
 
@@ -34,7 +35,7 @@ public abstract class GridView<T> extends VerticalLayout implements View {
         BeanItemContainer<T> container = new BeanItemContainer<>(type);
         GeneratedPropertyContainer wrapperContainer = new GeneratedPropertyContainer(container);
         grid.setContainerDataSource(wrapperContainer);
-
+        grid.setImmediate(true);
         if (excludeProps.length != 0)
             for (String prop : excludeProps)
                 wrapperContainer.removeContainerProperty(prop);
@@ -72,10 +73,8 @@ public abstract class GridView<T> extends VerticalLayout implements View {
         container().removeAllItems();
         container().addAll(data);
         grid.clearSortOrder();
-        grid.markAsDirty();
         Notification.show("Updated", Notification.Type.TRAY_NOTIFICATION);
-//        grid.sort(sortPropertyId, SortDirection.DESCENDING);
-//        grid.setImmediate(true);
+        grid.sort(sortPropertyId, SortDirection.DESCENDING);
     }
 
     protected void navigateTo(String viewName) {

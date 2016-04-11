@@ -67,6 +67,7 @@ public class RatesView extends GridView<BaseExchangeRate> {
             fetchBtn.setEnabled(true);
             fetchBtn.focus();
         });
+        df.setImmediate(true);
 
         fetchBtn.setEnabled(false);
         fetchBtn.addClickListener(event -> {
@@ -82,9 +83,10 @@ public class RatesView extends GridView<BaseExchangeRate> {
                 Notification.show("Select date first", Notification.Type.WARNING_MESSAGE);
             }
         });
+        fetchBtn.setImmediate(true);
 
         ComboBox cb = new ComboBox("Fetch by:");
-        cb.setValue(0);
+        cb.setValue(1);
         cb.setNullSelectionAllowed(false);
         cb.setTextInputAllowed(false);
         cb.setContainerDataSource(new IndexedContainer(Arrays.asList(FetchOption.VALUES)));
@@ -111,6 +113,7 @@ public class RatesView extends GridView<BaseExchangeRate> {
                     break;
             }
         });
+        cb.setImmediate(true);
 
         topBar.addComponent(cb);
         topBar.addComponent(df);
@@ -118,6 +121,7 @@ public class RatesView extends GridView<BaseExchangeRate> {
         topBar.setComponentAlignment(cb, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(df, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(fetchBtn, Alignment.BOTTOM_LEFT);
+        topBar.setImmediate(true);
         toggleVisibility(false, df, fetchBtn);
     }
 

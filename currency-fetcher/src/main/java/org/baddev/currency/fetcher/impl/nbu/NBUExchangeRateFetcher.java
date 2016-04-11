@@ -1,11 +1,10 @@
 package org.baddev.currency.fetcher.impl.nbu;
 
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.cxf.jaxrs.ext.xml.XMLSource;
 import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.dao.fetcher.ExchangeRateDao;
-import org.baddev.currency.fetcher.impl.nbu.entity.NBUExchangeRate;
+import org.baddev.currency.fetcher.impl.nbu.entity.NBUExchange;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.stream.Collectors;
@@ -67,9 +65,9 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
         try {
             rates = searchLocally(new LocalDate());
         } catch (NoRatesLocallyFoundException ex){
-            rates = extract(client
+            rates = convert(client
                     .accept(MediaType.TEXT_XML_TYPE)
-                    .get(XMLSource.class));
+                    .get(NBUExchange.class));
             rateDao.saveAll(rates);
         }
         return rates;
@@ -81,10 +79,10 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
         try {
             rates = searchLocally(date);
         } catch (NoRatesLocallyFoundException ex){
-            rates = extract(client
+            rates = convert(client
                     .accept(MediaType.TEXT_XML_TYPE)
                     .query(dateParam, date.toString(fmt))
-                    .get(XMLSource.class));
+                    .get(NBUExchange.class));
             rateDao.saveAll(rates);
         }
         return rates;
@@ -96,11 +94,11 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
         try {
             rate = filter(currency, searchLocally(date));
         } catch (NoRatesLocallyFoundException ex) {
-            rate =  extract(client
+            rate =  convert(client
                     .accept(MediaType.TEXT_XML_TYPE)
                     .query(currencyParam, currency.getCurrencyCode())
                     .query(dateParam, date.toString(fmt))
-                    .get(XMLSource.class))
+                    .get(NBUExchange.class))
                     .iterator().next();
             rateDao.save(rate);
         }
@@ -114,13 +112,11 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
                 .orElseThrow(NoRatesLocallyFoundException::new);
     }
 
-    private Collection<BaseExchangeRate> extract(XMLSource source){
-        source.setBuffering();
-        NBUExchangeRate [] rates = source.getNodes("/exchange/currency", NBUExchangeRate.class);
-        if(rates==null)
+    private Collection<BaseExchangeRate> convert(NBUExchange exchange){
+        if(exchange.getExchangeRates()==null)
             throw new RatesFetchingError("Failed to fetch rates");
-        log.info("Fetched and extracted [{}] records", rates.length);
-        return Arrays.stream(rates).map(r -> BaseExchangeRate.newBuilder()
+        log.info("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
+        return exchange.getExchangeRates().stream().map(r -> BaseExchangeRate.newBuilder()
                 .baseCurrencyCode(r.getBaseCurrencyCode())
                 .currencyCode(r.getCurrencyCode())
                 .date(r.getDate())
