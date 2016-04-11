@@ -4,12 +4,11 @@ import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.data.util.GeneratedPropertyContainer;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
-import com.vaadin.ui.Grid;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.*;
 import org.baddev.currency.ui.MyUI;
 
 import javax.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -44,8 +43,8 @@ public abstract class GridView<T> extends VerticalLayout implements View {
 
     private HorizontalLayout topBar() {
         HorizontalLayout topBar = new HorizontalLayout();
+        topBar.setSizeUndefined();
         topBar.setSpacing(true);
-        topBar.setWidth("100%");
         customizeTopBar(topBar);
         return topBar;
     }
@@ -69,14 +68,29 @@ public abstract class GridView<T> extends VerticalLayout implements View {
         return gridWithBar;
     }
 
-    protected void refresh(Collection<T> data) {
+    protected void refresh(Collection<T> data, String sortPropertyId) {
         container().removeAllItems();
         container().addAll(data);
         grid.clearSortOrder();
+        grid.markAsDirty();
+        Notification.show("Updated", Notification.Type.TRAY_NOTIFICATION);
+//        grid.sort(sortPropertyId, SortDirection.DESCENDING);
+//        grid.setImmediate(true);
     }
 
     protected void navigateTo(String viewName) {
         MyUI.current().getNavigator().navigateTo(viewName);
+    }
+
+    public static void attachComponents(AbstractOrderedLayout l, Component...cs) {
+        Arrays.stream(cs).forEach(c -> {
+            if(l.getComponentIndex(c)==-1)
+                l.addComponent(c);
+        });
+    }
+
+    public static void toggleVisibility(boolean visible, Component...components) {
+        Arrays.stream(components).forEach(c -> c.setVisible(visible));
     }
 
     @Override

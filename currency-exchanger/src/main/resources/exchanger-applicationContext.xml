@@ -11,10 +11,9 @@
         http://www.springframework.org/schema/context/spring-context.xsd">
 
     <context:component-scan base-package="org.baddev.currency.exchange"/>
+    <context:property-placeholder location="classpath:schedule.properties"/>
 
     <task:annotation-driven scheduler="myScheduler"/>
     <task:scheduler id="myScheduler"/>
-
-    <import resource="classpath:dao-applicationContext.xml"/>
 
 </beans>

@@ -1,7 +1,6 @@
 package org.baddev.currency.dao.fetcher.impl;
 
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
-import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.baddev.currency.dao.fetcher.ExchangeRateDao;
 import org.baddev.currency.dao.utils.ConverterUtils;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeRateRecord;
@@ -31,7 +30,7 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
     private DSLContext dsl;
 
     private static final class BaseExchangeRateMapper
-            implements RecordMapper<ExchangeRateRecord, ExchangeRate> {
+            implements RecordMapper<ExchangeRateRecord, BaseExchangeRate> {
         @Override
         public BaseExchangeRate map(ExchangeRateRecord record) {
             return BaseExchangeRate.newBuilder()
@@ -45,7 +44,7 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
     }
 
     @Override
-    public void save(ExchangeRate record) {
+    public void save(BaseExchangeRate record) {
         dsl.insertInto(EXCHANGE_RATE)
                 .set(EXCHANGE_RATE.BASE_LITER_CODE, record.getBaseCurrencyCode())
                 .set(EXCHANGE_RATE.LITER_CODE, record.getCurrencyCode())
@@ -66,7 +65,7 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
     }
 
     @Override
-    public ExchangeRate load(Long id) {
+    public BaseExchangeRate load(Long id) {
         return dsl.selectFrom(EXCHANGE_RATE)
                 .where(EXCHANGE_RATE.ID.eq(id))
                 .fetch(new BaseExchangeRateMapper())
@@ -74,25 +73,25 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
     }
 
     @Override
-    public Collection<ExchangeRate> loadAll() {
+    public Collection<BaseExchangeRate> loadAll() {
         return dsl.selectFrom(EXCHANGE_RATE)
                 .fetch(new BaseExchangeRateMapper());
     }
 
     @Override
-    public void saveAll(Collection<ExchangeRate> rates) {
+    public void saveAll(Collection<BaseExchangeRate> rates) {
         dsl.batchInsert(toRecords(rates)).execute();
         log.info("All fetched rates have been saved");
     }
 
     @Override
-    public Collection<ExchangeRate> loadByDate(LocalDate date) {
+    public Collection<BaseExchangeRate> loadByDate(LocalDate date) {
         return dsl.selectFrom(EXCHANGE_RATE)
                 .where(EXCHANGE_RATE.EXCHANGE_DATE.eq(ConverterUtils.toSqlDate(date)))
                 .fetch(new BaseExchangeRateMapper());
     }
 
-    private List<ExchangeRateRecord> toRecords(Collection<ExchangeRate> rates) {
+    private List<ExchangeRateRecord> toRecords(Collection<BaseExchangeRate> rates) {
         return rates.stream()
                 .map(rate -> new ExchangeRateRecord(rate.getId(),
                         rate.getBaseCurrencyCode(),

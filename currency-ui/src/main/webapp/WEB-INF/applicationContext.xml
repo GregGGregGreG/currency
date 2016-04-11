@@ -8,13 +8,9 @@
                            http://www.springframework.org/schema/context/spring-context.xsd">
 
     <context:component-scan base-package="org.baddev.currency.ui"/>
-    <context:property-placeholder location="
-        classpath:schedule.properties,
-        classpath:api_sources.properties,
-        classpath:proxy.properties,
-        classpath:db.properties"/>
 
     <bean class="org.baddev.currency.ui.MyUI.MyConfiguration" />
+    <import resource="classpath:dao-applicationContext.xml"/>
     <bean class="org.baddev.currency.fetcher.FetcherConfig"/>
     <import resource="classpath:exchanger-applicationContext.xml"/>
 
