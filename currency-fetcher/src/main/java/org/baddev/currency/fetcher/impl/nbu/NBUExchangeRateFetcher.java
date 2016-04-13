@@ -114,7 +114,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
 
     private Collection<BaseExchangeRate> convert(NBUExchange exchange){
         if(exchange.getExchangeRates()==null)
-            throw new RatesFetchingError("Failed to fetch rates");
+            throw new RatesFetchingError("Fetching error. No rates available");
         log.info("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
         return exchange.getExchangeRates().stream().map(r -> BaseExchangeRate.newBuilder()
                 .baseCurrencyCode(r.getBaseCurrencyCode())

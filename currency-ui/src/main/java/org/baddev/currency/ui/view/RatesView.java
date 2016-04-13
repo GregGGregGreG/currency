@@ -2,12 +2,14 @@ package org.baddev.currency.ui.view;
 
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.data.validator.DateRangeValidator;
+import com.vaadin.event.FieldEvents;
 import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.impl.nbu.NBUExchangeRateFetcher;
 import org.baddev.currency.ui.MyUI;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,20 +33,20 @@ public class RatesView extends GridView<BaseExchangeRate> {
 
     private interface FetchOption {
         String ALL = "All";
-        String CUR_DT = "Current Date";
+        String CUR_DT = "Today";
         String CUST_DT = "Date";
-        String CURRENCY_DT = "Currency & Date";
 
         String[] VALUES = {
                 ALL,
                 CUR_DT,
-                CUST_DT,
-                CURRENCY_DT
+                CUST_DT
         };
     }
 
-    private Button fetchBtn = new Button("Fetch");
+    private ComboBox fetchOptCb = new ComboBox("Fetch by:");
     private PopupDateField df = new PopupDateField("Select Date:");
+    private Button fetchBtn = new Button("Fetch");
+    private TextField filter = new TextField();
 
     @Override
     public void init() {
@@ -62,35 +64,51 @@ public class RatesView extends GridView<BaseExchangeRate> {
         df.setRangeEnd(today);
         df.addValidator(new DateRangeValidator("Select date in range ["
                 + minDate.toString() + "..." + LocalDate.fromDateFields(today) + "]",
-                minDate.toDate(), new Date(), Resolution.DAY));
+                minDate.toDate(), today, Resolution.DAY) {
+            @Override
+            protected boolean isValidValue(Date value) {
+                boolean isRangeValid = super.isValidValue(value);
+                if (value == null)
+                    return isRangeValid;
+                LocalDate date = LocalDate.fromDateFields(value);
+                boolean isWeekend = date.getDayOfWeek() == DateTimeConstants.SATURDAY ||
+                        date.getDayOfWeek() == DateTimeConstants.SUNDAY;
+                if (isWeekend)
+                    super.setErrorMessage("Weekend selected. Choose a non-weekend date.");
+                return isRangeValid && !isWeekend;
+            }
+        });
         df.addValueChangeListener(event -> {
-            fetchBtn.setEnabled(true);
-            fetchBtn.focus();
+            if (df.isValid()) {
+                fetchBtn.setEnabled(true);
+                fetchBtn.focus();
+            } else {
+                fetchBtn.setEnabled(false);
+            }
         });
         df.setImmediate(true);
 
         fetchBtn.setEnabled(false);
         fetchBtn.addClickListener(event -> {
             if (df.getValue() != null) {
-                Collection<BaseExchangeRate> rates = null;
                 try {
-                    rates = MyUI.current().fetcher().fetchByDate(new LocalDate(df.getValue()));
+                    Collection<BaseExchangeRate> rates =
+                            MyUI.current().fetcher().fetchByDate(new LocalDate(df.getValue()));
+                    refresh(rates, P_DATE);
                 } catch (NBUExchangeRateFetcher.RatesFetchingError e) {
-                    Notification.show(e.toString(), Notification.Type.ERROR_MESSAGE);
+                    Notification.show(e.getMessage(), Notification.Type.ERROR_MESSAGE);
                 }
-                refresh(rates, P_DATE);
             } else {
                 Notification.show("Select date first", Notification.Type.WARNING_MESSAGE);
             }
         });
         fetchBtn.setImmediate(true);
 
-        ComboBox cb = new ComboBox("Fetch by:");
-        cb.setValue(1);
-        cb.setNullSelectionAllowed(false);
-        cb.setTextInputAllowed(false);
-        cb.setContainerDataSource(new IndexedContainer(Arrays.asList(FetchOption.VALUES)));
-        cb.addValueChangeListener(event -> {
+        fetchOptCb.select(FetchOption.CUR_DT);
+        fetchOptCb.setNullSelectionAllowed(false);
+        fetchOptCb.setTextInputAllowed(false);
+        fetchOptCb.setContainerDataSource(new IndexedContainer(Arrays.asList(FetchOption.VALUES)));
+        fetchOptCb.addValueChangeListener(event -> {
             String option = (String) event.getProperty().getValue();
             switch (option) {
                 case FetchOption.ALL:
@@ -102,25 +120,30 @@ public class RatesView extends GridView<BaseExchangeRate> {
                     try {
                         refresh(MyUI.current().fetcher().fetchCurrent(), P_DATE);
                     } catch (NBUExchangeRateFetcher.RatesFetchingError e) {
-                        Notification.show(e.toString(), Notification.Type.ERROR_MESSAGE);
+                        Notification.show(e.getMessage(), Notification.Type.ERROR_MESSAGE);
                     }
                     break;
                 case FetchOption.CUST_DT:
                     toggleVisibility(true, df, fetchBtn);
                     break;
-                case FetchOption.CURRENCY_DT:
-                    toggleVisibility(true, df, fetchBtn);
-                    break;
             }
         });
-        cb.setImmediate(true);
+        fetchOptCb.setImmediate(true);
 
-        topBar.addComponent(cb);
+        filter.setInputPrompt("Type to filter...");
+        filter.addTextChangeListener((FieldEvents.TextChangeListener) event -> {
+            fetchOptCb.select(FetchOption.ALL);
+            filter(event.getText());
+        });
+
+        topBar.addComponent(fetchOptCb);
         topBar.addComponent(df);
         topBar.addComponent(fetchBtn);
-        topBar.setComponentAlignment(cb, Alignment.MIDDLE_LEFT);
+        topBar.addComponent(filter);
+        topBar.setComponentAlignment(fetchOptCb, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(df, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(fetchBtn, Alignment.BOTTOM_LEFT);
+        topBar.setComponentAlignment(filter, Alignment.BOTTOM_RIGHT);
         topBar.setImmediate(true);
         toggleVisibility(false, df, fetchBtn);
     }

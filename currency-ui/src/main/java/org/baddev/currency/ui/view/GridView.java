@@ -1,7 +1,10 @@
 package org.baddev.currency.ui.view;
 
+import com.vaadin.data.Container;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.data.util.GeneratedPropertyContainer;
+import com.vaadin.data.util.filter.Or;
+import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.shared.data.sort.SortDirection;
@@ -9,8 +12,10 @@ import com.vaadin.ui.*;
 import org.baddev.currency.ui.MyUI;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by IPotapchuk on 4/5/2016.
@@ -45,13 +50,14 @@ public abstract class GridView<T> extends VerticalLayout implements View {
     private HorizontalLayout topBar() {
         HorizontalLayout topBar = new HorizontalLayout();
         topBar.setSizeUndefined();
+        topBar.setWidth("100%");
         topBar.setSpacing(true);
         customizeTopBar(topBar);
         return topBar;
     }
 
     @SuppressWarnings("unchecked")
-    private BeanItemContainer<T> container() {
+    protected BeanItemContainer<T> container() {
         return ((BeanItemContainer<T>) ((GeneratedPropertyContainer) grid.getContainerDataSource())
                 .getWrappedContainer());
     }
@@ -75,6 +81,16 @@ public abstract class GridView<T> extends VerticalLayout implements View {
         grid.clearSortOrder();
         Notification.show("Updated", Notification.Type.TRAY_NOTIFICATION);
         grid.sort(sortPropertyId, SortDirection.DESCENDING);
+    }
+
+    protected void filter(String text){
+        container().removeAllContainerFilters();
+        if(!text.isEmpty()){
+            List<Container.Filter> filters = new ArrayList<>();
+            container().getContainerPropertyIds()
+                    .forEach(p -> filters.add(new SimpleStringFilter(p, text, true, false)));
+            container().addContainerFilter(new Or(filters.toArray(new Container.Filter[filters.size()])));
+        }
     }
 
     protected void navigateTo(String viewName) {
