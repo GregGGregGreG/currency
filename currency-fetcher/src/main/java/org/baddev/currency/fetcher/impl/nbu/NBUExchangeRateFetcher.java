@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Currency;
@@ -33,11 +34,12 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
     @Value("${param_date_nbu}")     private String dateParam;
     @Value("${param_currency_nbu}") private String currencyParam;
 
-    @Autowired
+    @Resource(name = "NBUClient")
     private WebClient client;
 
     @Autowired
     private ExchangeRateDao rateDao;
+
 
     public static final class NoRatesLocallyFoundException extends RuntimeException{
         //nothing to add

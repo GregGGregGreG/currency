@@ -9,7 +9,6 @@ import com.vaadin.ui.*;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.impl.nbu.NBUExchangeRateFetcher;
 import org.baddev.currency.ui.MyUI;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +26,8 @@ import static org.baddev.currency.core.fetcher.entity.BaseExchangeRate.*;
 public class RatesView extends GridView<BaseExchangeRate> {
 
     public static final String NAME = "rates";
+
+    private static final String P_CCY_NAME = "name";
 
     @Value("${min_date_nbu}")
     private String minDateVal;
@@ -51,7 +52,24 @@ public class RatesView extends GridView<BaseExchangeRate> {
     @Override
     public void init() {
         setup(BaseExchangeRate.class, MyUI.current().fetcher().fetchCurrent(), P_ID);
-        grid.setColumnOrder(P_DATE, P_BASE_CD, P_CD, P_RATE);
+        container().addNestedContainerProperty(P_CCY_NAME);
+        grid.setColumnOrder(P_DATE, P_BASE_CD, P_CD, P_CCY_NAME, P_RATE);
+    }
+
+    @Override
+    protected void refresh(Collection<BaseExchangeRate> data) {
+        super.refresh(data);
+//        containerWrapper().addGeneratedProperty(P_CCY_NAME, new PropertyValueGenerator<String>() {
+//            @Override
+//            public String getValue(Item item, Object itemId, Object propertyId) {
+//                return findCcyName(((BeanItem<BaseExchangeRate>)item).getBean().getCurrencyCode());
+//            }
+//            @Override
+//            public Class<String> getType() {
+//                return String.class;
+//            }
+//        });
+        data.forEach(r -> container().getItem(r).getItemProperty(P_CCY_NAME).setValue(findCcyName(r.getCurrencyCode())));
     }
 
     @Override
@@ -64,20 +82,7 @@ public class RatesView extends GridView<BaseExchangeRate> {
         df.setRangeEnd(today);
         df.addValidator(new DateRangeValidator("Select date in range ["
                 + minDate.toString() + "..." + LocalDate.fromDateFields(today) + "]",
-                minDate.toDate(), today, Resolution.DAY) {
-            @Override
-            protected boolean isValidValue(Date value) {
-                boolean isRangeValid = super.isValidValue(value);
-                if (value == null)
-                    return isRangeValid;
-                LocalDate date = LocalDate.fromDateFields(value);
-                boolean isWeekend = date.getDayOfWeek() == DateTimeConstants.SATURDAY ||
-                        date.getDayOfWeek() == DateTimeConstants.SUNDAY;
-                if (isWeekend)
-                    super.setErrorMessage("Weekend selected. Choose a non-weekend date.");
-                return isRangeValid && !isWeekend;
-            }
-        });
+                minDate.toDate(), today, Resolution.DAY));
         df.addValueChangeListener(event -> {
             if (df.isValid()) {
                 fetchBtn.setEnabled(true);
@@ -94,7 +99,7 @@ public class RatesView extends GridView<BaseExchangeRate> {
                 try {
                     Collection<BaseExchangeRate> rates =
                             MyUI.current().fetcher().fetchByDate(new LocalDate(df.getValue()));
-                    refresh(rates, P_DATE);
+                    refresh(rates);
                 } catch (NBUExchangeRateFetcher.RatesFetchingError e) {
                     Notification.show(e.getMessage(), Notification.Type.ERROR_MESSAGE);
                 }
@@ -104,21 +109,21 @@ public class RatesView extends GridView<BaseExchangeRate> {
         });
         fetchBtn.setImmediate(true);
 
+        fetchOptCb.setContainerDataSource(new IndexedContainer(Arrays.asList(FetchOption.VALUES)));
         fetchOptCb.select(FetchOption.CUR_DT);
         fetchOptCb.setNullSelectionAllowed(false);
         fetchOptCb.setTextInputAllowed(false);
-        fetchOptCb.setContainerDataSource(new IndexedContainer(Arrays.asList(FetchOption.VALUES)));
         fetchOptCb.addValueChangeListener(event -> {
             String option = (String) event.getProperty().getValue();
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisibility(false, df, fetchBtn);
-                    refresh(MyUI.current().rateDao().loadAll(), P_DATE);
+                    refresh(MyUI.current().rateDao().loadAll());
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisibility(false, df, fetchBtn);
                     try {
-                        refresh(MyUI.current().fetcher().fetchCurrent(), P_DATE);
+                        refresh(MyUI.current().fetcher().fetchCurrent());
                     } catch (NBUExchangeRateFetcher.RatesFetchingError e) {
                         Notification.show(e.getMessage(), Notification.Type.ERROR_MESSAGE);
                     }
