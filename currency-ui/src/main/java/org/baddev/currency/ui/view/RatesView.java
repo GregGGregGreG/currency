@@ -1,11 +1,15 @@
 package org.baddev.currency.ui.view;
 
+import com.vaadin.data.Container;
+import com.vaadin.data.Item;
 import com.vaadin.data.util.IndexedContainer;
+import com.vaadin.data.util.PropertyValueGenerator;
 import com.vaadin.data.validator.DateRangeValidator;
 import com.vaadin.event.FieldEvents;
 import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
+import com.vaadin.ui.renderers.NumberRenderer;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.impl.nbu.NBUExchangeRateFetcher;
 import org.baddev.currency.ui.MyUI;
@@ -16,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Locale;
 
 import static org.baddev.currency.core.fetcher.entity.BaseExchangeRate.*;
 
@@ -27,7 +32,8 @@ public class RatesView extends GridView<BaseExchangeRate> {
 
     public static final String NAME = "rates";
 
-    private static final String P_CCY_NAME = "name";
+    private static final String P_CCY_NAME = "currencyName";
+    private static final String P_CNTR_NAME = "countryName";
 
     @Value("${min_date_nbu}")
     private String minDateVal;
@@ -49,27 +55,40 @@ public class RatesView extends GridView<BaseExchangeRate> {
     private Button fetchBtn = new Button("Fetch");
     private TextField filter = new TextField();
 
-    @Override
-    public void init() {
-        setup(BaseExchangeRate.class, MyUI.current().fetcher().fetchCurrent(), P_ID);
-        container().addNestedContainerProperty(P_CCY_NAME);
-        grid.setColumnOrder(P_DATE, P_BASE_CD, P_CD, P_CCY_NAME, P_RATE);
+    private class CcyPropertyValGen extends PropertyValueGenerator<String> {
+        private final String fName;
+        private final String keyFName;
+
+        public CcyPropertyValGen(String fName, String keyFName) {
+            this.fName = fName;
+            this.keyFName = keyFName;
+        }
+
+        @Override
+        public String getValue(Item item, Object itemId, Object propertyId) {
+            return findFieldValue(fName, keyFName,
+                    item.getItemProperty(keyFName).getValue().toString());
+        }
+
+        @Override
+        public Class<String> getType() {
+            return String.class;
+        }
     }
 
     @Override
-    protected void refresh(Collection<BaseExchangeRate> data) {
-        super.refresh(data);
-//        containerWrapper().addGeneratedProperty(P_CCY_NAME, new PropertyValueGenerator<String>() {
-//            @Override
-//            public String getValue(Item item, Object itemId, Object propertyId) {
-//                return findCcyName(((BeanItem<BaseExchangeRate>)item).getBean().getCurrencyCode());
-//            }
-//            @Override
-//            public Class<String> getType() {
-//                return String.class;
-//            }
-//        });
-        data.forEach(r -> container().getItem(r).getItemProperty(P_CCY_NAME).setValue(findCcyName(r.getCurrencyCode())));
+    public void init() {
+        Collection<BaseExchangeRate> data = MyUI.current().fetcher().fetchCurrent();
+        setup(BaseExchangeRate.class, data, P_ID);
+        grid.getColumn(P_RATE).setRenderer(new NumberRenderer(Locale.US));
+
+        container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
+            containerWrapper().addGeneratedProperty(P_CCY_NAME, new CcyPropertyValGen(P_CCY_NAME, P_CCY));
+            containerWrapper().addGeneratedProperty(P_CNTR_NAME, new CcyPropertyValGen(P_CNTR_NAME, P_CCY));
+        });
+
+        refresh(data);
+        grid.setColumnOrder(P_DATE, P_BASE_CD, P_CCY, P_CCY_NAME, P_CNTR_NAME, P_RATE);
     }
 
     @Override
@@ -137,14 +156,19 @@ public class RatesView extends GridView<BaseExchangeRate> {
 
         filter.setInputPrompt("Type to filter...");
         filter.addTextChangeListener((FieldEvents.TextChangeListener) event -> {
-            fetchOptCb.select(FetchOption.ALL);
             filter(event.getText());
         });
 
         topBar.addComponent(fetchOptCb);
         topBar.addComponent(df);
         topBar.addComponent(fetchBtn);
+
+        Label space = new Label();
+        topBar.addComponent(space);
+        topBar.setExpandRatio(space, 1.0f);
+
         topBar.addComponent(filter);
+
         topBar.setComponentAlignment(fetchOptCb, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(df, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(fetchBtn, Alignment.BOTTOM_LEFT);

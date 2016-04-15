@@ -4,9 +4,9 @@ import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.baddev.currency.fetcher.impl.nbu.entity.adapters.LocalDateAdapter;
 import org.joda.time.LocalDate;
 
+import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.Currency;
 
 /**
  * Created by IPotapchuk on 3/14/2016.
@@ -16,9 +16,14 @@ import java.util.Currency;
 public class NBUExchangeRate implements ExchangeRate {
 
     @XmlTransient
+    public static final LocalDate HRIVNA_INTR_DATE = new LocalDate(1996, 9, 2);
+    @XmlTransient
+    private static final String USSR_RUBLE_CD = "RUR";
+
+    @XmlTransient
     private Long id;
     @XmlTransient
-    private String baseLiterCode = Currency.getInstance("UAH").getCurrencyCode();
+    private String baseLiterCode;
     @XmlElement(name = "cc")
     private String literCode;
     @XmlJavaTypeAdapter(LocalDateAdapter.class)
@@ -36,9 +41,11 @@ public class NBUExchangeRate implements ExchangeRate {
 
     private NBUExchangeRate(Builder builder) {
         setId(builder.id);
-        setBaseLiterCode(builder.baseCurrencyLiterCode);
         setLiterCode(builder.literCode);
         setExchangeDate(builder.exchangeDate);
+        if(builder.baseLiterCode==null)
+            setDfBaseCcyCd();
+        else setBaseCcyCd(builder.baseLiterCode);
         setDigitCode(builder.digitCode);
         setName(builder.name);
         setRate(builder.rate);
@@ -58,15 +65,21 @@ public class NBUExchangeRate implements ExchangeRate {
         this.id = id;
     }
 
+    @Override
     public String getBaseCurrencyCode() {
         return baseLiterCode;
     }
 
-    public void setBaseLiterCode(String baseLiterCode) {
+    public void setBaseCcyCd(String baseLiterCode) {
         this.baseLiterCode = baseLiterCode;
     }
 
-    public String getCurrencyCode() {
+    public void setDfBaseCcyCd() {
+        baseLiterCode = (exchangeDate.isAfter(HRIVNA_INTR_DATE)
+                || exchangeDate.isEqual(HRIVNA_INTR_DATE)) ? "UAH" : USSR_RUBLE_CD;
+    }
+
+    public String getCcy() {
         return literCode;
     }
 
@@ -106,6 +119,10 @@ public class NBUExchangeRate implements ExchangeRate {
 
     public void setRate(double rate) {
         this.rate = rate;
+    }
+
+    void afterUnmarshal(Unmarshaller u, Object parent) {
+        setDfBaseCcyCd();
     }
 
     @Override
@@ -156,9 +173,9 @@ public class NBUExchangeRate implements ExchangeRate {
 
     public static final class Builder {
         private Long id;
-        private String baseCurrencyLiterCode;
         private String literCode;
         private LocalDate exchangeDate;
+        private String baseLiterCode;
         private int digitCode;
         private String name;
         private double rate;
@@ -168,11 +185,6 @@ public class NBUExchangeRate implements ExchangeRate {
 
         public Builder id(Long val) {
             id = val;
-            return this;
-        }
-
-        public Builder baseCurrencyLiterCode(String val) {
-            baseCurrencyLiterCode = val;
             return this;
         }
 
@@ -188,6 +200,11 @@ public class NBUExchangeRate implements ExchangeRate {
 
         public Builder digitCode(int val) {
             digitCode = val;
+            return this;
+        }
+
+        public Builder baseCurrencyCode(String val) {
+            literCode = val;
             return this;
         }
 

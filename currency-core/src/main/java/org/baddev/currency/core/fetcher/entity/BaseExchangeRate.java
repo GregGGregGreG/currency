@@ -9,13 +9,13 @@ public class BaseExchangeRate implements ExchangeRate {
 
     private long id;
     private String baseCurrencyCode;
-    private String currencyCode;
+    private String ccy;
     private LocalDate date;
     private double rate;
 
     public static final String P_ID = "id";
     public static final String P_BASE_CD = "baseCurrencyCode";
-    public static final String P_CD = "currencyCode";
+    public static final String P_CCY = "ccy";
     public static final String P_DATE = "date";
     public static final String P_RATE = "rate";
 
@@ -25,7 +25,7 @@ public class BaseExchangeRate implements ExchangeRate {
     private BaseExchangeRate(Builder builder) {
         id = builder.id;
         setBaseCurrencyCode(builder.baseCurrencyCode);
-        setCurrencyCode(builder.currencyCode);
+        setCcy(builder.currencyCode);
         setDate(builder.date);
         setRate(builder.rate);
     }
@@ -42,12 +42,12 @@ public class BaseExchangeRate implements ExchangeRate {
         this.baseCurrencyCode = baseCurrencyCode;
     }
 
-    public String getCurrencyCode() {
-        return currencyCode;
+    public String getCcy() {
+        return ccy;
     }
 
-    public void setCurrencyCode(String currencyCode) {
-        this.currencyCode = currencyCode;
+    public void setCcy(String ccy) {
+        this.ccy = ccy;
     }
 
     @Override
@@ -88,7 +88,7 @@ public class BaseExchangeRate implements ExchangeRate {
         if (id != that.id) return false;
         if (Double.compare(that.rate, rate) != 0) return false;
         if (!baseCurrencyCode.equals(that.baseCurrencyCode)) return false;
-        if (!currencyCode.equals(that.currencyCode)) return false;
+        if (!ccy.equals(that.ccy)) return false;
         return date.equals(that.date);
     }
 
@@ -98,7 +98,7 @@ public class BaseExchangeRate implements ExchangeRate {
         long temp;
         result = (int) (id ^ (id >>> 32));
         result = 31 * result + baseCurrencyCode.hashCode();
-        result = 31 * result + currencyCode.hashCode();
+        result = 31 * result + ccy.hashCode();
         result = 31 * result + date.hashCode();
         temp = Double.doubleToLongBits(rate);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
@@ -110,7 +110,7 @@ public class BaseExchangeRate implements ExchangeRate {
         final StringBuilder sb = new StringBuilder("BaseExchangeRate{");
         sb.append("id=").append(id);
         sb.append(", baseCurrencyCode='").append(baseCurrencyCode).append('\'');
-        sb.append(", currencyCode='").append(currencyCode).append('\'');
+        sb.append(", ccy='").append(ccy).append('\'');
         sb.append(", date=").append(date);
         sb.append(", rate=").append(rate);
         sb.append('}');

@@ -109,7 +109,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
 
     private BaseExchangeRate filter(Currency currency, Collection<BaseExchangeRate> rates){
         return rates.stream()
-                .filter(rate -> rate.getCurrencyCode().equals(currency.getCurrencyCode()))
+                .filter(rate -> rate.getCcy().equals(currency.getCurrencyCode()))
                 .findFirst()
                 .orElseThrow(NoRatesLocallyFoundException::new);
     }
@@ -120,7 +120,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
         log.info("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
         return exchange.getExchangeRates().stream().map(r -> BaseExchangeRate.newBuilder()
                 .baseCurrencyCode(r.getBaseCurrencyCode())
-                .currencyCode(r.getCurrencyCode())
+                .currencyCode(r.getCcy())
                 .date(r.getDate())
                 .rate(r.getRate())
                 .build()).collect(Collectors.toList());

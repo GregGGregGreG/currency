@@ -10,7 +10,7 @@ public interface ExchangeRate extends Identity<Long> {
 
     String getBaseCurrencyCode();
 
-    String getCurrencyCode();
+    String getCcy();
 
     LocalDate getDate();
 

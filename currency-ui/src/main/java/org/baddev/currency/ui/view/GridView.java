@@ -9,15 +9,16 @@ import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.ui.*;
 import org.baddev.currency.fetcher.impl.nbu.entity.IsoCcyEntry;
+import org.baddev.currency.fetcher.impl.nbu.entity.IsoCcyHistEntries;
 import org.baddev.currency.fetcher.impl.nbu.entity.IsoCcyHistEntry;
 import org.baddev.currency.ui.MyUI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Created by IPotapchuk on 4/5/2016.
@@ -32,24 +33,41 @@ public abstract class GridView<T> extends VerticalLayout implements View {
     @Resource(name = "IsoHistCcys")
     private List<IsoCcyHistEntry> isoHistCcyEntries;
 
-    public String findCcyName(String ccyCode) {
-        String inCurCcys = isoCurCcyEntries.stream()
-                .filter(e -> ccyCode.equals(e.getCcy()))
+    private static final Logger log = LoggerFactory.getLogger(GridView.class);
+
+    protected <E> String findFieldValue(String fName, String keyFieldName, String keyFieldVal) {
+        concat(
+                Arrays.stream(IsoCcyEntry.class.getDeclaredFields()),
+                Arrays.stream(IsoCcyHistEntries.class.getDeclaredFields())
+        ).filter(f -> fName.equals(f.getName()))
+                .findAny()
+                .orElseThrow(IllegalArgumentException::new);
+        return concat(
+                isoCurCcyEntries.stream().map(rec -> toEntry(fName, keyFieldName, rec)),
+                isoHistCcyEntries.stream().map(rec -> toEntry(fName, keyFieldName, rec))
+        ).filter(s -> keyFieldVal.equals(s.getKey()))
+                .map(o -> o.getValue().toString())
                 .findFirst()
-                .orElse(IsoCcyEntry.newBuilder()
-                        .ccy(ccyCode)
-                        .currencyName("Unknown")
-                        .build()
-                ).getCurrencyName();
-        return (!inCurCcys.equals("Unknown")) ? inCurCcys :
-                isoHistCcyEntries.stream()
-                        .filter(e -> ccyCode.equals(e.getCurrencyName()))
-                        .findFirst()
-                        .orElse(IsoCcyHistEntry.newBuilder()
-                                .ccy(ccyCode)
-                                .currencyName("Unknown")
-                                .build()
-                        ).getCurrencyName();
+                .orElse("Unknown");
+    }
+
+    private static AbstractMap.SimpleEntry<String, Object> toEntry(String fName, String keyFName, Object obj) {
+        try {
+            java.lang.reflect.Field f = obj.getClass().getDeclaredField(fName);
+            java.lang.reflect.Field ccyF = obj.getClass().getDeclaredField(keyFName);
+            f.setAccessible(true);
+            ccyF.setAccessible(true);
+            String key = (String) ccyF.get(obj);
+            Object value = f.get(obj);
+            return new AbstractMap.SimpleEntry<>(key, value);
+        } catch (IllegalAccessException | NoSuchFieldException e1) {
+            e1.printStackTrace();
+        }
+        return null;
+    }
+
+    public static <E> Stream<E> concat(Stream<? extends E> lhs, Stream<? extends E> rhs) {
+        return Stream.concat(lhs, rhs);
     }
 
     @PostConstruct

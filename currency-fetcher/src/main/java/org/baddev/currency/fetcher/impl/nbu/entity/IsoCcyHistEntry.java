@@ -22,7 +22,7 @@ public class IsoCcyHistEntry implements Identity<Long> {
     @XmlElement(name = "CcyNbr", required = false)
     private Integer ccyNumber;
     @XmlElement(name = "WthdrwlDt")
-    private String activeUntil;
+    private String withdrawDate;
 
     public IsoCcyHistEntry() {
     }
@@ -33,7 +33,7 @@ public class IsoCcyHistEntry implements Identity<Long> {
         setCurrencyName(builder.currencyName);
         setCcy(builder.ccy);
         setCcyNumber(builder.ccyNumber);
-        setActiveUntil(builder.activeUntil);
+        setWithdrawDate(builder.withdrawDate);
     }
 
     public static Builder newBuilder() {
@@ -82,12 +82,16 @@ public class IsoCcyHistEntry implements Identity<Long> {
         this.ccyNumber = ccyNumber;
     }
 
-    public String getActiveUntil() {
-        return activeUntil;
+    public String getWithdrawDate() {
+        return withdrawDate;
     }
 
-    public void setActiveUntil(String activeUntil) {
-        this.activeUntil = activeUntil;
+    public void setWithdrawDate(String withdrawDate) {
+        this.withdrawDate = withdrawDate;
+    }
+
+    public String getCcyNameWithDate() {
+        return currencyName + " (" + withdrawDate + ")";
     }
 
     @Override
@@ -98,7 +102,7 @@ public class IsoCcyHistEntry implements Identity<Long> {
         sb.append(", currencyName='").append(currencyName).append('\'');
         sb.append(", ccy='").append(ccy).append('\'');
         sb.append(", ccyNumber=").append(ccyNumber);
-        sb.append(", activeUntil='").append(activeUntil).append('\'');
+        sb.append(", withdrawDate='").append(withdrawDate).append('\'');
         sb.append('}');
         return sb.toString();
     }
@@ -110,7 +114,7 @@ public class IsoCcyHistEntry implements Identity<Long> {
         private String currencyName;
         private String ccy;
         private Integer ccyNumber;
-        private String activeUntil;
+        private String withdrawDate;
 
         private Builder() {
         }
@@ -140,8 +144,8 @@ public class IsoCcyHistEntry implements Identity<Long> {
             return this;
         }
 
-        public Builder activeUntil(String val) {
-            activeUntil = val;
+        public Builder withdrawDate(String val) {
+            withdrawDate = val;
             return this;
         }
 
