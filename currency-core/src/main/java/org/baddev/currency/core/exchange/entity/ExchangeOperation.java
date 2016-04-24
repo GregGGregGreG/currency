@@ -100,7 +100,7 @@ public class ExchangeOperation implements Identity<Long> {
     public double exchange(Collection<ExchangeRate> rates) throws CurrencyNotFoundException {
         ExchangeRate exc = null;
         for (ExchangeRate ex : rates) {
-            if (ex.getCcy().equals(this.amountCurrencyCode)) {
+            if (ex.getCcyCode().equals(this.amountCurrencyCode)) {
                 exc = ex;
                 break;
             }

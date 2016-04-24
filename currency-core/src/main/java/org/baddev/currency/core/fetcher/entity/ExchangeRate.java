@@ -8,9 +8,9 @@ import org.joda.time.LocalDate;
  */
 public interface ExchangeRate extends Identity<Long> {
 
-    String getBaseCurrencyCode();
+    String getBaseCcyCode();
 
-    String getCcy();
+    String getCcyCode();
 
     LocalDate getDate();
 

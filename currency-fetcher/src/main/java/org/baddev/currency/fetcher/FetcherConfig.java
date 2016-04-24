@@ -4,16 +4,17 @@ import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
-import org.baddev.currency.fetcher.impl.nbu.entity.IsoCcyEntries;
-import org.baddev.currency.fetcher.impl.nbu.entity.IsoCcyEntry;
-import org.baddev.currency.fetcher.impl.nbu.entity.IsoCcyHistEntries;
-import org.baddev.currency.fetcher.impl.nbu.entity.IsoCcyHistEntry;
+import org.baddev.currency.fetcher.other.entity.IsoCcyEntries;
+import org.baddev.currency.fetcher.other.entity.IsoCcyEntry;
+import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntries;
+import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 
 import javax.ws.rs.core.MediaType;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,7 +57,7 @@ public class FetcherConfig {
         WebClient client = WebClient.create(isoCurSourceURI);
         configureClient(client);
         IsoCcyEntries entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
-        return (entries!=null && entries.getEntries()!=null)? entries.getEntries() : null;
+        return (entries!=null && entries.getEntries()!=null)? entries.getEntries() : new ArrayList<>();
     }
 
     @Bean(name = "IsoHistCcys")
@@ -64,7 +65,7 @@ public class FetcherConfig {
         WebClient client = WebClient.create(isoHistSourceURI);
         configureClient(client);
         IsoCcyHistEntries entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
-        return (entries!=null && entries.getEntries()!=null)? entries.getEntries() : null;
+        return (entries!=null && entries.getEntries()!=null)? entries.getEntries() : new ArrayList<>();
     }
 
     private void configureClient(WebClient client) {

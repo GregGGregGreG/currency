@@ -19,6 +19,7 @@ import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.ui.view.RatesView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.web.context.ContextLoaderListener;
 
 import javax.servlet.annotation.WebListener;

@@ -65,8 +65,7 @@ public class NBUExchangeRate implements ExchangeRate {
         this.id = id;
     }
 
-    @Override
-    public String getBaseCurrencyCode() {
+    public String getBaseCcyCode() {
         return baseLiterCode;
     }
 
@@ -79,7 +78,7 @@ public class NBUExchangeRate implements ExchangeRate {
                 || exchangeDate.isEqual(HRIVNA_INTR_DATE)) ? "UAH" : USSR_RUBLE_CD;
     }
 
-    public String getCcy() {
+    public String getCcyCode() {
         return literCode;
     }
 

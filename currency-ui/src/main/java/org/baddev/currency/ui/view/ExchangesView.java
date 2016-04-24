@@ -12,7 +12,7 @@ import static org.baddev.currency.core.exchange.entity.ExchangeOperation.*;
  * Created by IPotapchuk on 4/8/2016.
  */
 @SpringView(name = ExchangesView.NAME)
-public class ExchangesView extends GridView<ExchangeOperation> {
+public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
 
     public static final String NAME = "exchanges";
 

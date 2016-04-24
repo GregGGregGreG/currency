@@ -12,10 +12,10 @@ import java.util.Currency;
 
 public interface ExchangeRateFetcher<T extends ExchangeRate> {
 
-    Collection<T> fetchCurrent();
+    Collection<T> fetchCurrent() throws NoRatesFoundException;
 
-    Collection<T> fetchByDate(LocalDate date);
+    Collection<T> fetchByDate(LocalDate date) throws NoRatesFoundException;
 
-    T fetchByCurrencyAndDate(Currency currency, LocalDate date);
+    T fetchByCurrencyAndDate(Currency currency, LocalDate date) throws NoRatesFoundException;
 
 }

@@ -4,15 +4,16 @@
 package org.baddev.currency.jooq.schema.tables.records;
 
 
+import java.sql.Date;
+
+import javax.annotation.Generated;
+
 import org.baddev.currency.jooq.schema.tables.ExchangeRate;
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record5;
 import org.jooq.Row5;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import javax.annotation.Generated;
-import java.sql.Date;
 
 
 /**

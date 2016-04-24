@@ -1,4 +1,4 @@
-package org.baddev.currency.fetcher.impl.nbu.entity;
+package org.baddev.currency.fetcher.other.entity;
 
 import javax.xml.bind.annotation.*;
 import java.util.List;
@@ -8,26 +8,25 @@ import java.util.List;
  */
 @XmlRootElement(name = "ISO_4217")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class IsoCcyHistEntries {
+public class IsoCcyEntries {
 
-    @XmlElementWrapper(name="HstrcCcyTbl")
+    @XmlElementWrapper(name="CcyTbl")
     @XmlElementRef
-    private List<IsoCcyHistEntry> entries;
+    private List<IsoCcyEntry> entries;
 
-    public List<IsoCcyHistEntry> getEntries() {
+    public List<IsoCcyEntry> getEntries() {
         return entries;
     }
 
-    public void setEntries(List<IsoCcyHistEntry> entries) {
+    public void setEntries(List<IsoCcyEntry> entries) {
         this.entries = entries;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("IsoCcyHistEntries{");
+        final StringBuilder sb = new StringBuilder("IsoCcyEntries{");
         sb.append("entries=").append(entries);
         sb.append('}');
         return sb.toString();
     }
-
 }

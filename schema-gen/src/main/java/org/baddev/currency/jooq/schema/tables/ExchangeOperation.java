@@ -4,16 +4,20 @@
 package org.baddev.currency.jooq.schema.tables;
 
 
-import org.baddev.currency.jooq.schema.Exchanger;
-import org.baddev.currency.jooq.schema.Keys;
-import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
-import org.jooq.*;
-import org.jooq.impl.TableImpl;
-
-import javax.annotation.Generated;
 import java.sql.Date;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.annotation.Generated;
+
+import org.baddev.currency.jooq.schema.Exchanger;
+import org.baddev.currency.jooq.schema.Keys;
+import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
+import org.jooq.Field;
+import org.jooq.Table;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.TableImpl;
 
 
 /**
@@ -29,7 +33,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExchangeOperation extends TableImpl<ExchangeOperationRecord> {
 
-	private static final long serialVersionUID = 113276410;
+	private static final long serialVersionUID = -1580002268;
 
 	/**
 	 * The reference instance of <code>exchanger.exchange_operation</code>
@@ -52,12 +56,12 @@ public class ExchangeOperation extends TableImpl<ExchangeOperationRecord> {
 	/**
 	 * The column <code>exchanger.exchange_operation.from_currency_code</code>.
 	 */
-	public final TableField<ExchangeOperationRecord, String> FROM_CURRENCY_CODE = createField("from_currency_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false), this, "");
+	public final TableField<ExchangeOperationRecord, String> FROM_CURRENCY_CODE = createField("from_currency_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false).defaulted(true), this, "");
 
 	/**
 	 * The column <code>exchanger.exchange_operation.to_currency_code</code>.
 	 */
-	public final TableField<ExchangeOperationRecord, String> TO_CURRENCY_CODE = createField("to_currency_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false), this, "");
+	public final TableField<ExchangeOperationRecord, String> TO_CURRENCY_CODE = createField("to_currency_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false).defaulted(true), this, "");
 
 	/**
 	 * The column <code>exchanger.exchange_operation.from_amount</code>.
@@ -94,14 +98,6 @@ public class ExchangeOperation extends TableImpl<ExchangeOperationRecord> {
 
 	private ExchangeOperation(String alias, Table<ExchangeOperationRecord> aliased, Field<?>[] parameters) {
 		super(alias, Exchanger.EXCHANGER, aliased, parameters, "");
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Identity<ExchangeOperationRecord, Long> getIdentity() {
-		return Keys.IDENTITY_EXCHANGE_OPERATION;
 	}
 
 	/**

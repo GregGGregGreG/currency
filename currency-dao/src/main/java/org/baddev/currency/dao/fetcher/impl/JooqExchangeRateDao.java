@@ -36,7 +36,7 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
             return BaseExchangeRate.newBuilder()
                     .id(record.getId())
                     .baseCurrencyCode(record.getBaseLiterCode())
-                    .currencyCode(record.getLiterCode())
+                    .ccyCode(record.getLiterCode())
                     .date(ConverterUtils.fromSqlDate(record.getExchangeDate()))
                     .rate(record.getRate())
                     .build();
@@ -46,8 +46,8 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
     @Override
     public void save(BaseExchangeRate record) {
         dsl.insertInto(EXCHANGE_RATE)
-                .set(EXCHANGE_RATE.BASE_LITER_CODE, record.getBaseCurrencyCode())
-                .set(EXCHANGE_RATE.LITER_CODE, record.getCcy())
+                .set(EXCHANGE_RATE.BASE_LITER_CODE, record.getBaseCcyCode())
+                .set(EXCHANGE_RATE.LITER_CODE, record.getCcyCode())
                 .set(EXCHANGE_RATE.EXCHANGE_DATE, ConverterUtils.toSqlDate(record.getDate()))
                 .set(EXCHANGE_RATE.RATE, record.getRate())
                 .execute();
@@ -94,8 +94,8 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
     private List<ExchangeRateRecord> toRecords(Collection<BaseExchangeRate> rates) {
         return rates.stream()
                 .map(rate -> new ExchangeRateRecord(rate.getId(),
-                        rate.getBaseCurrencyCode(),
-                        rate.getCcy(),
+                        rate.getBaseCcyCode(),
+                        rate.getCcyCode(),
                         ConverterUtils.toSqlDate(rate.getDate()),
                         rate.getRate()))
                 .collect(Collectors.toList());

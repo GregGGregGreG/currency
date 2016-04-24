@@ -4,15 +4,16 @@
 package org.baddev.currency.jooq.schema;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import org.baddev.currency.jooq.schema.tables.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.ExchangeRate;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
-
-import javax.annotation.Generated;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**

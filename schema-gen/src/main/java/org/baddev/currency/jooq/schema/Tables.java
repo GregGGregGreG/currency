@@ -4,10 +4,10 @@
 package org.baddev.currency.jooq.schema;
 
 
+import javax.annotation.Generated;
+
 import org.baddev.currency.jooq.schema.tables.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.ExchangeRate;
-
-import javax.annotation.Generated;
 
 
 /**
@@ -26,10 +26,10 @@ public class Tables {
 	/**
 	 * The table exchanger.exchange_operation
 	 */
-	public static final ExchangeOperation EXCHANGE_OPERATION = ExchangeOperation.EXCHANGE_OPERATION;
+	public static final ExchangeOperation EXCHANGE_OPERATION = org.baddev.currency.jooq.schema.tables.ExchangeOperation.EXCHANGE_OPERATION;
 
 	/**
 	 * The table exchanger.exchange_rate
 	 */
-	public static final ExchangeRate EXCHANGE_RATE = ExchangeRate.EXCHANGE_RATE;
+	public static final ExchangeRate EXCHANGE_RATE = org.baddev.currency.jooq.schema.tables.ExchangeRate.EXCHANGE_RATE;
 }
