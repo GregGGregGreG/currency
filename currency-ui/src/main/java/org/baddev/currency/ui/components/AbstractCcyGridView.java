@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.view;
+package org.baddev.currency.ui.components;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.util.BeanItemContainer;
@@ -15,23 +15,22 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by IPotapchuk on 4/5/2016.
  */
 public abstract class AbstractCcyGridView<T> extends VerticalLayout implements View {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractCcyGridView.class);
+    protected static final Logger log = LoggerFactory.getLogger(AbstractCcyGridView.class);
 
     protected Grid grid;
 
     @Resource(name = "Iso4217Service")
-    private Iso4217CcyService iso4217Service;
-
-    public Iso4217CcyService iso4217Service() {
-        return iso4217Service;
-    }
+    protected Iso4217CcyService iso4217Service;
 
     @PostConstruct
     public abstract void init();
@@ -40,7 +39,7 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
         setSizeFull();
         setup(type, excludeProps);
         refresh(items);
-        addComponent(gridWithTopBar());
+        addComponent(contentRoot());
     }
 
     private void setup(Class<T> type, String... excludeProps) {
@@ -59,10 +58,40 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
     private HorizontalLayout topBar() {
         HorizontalLayout topBar = new HorizontalLayout();
         topBar.setSizeUndefined();
-        topBar.setWidth("100%");
+        topBar.setWidth(100.0f, Unit.PERCENTAGE);
         topBar.setSpacing(true);
         customizeTopBar(topBar);
         return topBar;
+    }
+
+    private MenuBar menuBar() {
+        MenuBar menuBar = new MenuBar();
+        menuBar.setWidth(100.0f, Unit.PERCENTAGE);
+        menuBar.addStyleName("small");
+        customizeMenuBar(menuBar);
+        return menuBar;
+    }
+
+    private VerticalLayout gridWithBar() {
+        VerticalLayout gridWithBar = new VerticalLayout();
+        gridWithBar.addComponent(topBar());
+        gridWithBar.addComponent(grid);
+        gridWithBar.setMargin(true);
+        gridWithBar.setSpacing(true);
+        gridWithBar.setSizeFull();
+        gridWithBar.setExpandRatio(grid, 1.0f);
+        return gridWithBar;
+    }
+
+    private VerticalLayout contentRoot() {
+        VerticalLayout content = new VerticalLayout();
+//        content.setSizeFull();
+        content.addComponent(menuBar());
+        VerticalLayout gridWithBar = gridWithBar();
+        content.addComponent(gridWithBar);
+        content.setExpandRatio(gridWithBar, 1.0f);
+        content.setSizeFull();
+        return content;
     }
 
     protected Object getSelectedRow() {
@@ -81,23 +110,13 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
 
     protected abstract void customizeTopBar(HorizontalLayout topBar);
 
-    private VerticalLayout gridWithTopBar() {
-        VerticalLayout gridWithBar = new VerticalLayout();
-        gridWithBar.addComponent(topBar());
-        gridWithBar.addComponent(grid);
-        gridWithBar.setMargin(true);
-        gridWithBar.setSpacing(true);
-        gridWithBar.setSizeFull();
-        gridWithBar.setExpandRatio(grid, 1);
-        return gridWithBar;
-    }
+    protected abstract void customizeMenuBar(MenuBar menuBar);
 
     protected void refresh(Collection<T> data) {
         container().removeAllItems();
         container().addAll(data);
         grid.clearSortOrder();
         Notification.show("Fetched " + data.size() + " records", Notification.Type.TRAY_NOTIFICATION);
-//        grid.sort(sortPropertyId);
     }
 
     protected void filter(String text) {
@@ -106,7 +125,7 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
             List<Container.Filter> filters = new ArrayList<>();
             container().getContainerPropertyIds()
                     .forEach(p -> filters.add(new SimpleStringFilter(p, text, true, false)));
-            container().addContainerFilter(new Or(filters.toArray(new Container.Filter[filters.size()])));
+            container().addContainerFilter(new Or(filters.stream().toArray(SimpleStringFilter[]::new)));
         }
     }
 

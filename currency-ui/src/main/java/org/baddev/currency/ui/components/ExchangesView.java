@@ -1,8 +1,9 @@
-package org.baddev.currency.ui.view;
+package org.baddev.currency.ui.components;
 
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.MenuBar;
 import org.baddev.currency.core.exchange.entity.ExchangeOperation;
 import org.baddev.currency.ui.MyUI;
 
@@ -26,5 +27,10 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
     @Override
     protected void customizeTopBar(HorizontalLayout topBar) {
 
+    }
+
+    @Override
+    protected void customizeMenuBar(MenuBar menuBar) {
+        menuBar.addItem("Rates", (MenuBar.Command) selectedItem -> MyUI.current().getNavigator().navigateTo(RatesView.NAME));
     }
 }

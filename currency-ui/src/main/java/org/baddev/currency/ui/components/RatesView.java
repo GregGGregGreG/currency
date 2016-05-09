@@ -1,16 +1,17 @@
-package org.baddev.currency.ui.view;
+package org.baddev.currency.ui.components;
 
 import com.vaadin.data.Container;
-import com.vaadin.data.Item;
 import com.vaadin.data.util.IndexedContainer;
-import com.vaadin.data.util.PropertyValueGenerator;
+import com.vaadin.data.util.converter.Converter;
+import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.validator.DateRangeValidator;
 import com.vaadin.event.FieldEvents;
+import com.vaadin.server.FontAwesome;
+import com.vaadin.server.ThemeResource;
 import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import com.vaadin.ui.renderers.NumberRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
@@ -20,6 +21,8 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.*;
 
 import static org.baddev.currency.core.fetcher.entity.BaseExchangeRate.*;
@@ -31,53 +34,26 @@ import static org.baddev.currency.core.fetcher.entity.BaseExchangeRate.*;
 public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
 
     public static final String NAME = "rates";
-
-    private static final String P_GEN_CCY_NAME = "currencyName";
-    private static final String P_GEN_CTRY_NAME = "countries";
+    private static final String P_GEN_CCY_NAME = Iso4217CcyService.Parameter.CCY_NM.fieldName();
 
     @Value("${min_date_nbu}")
     private String minDateVal;
 
+    private ComboBox fetchOptCb = new ComboBox("Fetch:");
+    private PopupDateField df = new PopupDateField("Select Date:");
+    private Button fetchBtn = new Button("Fetch");
+    private TextField filter = new TextField();
+
     private interface FetchOption {
         String ALL = "All";
         String CUR_DT = "Current";
-        String CUST_DT = "By Date";
 
+        String CUST_DT = "By Date";
         String[] VALUES = {
                 ALL,
                 CUR_DT,
                 CUST_DT
         };
-    }
-
-    private ComboBox fetchOptCb = new ComboBox("Fetch by:");
-    private PopupDateField df = new PopupDateField("Select Date:");
-    private Button fetchBtn = new Button("Fetch");
-    private TextField filter = new TextField();
-
-    private class CcyPropertyValGen extends PropertyValueGenerator<String> {
-        private final Iso4217CcyService.Parameter param;
-        private final Iso4217CcyService.Parameter keyParam;
-        private static final String NULL_REPR_FOR_GEN_COL = "Unknown";
-
-        public CcyPropertyValGen(Iso4217CcyService.Parameter param, Iso4217CcyService.Parameter keyParam) {
-            this.param = param;
-            this.keyParam = keyParam;
-        }
-
-        @Override
-        public String getValue(Item item, Object itemId, Object propertyId) {
-            String val = iso4217Service().findCcyParameter(param, keyParam,
-                    item.getItemProperty(keyParam.getFieldName()).getValue().toString());
-            if(val==null)
-                return NULL_REPR_FOR_GEN_COL;
-            return val;
-        }
-
-        @Override
-        public Class<String> getType() {
-            return String.class;
-        }
     }
 
     @Override
@@ -87,19 +63,51 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
 
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             containerWrapper().addGeneratedProperty(P_GEN_CCY_NAME,
-                    new CcyPropertyValGen(Iso4217CcyService.Parameter.CCY_NM, Iso4217CcyService.Parameter.CCY));
-            containerWrapper().addGeneratedProperty(P_GEN_CTRY_NAME,
-                    new CcyPropertyValGen(Iso4217CcyService.Parameter.CTRY_NM, Iso4217CcyService.Parameter.CCY));
+                    new Iso4217PropertyValGen(Iso4217CcyService.Parameter.CCY_NM, Iso4217CcyService.Parameter.CCY,
+                            iso4217Service));
         });
 
         refresh(data);
 
-        grid.getColumn(P_RATE).setRenderer(new NumberRenderer(Locale.US));
+        grid.getColumn(P_BASE_CD).setHeaderCaption("Base Currency Code");
+        grid.getColumn(P_CCY).setHeaderCaption("Currency Code");
+        grid.getColumn(P_GEN_CCY_NAME).setHeaderCaption("Currency Name");
+        grid.getColumn(P_RATE).setConverter(new Converter<String, Double>() {
+            @Override
+            public Double convertToModel(String value, Class<? extends Double> targetType, Locale locale) throws ConversionException {
+                return Double.parseDouble(value.replaceAll("<[^>]+>", ""));
+            }
 
-        grid.setColumnOrder(P_DATE, P_BASE_CD, P_CCY, P_GEN_CCY_NAME, P_GEN_CTRY_NAME, P_RATE);
+            @Override
+            public String convertToPresentation(Double value, Class<? extends String> targetType, Locale locale) throws ConversionException {
+                NumberFormat f = NumberFormat.getInstance(Locale.US);
+                BigDecimal d = new BigDecimal(value);
+                int fractions = d.precision();
+                f.setMaximumFractionDigits(fractions);
+                if (value % 2 == 0)
+                    f.setMaximumFractionDigits(1);
+                return "<b>" + f.format(value) + "</b>";
+            }
+
+            @Override
+            public Class<Double> getModelType() {
+                return Double.class;
+            }
+
+            @Override
+            public Class<String> getPresentationType() {
+                return String.class;
+            }
+        });
+        grid.getColumns().forEach(c -> {
+            if (!c.getPropertyId().equals(P_DATE))
+                c.setRenderer(new HtmlRenderer());
+        });
+
+        grid.setColumnOrder(P_DATE, P_BASE_CD, P_CCY, P_GEN_CCY_NAME, P_RATE);
     }
 
-    private Collection<BaseExchangeRate> fetchCurrentRates(){
+    private Collection<BaseExchangeRate> fetchCurrentRates() {
         Collection<BaseExchangeRate> data;
         try {
             data = MyUI.current().fetcher().fetchCurrent();
@@ -108,6 +116,13 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
         }
         return data;
+    }
+
+    @Override
+    protected void filter(String text) {
+        super.filter(text);
+        if (!text.isEmpty())
+            containerWrapper().addContainerFilter(new SimpleStringFilter(P_GEN_CCY_NAME, text, true, false));
     }
 
     @Override
@@ -130,19 +145,6 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             }
         });
         df.setImmediate(true);
-
-        grid.addSelectionListener(selectionEvent -> {
-            Object selected = getSelectedRow();
-            if (selected != null) {
-                Notification n = new Notification("" +
-                        grid.getContainerDataSource().getItem(selected)
-                                .getItemProperty(P_GEN_CTRY_NAME).getValue(),
-                        Notification.Type.HUMANIZED_MESSAGE);
-                n.setStyleName(ValoTheme.NOTIFICATION_CLOSABLE);
-                n.setDelayMsec(-1);
-                n.show(UI.getCurrent().getPage());
-            }
-        });
 
         fetchBtn.setEnabled(false);
         fetchBtn.addClickListener(event -> {
@@ -206,4 +208,9 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
         toggleVisibility(false, df, fetchBtn);
     }
 
+    @Override
+    protected void customizeMenuBar(MenuBar menuBar) {
+        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
+                (MenuBar.Command) selectedItem -> MyUI.current().getNavigator().navigateTo(ExchangesView.NAME));
+    }
 }

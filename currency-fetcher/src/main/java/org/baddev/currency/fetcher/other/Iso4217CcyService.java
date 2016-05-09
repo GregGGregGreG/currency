@@ -1,5 +1,8 @@
 package org.baddev.currency.fetcher.other;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Ilya on 15.04.2016.
  */
@@ -27,16 +30,22 @@ public interface Iso4217CcyService {
 
         private String paramName, fieldName;
 
-        public String getParamName() {
+        public static Parameter find(String fieldName){
+            return Arrays.stream(values()).filter(v -> v.fieldName().equals(fieldName))
+                    .findFirst()
+                    .orElseThrow(IllegalArgumentException::new);
+        }
+
+        public String paramName() {
             return paramName;
         }
 
-        public String getFieldName() {
+        public String fieldName() {
             return fieldName;
         }
 
     }
 
-    String findCcyParameter(Parameter param, Parameter keyParam, String keyParamVal);
+    List<String> findCcyParamValues(Parameter target, Parameter keyParam, String keyParamVal);
 
 }
