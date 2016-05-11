@@ -9,7 +9,6 @@ import com.vaadin.data.util.filter.UnsupportedFilterException;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
 
 import java.util.List;
-import java.util.Set;
 
 public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
 
@@ -32,7 +31,7 @@ public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
         if (vals.isEmpty())
             return GEN_COL_NULL_REPR;
         StringBuilder sb = new StringBuilder();
-        vals.forEach(s -> sb.append("<b>").append(s).append("</b>").append(", "));
+        vals.forEach(s -> sb.append(s).append(", "));
         sb.delete(sb.toString().length() - 2, sb.toString().length() - 1);
         return sb.toString();
     }

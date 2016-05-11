@@ -7,6 +7,7 @@ import com.vaadin.data.util.filter.Or;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.ui.*;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.ui.MyUI;
@@ -38,7 +39,7 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
     protected void setup(Class<T> type, Collection<T> items, String... excludeProps) {
         setSizeFull();
         setup(type, excludeProps);
-        refresh(items);
+        refresh(items, null, null);
         addComponent(contentRoot());
     }
 
@@ -85,7 +86,6 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
 
     private VerticalLayout contentRoot() {
         VerticalLayout content = new VerticalLayout();
-//        content.setSizeFull();
         content.addComponent(menuBar());
         VerticalLayout gridWithBar = gridWithBar();
         content.addComponent(gridWithBar);
@@ -112,10 +112,21 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
 
     protected abstract void customizeMenuBar(MenuBar menuBar);
 
-    protected void refresh(Collection<T> data) {
+    /**
+     * @param data       data to be stored
+     * @param sortPropId if null then there is no sort applied
+     * @param direction  if null and {@code sortPropId} not null, then asc
+     */
+    protected void refresh(Collection<T> data, String sortPropId, SortDirection direction) {
         container().removeAllItems();
         container().addAll(data);
         grid.clearSortOrder();
+        if (sortPropId != null) {
+            if (direction != null)
+                grid.sort(sortPropId, direction);
+            else
+                grid.sort(sortPropId, SortDirection.ASCENDING);
+        }
         Notification.show("Fetched " + data.size() + " records", Notification.Type.TRAY_NOTIFICATION);
     }
 
@@ -142,6 +153,10 @@ public abstract class AbstractCcyGridView<T> extends VerticalLayout implements V
 
     public static void toggleVisibility(boolean visible, Component... components) {
         Arrays.stream(components).forEach(c -> c.setVisible(visible));
+    }
+
+    public static void toggleEnabled(boolean enabled, Component... components) {
+        Arrays.stream(components).forEach(c -> c.setEnabled(enabled));
     }
 
     @Override

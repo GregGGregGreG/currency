@@ -1,7 +1,6 @@
 package org.baddev.currency.exchange.impl;
 
 import org.baddev.currency.core.exchange.entity.ExchangeOperation;
-import org.baddev.currency.core.exchange.exception.CurrencyNotFoundException;
 import org.baddev.currency.core.exchange.job.Exchanger;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.baddev.currency.dao.exchange.ExchangeOperationDao;
@@ -26,8 +25,7 @@ public class ExchangerImpl implements Exchanger {
 
     @Transactional
     @SuppressWarnings("unchecked")
-    public double exchange(ExchangeOperation operation, Collection<ExchangeRate> rates)
-            throws CurrencyNotFoundException {
+    public double exchange(ExchangeOperation operation, Collection<ExchangeRate> rates) {
         double excAmount = operation.exchange(rates);
         log.info("Exchanged amount: [{}]{}", excAmount,
                 operation.getExchangedAmountCurrencyCode());

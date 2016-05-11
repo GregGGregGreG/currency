@@ -3,16 +3,16 @@ package org.baddev.currency.ui.components;
 import com.vaadin.data.Container;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.data.util.converter.Converter;
+import com.vaadin.data.util.filter.Or;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.validator.DateRangeValidator;
 import com.vaadin.event.FieldEvents;
 import com.vaadin.server.FontAwesome;
-import com.vaadin.server.ThemeResource;
+import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
@@ -47,7 +47,6 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     private interface FetchOption {
         String ALL = "All";
         String CUR_DT = "Current";
-
         String CUST_DT = "By Date";
         String[] VALUES = {
                 ALL,
@@ -67,7 +66,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
                             iso4217Service));
         });
 
-        refresh(data);
+        refresh(data, P_CCY, null);
 
         grid.getColumn(P_BASE_CD).setHeaderCaption("Base Currency Code");
         grid.getColumn(P_CCY).setHeaderCaption("Currency Code");
@@ -121,13 +120,19 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     @Override
     protected void filter(String text) {
         super.filter(text);
-        if (!text.isEmpty())
+        if (!text.isEmpty()) {
+            //let wrapper modify our gen property filter
             containerWrapper().addContainerFilter(new SimpleStringFilter(P_GEN_CCY_NAME, text, true, false));
+            Or mergedOrs = new Or(container().getContainerFilters().stream().toArray(Container.Filter[]::new));
+            container().removeAllContainerFilters();
+            container().addContainerFilter(mergedOrs);
+        }
     }
 
     @Override
     protected void customizeTopBar(HorizontalLayout topBar) {
         df.setResolution(Resolution.DAY);
+        df.setIcon(FontAwesome.CALENDAR);
         df.setTextFieldEnabled(false);
         LocalDate minDate = LocalDate.parse(minDateVal, DateTimeFormat.forPattern("dd.MM.YYYY"));
         Date today = new Date();
@@ -152,9 +157,9 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
                 try {
                     Collection<BaseExchangeRate> rates =
                             MyUI.current().fetcher().fetchByDate(new LocalDate(df.getValue()));
-                    refresh(rates);
+                    refresh(rates, P_CCY, null);
                 } catch (NoRatesFoundException e) {
-                    refresh(new ArrayList<>());
+                    refresh(new ArrayList<>(), null, null);
                     Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
                 }
             } else {
@@ -164,6 +169,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
         fetchBtn.setImmediate(true);
 
         fetchOptCb.setContainerDataSource(new IndexedContainer(Arrays.asList(FetchOption.VALUES)));
+        fetchOptCb.setIcon(FontAwesome.DOWNLOAD);
         fetchOptCb.select(FetchOption.CUR_DT);
         fetchOptCb.setNullSelectionAllowed(false);
         fetchOptCb.setTextInputAllowed(false);
@@ -172,11 +178,11 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisibility(false, df, fetchBtn);
-                    refresh(MyUI.current().rateDao().loadAll());
+                    refresh(MyUI.current().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisibility(false, df, fetchBtn);
-                    refresh(fetchCurrentRates());
+                    refresh(fetchCurrentRates(), P_CCY, null);
                     break;
                 case FetchOption.CUST_DT:
                     toggleVisibility(true, df, fetchBtn);
@@ -190,15 +196,10 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             filter(event.getText());
         });
 
-        topBar.addComponent(fetchOptCb);
-        topBar.addComponent(df);
-        topBar.addComponent(fetchBtn);
-
         Label space = new Label();
-        topBar.addComponent(space);
-        topBar.setExpandRatio(space, 1.0f);
 
-        topBar.addComponent(filter);
+        topBar.addComponents(fetchOptCb, df, fetchBtn, space, filter);
+        topBar.setExpandRatio(space, 1.0f);
 
         topBar.setComponentAlignment(fetchOptCb, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(df, Alignment.MIDDLE_LEFT);

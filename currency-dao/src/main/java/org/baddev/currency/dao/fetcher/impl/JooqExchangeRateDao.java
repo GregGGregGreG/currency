@@ -91,6 +91,20 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
                 .fetch(new BaseExchangeRateMapper());
     }
 
+    @Override
+    public List<BaseExchangeRate> findForCcy(String ccy) {
+        return dsl.selectFrom(EXCHANGE_RATE)
+                .where(EXCHANGE_RATE.LITER_CODE.eq(ccy))
+                .fetch(new BaseExchangeRateMapper());
+    }
+
+    @Override
+    public List<BaseExchangeRate> findForDate(LocalDate date) {
+        return dsl.selectFrom(EXCHANGE_RATE)
+                .where(EXCHANGE_RATE.EXCHANGE_DATE.eq(ConverterUtils.toSqlDate(date)))
+                .fetch(new BaseExchangeRateMapper());
+    }
+
     private List<ExchangeRateRecord> toRecords(Collection<BaseExchangeRate> rates) {
         return rates.stream()
                 .map(rate -> new ExchangeRateRecord(rate.getId(),
@@ -99,5 +113,6 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
                         ConverterUtils.toSqlDate(rate.getDate()),
                         rate.getRate()))
                 .collect(Collectors.toList());
-     }
+    }
+
 }

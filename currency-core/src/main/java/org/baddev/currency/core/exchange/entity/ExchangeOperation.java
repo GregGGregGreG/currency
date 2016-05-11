@@ -1,7 +1,7 @@
 package org.baddev.currency.core.exchange.entity;
 
 import org.baddev.currency.core.Identity;
-import org.baddev.currency.core.exchange.exception.CurrencyNotFoundException;
+import org.baddev.currency.core.ServiceException;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.joda.time.LocalDate;
 
@@ -97,20 +97,27 @@ public class ExchangeOperation implements Identity<Long> {
         this.exchangedAmount = exchangedAmount;
     }
 
-    public double exchange(Collection<ExchangeRate> rates) throws CurrencyNotFoundException {
-        ExchangeRate exc = null;
-        for (ExchangeRate ex : rates) {
-            if (ex.getCcyCode().equals(this.amountCurrencyCode)) {
-                exc = ex;
-                break;
-            }
+    public double exchange(Collection<ExchangeRate> rates) {
+        if (amountCurrencyCode.equals("UAH")) {
+            double rate = findRate(rates, exchangedAmountCurrencyCode);
+            exchangedAmount = rate * amount;
+        } else {
+            double fPairRate = findRate(rates, amountCurrencyCode);
+            double inDefaultBase = fPairRate * amount;
+            double sPairRate = findRate(rates, exchangedAmountCurrencyCode);
+            exchangedAmount = inDefaultBase / sPairRate;
         }
-        if (exc == null) {
-            throw new CurrencyNotFoundException("Currency " + amountCurrencyCode + " not found.");
-        }
-        exchangedAmount = exc.getRate() * amount;
         return exchangedAmount;
     }
+
+    private static Double findRate(Collection<ExchangeRate> rates, String ccy) {
+        return rates.stream()
+                .filter(r -> r.getCcyCode().equals(ccy))
+                .mapToDouble(ExchangeRate::getRate)
+                .findFirst()
+                .orElseThrow(ServiceException::new);
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("ExchangeOperation{");

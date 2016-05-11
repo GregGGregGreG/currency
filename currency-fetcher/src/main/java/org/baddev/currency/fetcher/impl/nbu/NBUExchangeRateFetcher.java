@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.stream.Collectors;
@@ -118,12 +117,19 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
             throw new NoRatesFoundException("No records found by specified date. Choose another date.");
         }
         log.info("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
-        return exchange.getExchangeRates().stream().map(r -> BaseExchangeRate.newBuilder()
-                .baseCurrencyCode(r.getBaseCcyCode())
-                .ccyCode(r.getCcyCode())
-                .date(r.getDate())
-                .rate(r.getRate())
-                .build()).collect(Collectors.toList());
+        return exchange.getExchangeRates().stream()
+                .filter(r -> isNotEmpty(r.getCcyCode())) //ignoring records without ccy
+                .map(r -> BaseExchangeRate.newBuilder()
+                        .baseCurrencyCode(r.getBaseCcyCode())
+                        .ccyCode(r.getCcyCode())
+                        .date(r.getDate())
+                        .rate(r.getRate())
+                        .build()
+                ).collect(Collectors.toList());
+    }
+
+    private static boolean isNotEmpty(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 
 }
