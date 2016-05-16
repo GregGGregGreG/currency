@@ -17,6 +17,7 @@ import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.ui.MyUI;
+import org.baddev.currency.ui.components.base.AbstractCcyGridView;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +58,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
 
     @Override
     public void init() {
+        super.init();
         Collection<BaseExchangeRate> data = fetchCurrentRates();
         setup(BaseExchangeRate.class, data, P_ID);
 

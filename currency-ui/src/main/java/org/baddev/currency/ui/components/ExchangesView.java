@@ -17,6 +17,7 @@ import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.baddev.currency.ui.MyUI;
+import org.baddev.currency.ui.components.base.AbstractCcyGridView;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,7 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
 
     @Override
     public void init() {
+        super.init();
         setup(ExchangeOperation.class, MyUI.current().exchangeDao().loadAll(), P_ID);
         grid.setColumnOrder(P_DATE, P_AM_CD, P_EXC_AM_CD, P_AM, P_EXC_AM);
         grid.sort(P_DATE, SortDirection.DESCENDING);
@@ -87,9 +89,10 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
             Container c = new BeanItemContainer<>(BaseExchangeRate.class, rates);
             fromCcyChoiseF.setContainerDataSource(c);
             toCcyChoiseF.setContainerDataSource(c);
+            toggleEnabled(false, fromCcyChoiseF, toCcyChoiseF);
             resetBtn.setEnabled(true);
             toggleVisibility(true, fromCcyChoiseF, toCcyChoiseF, amountF);
-            fromCcyChoiseF.focus();
+            amountF.focus();
         });
 
         fromCcyChoiseF.addValueChangeListener((Property.ValueChangeListener) event -> {
@@ -109,13 +112,9 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
         amountF.setRequiredError("Field must be set");
         amountF.setImmediate(true);
         amountF.addValueChangeListener((Property.ValueChangeListener) event -> {
-            Object amountVal = event.getProperty().getValue();
-            boolean cbSelected = !fromCcyChoiseF.isEmpty() && !toCcyChoiseF.isEmpty();
-            if (amountVal != null && amountF.isValid() && cbSelected) {
-                exchBtn.setEnabled(true);
-                exchBtn.addStyleName(ValoTheme.BUTTON_FRIENDLY);
-                exchBtn.focus();
-            } else
+            if (amountF.isValid())
+                activateCcyCbs();
+            else
                 exchBtn.setEnabled(false);
         });
 
@@ -125,7 +124,7 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
         resetBtn.setImmediate(true);
         resetBtn.addClickListener((Button.ClickListener) event -> {
             resetInputs();
-            fromCcyChoiseF.focus();
+            amountF.focus();
         });
 
         exchBtn.setEnabled(false);
@@ -140,12 +139,12 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
             MyUI.current().exchanger().exchange(exc, ((Collection<ExchangeRate>) fromCcyChoiseF.getItemIds()));
             refresh(MyUI.current().exchangeDao().loadAll(), ExchangeOperation.P_DATE, SortDirection.DESCENDING);
             resetInputs();
-            fromCcyChoiseF.focus();
+            amountF.focus();
         });
         exchBtn.setImmediate(true);
 
         Label space = new Label();
-        topBar.addComponents(exchDateF, fromCcyChoiseF, toCcyChoiseF, amountF, space, exchBtn, resetBtn);
+        topBar.addComponents(exchDateF, amountF, fromCcyChoiseF, toCcyChoiseF, space, exchBtn, resetBtn);
         topBar.setExpandRatio(space, 1.0f);
         topBar.setComponentAlignment(exchDateF, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(fromCcyChoiseF, Alignment.MIDDLE_LEFT);
@@ -159,28 +158,35 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
 
     private void doCbValChange(Property.ValueChangeEvent event, ComboBox another) {
         if (event.getProperty().getValue() != null) {
-            if (!another.isEmpty() && !amountF.isEmpty()) {
-                exchBtn.setEnabled(true);
-                exchBtn.focus();
-            } else if (!another.isEmpty()) {
-                amountF.setEnabled(true);
-                amountF.focus();
-            } else {
+            if (!another.isEmpty() && !amountF.isEmpty())
+                activateExchBtn();
+            else
                 another.focus();
-            }
         }
+    }
+
+    private void activateExchBtn() {
+        exchBtn.setEnabled(true);
+        exchBtn.addStyleName(ValoTheme.BUTTON_FRIENDLY);
+        exchBtn.focus();
+    }
+
+    private void activateCcyCbs() {
+        toggleEnabled(true, fromCcyChoiseF, toCcyChoiseF);
+        fromCcyChoiseF.focus();
     }
 
     private void resetInputs() {
         amountF.clear();
         fromCcyChoiseF.clear();
         toCcyChoiseF.clear();
-        exchBtn.setEnabled(false);
+        toggleEnabled(false, fromCcyChoiseF, toCcyChoiseF, exchBtn);
         exchBtn.removeStyleName(ValoTheme.BUTTON_FRIENDLY);
     }
 
     @Override
     protected void customizeMenuBar(MenuBar menuBar) {
         menuBar.addItem("Rates", FontAwesome.DOLLAR, (MenuBar.Command) selectedItem -> MyUI.current().getNavigator().navigateTo(RatesView.NAME));
+        menuBar.addItem("Scheduler", FontAwesome.GEARS, (MenuBar.Command) selectedItem -> MyUI.current().getNavigator().navigateTo(RatesView.NAME));
     }
 }

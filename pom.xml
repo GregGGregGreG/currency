@@ -135,6 +135,7 @@
         <module>currency-core</module>
         <module>schema-gen</module>
         <module>currency-ui</module>
+        <module>currency-scheduler</module>
     </modules>
     
 </project>
