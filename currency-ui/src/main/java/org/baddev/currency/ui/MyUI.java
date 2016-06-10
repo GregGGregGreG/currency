@@ -10,17 +10,16 @@ import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.spring.navigator.SpringViewProvider;
 import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
-import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.exchange.job.Exchanger;
 import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.dao.exchange.ExchangeOperationDao;
 import org.baddev.currency.dao.fetcher.ExchangeRateDao;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
+import org.baddev.currency.scheduler.ScheduledExchangeManager;
 import org.baddev.currency.ui.components.RatesView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.ui.context.ThemeSource;
 import org.springframework.web.context.ContextLoaderListener;
 
 import javax.servlet.annotation.WebListener;
@@ -41,6 +40,8 @@ public class MyUI extends UI {
     private ExchangeOperationDao exchangeDao;
     @Autowired
     private ExchangeRateDao rateDao;
+    @Autowired
+    private ScheduledExchangeManager exchangeManager;
 
     public ExchangeRateFetcher<BaseExchangeRate> fetcher() {
         return fetcher;
@@ -58,7 +59,11 @@ public class MyUI extends UI {
         return rateDao;
     }
 
-    public static MyUI current(){
+    public ScheduledExchangeManager exchangeManager(){
+        return exchangeManager;
+    }
+
+    public static MyUI myUI(){
         return (MyUI)UI.getCurrent();
     }
 

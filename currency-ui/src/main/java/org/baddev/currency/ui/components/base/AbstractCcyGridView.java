@@ -1,8 +1,10 @@
 package org.baddev.currency.ui.components.base;
 
 import com.vaadin.data.Container;
+import com.vaadin.data.Item;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.data.util.GeneratedPropertyContainer;
+import com.vaadin.data.util.PropertyValueGenerator;
 import com.vaadin.data.util.filter.Or;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.shared.data.sort.SortDirection;
@@ -10,6 +12,8 @@ import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.renderers.ButtonRenderer;
+import com.vaadin.ui.renderers.ClickableRenderer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -110,6 +114,21 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
                     .forEach(p -> filters.add(new SimpleStringFilter(p, text, true, false)));
             container().addContainerFilter(new Or(filters.stream().toArray(SimpleStringFilter[]::new)));
         }
+    }
+
+    protected void addGeneratedButton(String propertyId, String value, ClickableRenderer.RendererClickListener listener) {
+        containerWrapper().addGeneratedProperty(propertyId, new PropertyValueGenerator<String>() {
+            @Override
+            public String getValue(Item item, Object itemId, Object propertyId) {
+                return value;
+            }
+
+            @Override
+            public Class<String> getType() {
+                return String.class;
+            }
+        });
+        grid.getColumn(propertyId).setRenderer(new ButtonRenderer(listener));
     }
 
 }

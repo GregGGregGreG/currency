@@ -8,6 +8,8 @@ import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.VerticalLayout;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.ui.MyUI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -20,6 +22,8 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
 
     @Resource(name = "Iso4217Service")
     protected Iso4217CcyService iso4217Service;
+
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     @PostConstruct
     public void init(){
@@ -45,7 +49,7 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
     protected abstract void customizeMenuBar(MenuBar menuBar);
 
     protected final void navigateTo(String viewName) {
-        MyUI.current().getNavigator().navigateTo(viewName);
+        MyUI.myUI().getNavigator().navigateTo(viewName);
     }
 
     public static void attachComponents(AbstractOrderedLayout l, Component... cs) {

@@ -7,6 +7,7 @@ import org.baddev.currency.jooq.schema.tables.records.ExchangeRateRecord;
 import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
 import org.jooq.RecordMapper;
+import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,17 +93,18 @@ public class JooqExchangeRateDao implements ExchangeRateDao {
     }
 
     @Override
-    public List<BaseExchangeRate> findForCcy(String ccy) {
+    public Collection<BaseExchangeRate> findForCcy(String ccy) {
         return dsl.selectFrom(EXCHANGE_RATE)
                 .where(EXCHANGE_RATE.LITER_CODE.eq(ccy))
                 .fetch(new BaseExchangeRateMapper());
     }
 
     @Override
-    public List<BaseExchangeRate> findForDate(LocalDate date) {
+    public Collection<BaseExchangeRate> findLastRates() {
         return dsl.selectFrom(EXCHANGE_RATE)
-                .where(EXCHANGE_RATE.EXCHANGE_DATE.eq(ConverterUtils.toSqlDate(date)))
-                .fetch(new BaseExchangeRateMapper());
+                .where(EXCHANGE_RATE.EXCHANGE_DATE.eq(
+                        dsl.select(DSL.max(EXCHANGE_RATE.EXCHANGE_DATE)).from(EXCHANGE_RATE)
+                )).fetch(new BaseExchangeRateMapper());
     }
 
     private List<ExchangeRateRecord> toRecords(Collection<BaseExchangeRate> rates) {

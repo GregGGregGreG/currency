@@ -9,5 +9,5 @@ import java.util.Collection;
  * Created by IPotapchuk on 3/14/2016.
  */
 public interface Exchanger {
-    double exchange(ExchangeOperation operation, Collection<ExchangeRate> rates);
+    ExchangeOperation exchange(ExchangeOperation operation, Collection<ExchangeRate> rates);
 }

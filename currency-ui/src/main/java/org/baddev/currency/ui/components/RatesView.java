@@ -111,7 +111,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     private Collection<BaseExchangeRate> fetchCurrentRates() {
         Collection<BaseExchangeRate> data;
         try {
-            data = MyUI.current().fetcher().fetchCurrent();
+            data = MyUI.myUI().fetcher().fetchCurrent();
         } catch (NoRatesFoundException e) {
             data = new ArrayList<>();
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
@@ -158,7 +158,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             if (df.getValue() != null) {
                 try {
                     Collection<BaseExchangeRate> rates =
-                            MyUI.current().fetcher().fetchByDate(new LocalDate(df.getValue()));
+                            MyUI.myUI().fetcher().fetchByDate(new LocalDate(df.getValue()));
                     refresh(rates, P_CCY, null);
                 } catch (NoRatesFoundException e) {
                     refresh(new ArrayList<>(), null, null);
@@ -180,7 +180,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisibility(false, df, fetchBtn);
-                    refresh(MyUI.current().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
+                    refresh(MyUI.myUI().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisibility(false, df, fetchBtn);
@@ -214,6 +214,6 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     @Override
     protected void customizeMenuBar(MenuBar menuBar) {
         menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
-                (MenuBar.Command) selectedItem -> MyUI.current().getNavigator().navigateTo(ExchangesView.NAME));
+                (MenuBar.Command) selectedItem -> MyUI.myUI().getNavigator().navigateTo(ExchangesView.NAME));
     }
 }

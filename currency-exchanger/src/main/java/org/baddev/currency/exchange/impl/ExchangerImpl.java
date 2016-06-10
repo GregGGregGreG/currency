@@ -25,11 +25,11 @@ public class ExchangerImpl implements Exchanger {
 
     @Transactional
     @SuppressWarnings("unchecked")
-    public double exchange(ExchangeOperation operation, Collection<ExchangeRate> rates) {
-        double excAmount = operation.exchange(rates);
-        log.info("Exchanged amount: [{}]{}", excAmount,
+    public ExchangeOperation exchange(ExchangeOperation operation, Collection<ExchangeRate> rates) {
+        operation.exchange(rates);
+        log.info("Exchanged amount: [{}]{}", operation.getExchangedAmount(),
                 operation.getExchangedAmountCurrencyCode());
         exchangeDao.save(operation);
-        return excAmount;
+        return operation;
     }
 }

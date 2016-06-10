@@ -114,7 +114,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
     private Collection<BaseExchangeRate> convert(NBUExchange exchange) throws NoRatesFoundException {
         if (exchange.getExchangeRates() == null) {
             log.info("No rates found in fetched payload");
-            throw new NoRatesFoundException("No records found by specified date. Choose another date.");
+            throw new NoRatesFoundException("No rates found by specified date");
         }
         log.info("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
         return exchange.getExchangeRates().stream()
