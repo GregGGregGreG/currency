@@ -2,7 +2,6 @@ package org.baddev.currency.ui.components;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.util.IndexedContainer;
-import com.vaadin.data.util.converter.Converter;
 import com.vaadin.data.util.filter.Or;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.validator.DateRangeValidator;
@@ -16,17 +15,20 @@ import com.vaadin.ui.renderers.HtmlRenderer;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.ui.MyUI;
+import org.baddev.currency.ui.DoubleAmountToStringConverter;
+import org.baddev.currency.ui.Iso4217PropertyValGen;
 import org.baddev.currency.ui.components.base.AbstractCcyGridView;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.math.BigDecimal;
-import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 
 import static org.baddev.currency.core.fetcher.entity.BaseExchangeRate.*;
+import static org.baddev.currency.ui.MyUI.myUI;
 
 /**
  * Created by IPotapchuk on 4/8/2016.
@@ -73,33 +75,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
         grid.getColumn(P_BASE_CD).setHeaderCaption("Base Currency Code");
         grid.getColumn(P_CCY).setHeaderCaption("Currency Code");
         grid.getColumn(P_GEN_CCY_NAME).setHeaderCaption("Currency Name");
-        grid.getColumn(P_RATE).setConverter(new Converter<String, Double>() {
-            @Override
-            public Double convertToModel(String value, Class<? extends Double> targetType, Locale locale) throws ConversionException {
-                return Double.parseDouble(value.replaceAll("<[^>]+>", ""));
-            }
-
-            @Override
-            public String convertToPresentation(Double value, Class<? extends String> targetType, Locale locale) throws ConversionException {
-                NumberFormat f = NumberFormat.getInstance(Locale.US);
-                BigDecimal d = new BigDecimal(value);
-                int fractions = d.precision();
-                f.setMaximumFractionDigits(fractions);
-                if (value % 2 == 0)
-                    f.setMaximumFractionDigits(1);
-                return "<b>" + f.format(value) + "</b>";
-            }
-
-            @Override
-            public Class<Double> getModelType() {
-                return Double.class;
-            }
-
-            @Override
-            public Class<String> getPresentationType() {
-                return String.class;
-            }
-        });
+        grid.getColumn(P_RATE).setConverter(new DoubleAmountToStringConverter());
         grid.getColumns().forEach(c -> {
             if (!c.getPropertyId().equals(P_DATE))
                 c.setRenderer(new HtmlRenderer());
@@ -111,7 +87,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     private Collection<BaseExchangeRate> fetchCurrentRates() {
         Collection<BaseExchangeRate> data;
         try {
-            data = MyUI.myUI().fetcher().fetchCurrent();
+            data = myUI().fetcher().fetchCurrent();
         } catch (NoRatesFoundException e) {
             data = new ArrayList<>();
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
@@ -143,6 +119,8 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
         df.addValidator(new DateRangeValidator("Select date in range ["
                 + minDate.toString() + "..." + LocalDate.fromDateFields(today) + "]",
                 minDate.toDate(), today, Resolution.DAY));
+        df.setRequired(true);
+        df.setRequiredError("Date must be selected");
         df.addValueChangeListener(event -> {
             if (df.isValid()) {
                 fetchBtn.setEnabled(true);
@@ -158,7 +136,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             if (df.getValue() != null) {
                 try {
                     Collection<BaseExchangeRate> rates =
-                            MyUI.myUI().fetcher().fetchByDate(new LocalDate(df.getValue()));
+                            myUI().fetcher().fetchByDate(new LocalDate(df.getValue()));
                     refresh(rates, P_CCY, null);
                 } catch (NoRatesFoundException e) {
                     refresh(new ArrayList<>(), null, null);
@@ -180,7 +158,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisibility(false, df, fetchBtn);
-                    refresh(MyUI.myUI().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
+                    refresh(myUI().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisibility(false, df, fetchBtn);
@@ -214,6 +192,6 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     @Override
     protected void customizeMenuBar(MenuBar menuBar) {
         menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
-                (MenuBar.Command) selectedItem -> MyUI.myUI().getNavigator().navigateTo(ExchangesView.NAME));
+                (MenuBar.Command) selectedItem -> myUI().getNavigator().navigateTo(ExchangesView.NAME));
     }
 }

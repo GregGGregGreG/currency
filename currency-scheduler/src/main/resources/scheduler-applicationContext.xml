@@ -15,4 +15,6 @@
         <property name="waitForTasksToCompleteOnShutdown" value="true"/>
     </bean>
 
+    <import resource="classpath:jooq-applicationContext.xml"/>
+
 </beans>

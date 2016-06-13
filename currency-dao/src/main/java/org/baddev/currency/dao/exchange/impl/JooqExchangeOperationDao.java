@@ -33,6 +33,7 @@ public class JooqExchangeOperationDao implements ExchangeOperationDao {
         @Override
         public ExchangeOperation map(ExchangeOperationRecord record) {
             return ExchangeOperation.newBuilder()
+                    .id(record.getId())
                     .date(ConverterUtils.fromSqlDate(record.getDate()))
                     .amount(record.getFromAmount())
                     .exchangedAmount(record.getToAmount())

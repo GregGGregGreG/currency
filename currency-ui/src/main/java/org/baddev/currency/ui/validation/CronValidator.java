@@ -1,4 +1,4 @@
-package org.baddev.currency.ui;
+package org.baddev.currency.ui.validation;
 
 import com.vaadin.data.validator.AbstractStringValidator;
 import org.springframework.scheduling.support.CronSequenceGenerator;

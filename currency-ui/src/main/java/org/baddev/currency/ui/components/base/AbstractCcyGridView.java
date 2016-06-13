@@ -129,6 +129,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
             }
         });
         grid.getColumn(propertyId).setRenderer(new ButtonRenderer(listener));
+
     }
 
 }

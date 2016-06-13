@@ -4,14 +4,15 @@
 package org.baddev.currency.jooq.schema;
 
 
-import javax.annotation.Generated;
-
 import org.baddev.currency.jooq.schema.tables.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeRateRecord;
+import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
+
+import javax.annotation.Generated;
 
 
 /**
@@ -32,6 +33,8 @@ public class Keys {
 	// IDENTITY definitions
 	// -------------------------------------------------------------------------
 
+	public static final Identity<ExchangeOperationRecord, Long> IDENTITY_EXCHANGE_OPERATION = Identities0.IDENTITY_EXCHANGE_OPERATION;
+	public static final Identity<ExchangeRateRecord, Long> IDENTITY_EXCHANGE_RATE = Identities0.IDENTITY_EXCHANGE_RATE;
 
 	// -------------------------------------------------------------------------
 	// UNIQUE and PRIMARY KEY definitions
@@ -48,6 +51,11 @@ public class Keys {
 	// -------------------------------------------------------------------------
 	// [#1459] distribute members to avoid static initialisers > 64kb
 	// -------------------------------------------------------------------------
+
+	private static class Identities0 extends AbstractKeys {
+		public static Identity<ExchangeOperationRecord, Long> IDENTITY_EXCHANGE_OPERATION = createIdentity(ExchangeOperation.EXCHANGE_OPERATION, ExchangeOperation.EXCHANGE_OPERATION.ID);
+		public static Identity<ExchangeRateRecord, Long> IDENTITY_EXCHANGE_RATE = createIdentity(ExchangeRate.EXCHANGE_RATE, ExchangeRate.EXCHANGE_RATE.ID);
+	}
 
 	private static class UniqueKeys0 extends AbstractKeys {
 		public static final UniqueKey<ExchangeOperationRecord> KEY_EXCHANGE_OPERATION_PRIMARY = createUniqueKey(ExchangeOperation.EXCHANGE_OPERATION, ExchangeOperation.EXCHANGE_OPERATION.ID);

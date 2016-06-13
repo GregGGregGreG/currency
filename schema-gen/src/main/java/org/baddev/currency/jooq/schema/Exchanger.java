@@ -4,16 +4,16 @@
 package org.baddev.currency.jooq.schema;
 
 
+import org.baddev.currency.jooq.schema.tables.ExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.ExchangeRate;
+import org.baddev.currency.jooq.schema.tables.ExchangeTask;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+
+import javax.annotation.Generated;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.annotation.Generated;
-
-import org.baddev.currency.jooq.schema.tables.ExchangeOperation;
-import org.baddev.currency.jooq.schema.tables.ExchangeRate;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
 
 
 /**
@@ -29,7 +29,7 @@ import org.jooq.impl.SchemaImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Exchanger extends SchemaImpl {
 
-	private static final long serialVersionUID = 880174439;
+	private static final long serialVersionUID = 716238731;
 
 	/**
 	 * The reference instance of <code>exchanger</code>
@@ -53,6 +53,7 @@ public class Exchanger extends SchemaImpl {
 	private final List<Table<?>> getTables0() {
 		return Arrays.<Table<?>>asList(
 			ExchangeOperation.EXCHANGE_OPERATION,
-			ExchangeRate.EXCHANGE_RATE);
+			ExchangeRate.EXCHANGE_RATE,
+			ExchangeTask.EXCHANGE_TASK);
 	}
 }

@@ -9,14 +9,16 @@ import com.vaadin.server.FontAwesome;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
+import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.exchange.entity.ExchangeOperation;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.scheduler.CronExchangeOperation;
-import org.baddev.currency.ui.CronValidator;
+import org.baddev.currency.ui.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.MyUI;
 import org.baddev.currency.ui.components.base.AbstractCcyGridView;
+import org.baddev.currency.ui.validation.CronValidator;
 import org.joda.time.LocalDate;
 
 import java.util.Arrays;
@@ -25,6 +27,8 @@ import java.util.Date;
 
 import static org.baddev.currency.core.exchange.entity.ExchangeOperation.*;
 import static org.baddev.currency.scheduler.CronExchangeOperation.P_CRON;
+import static org.baddev.currency.ui.MyUI.myUI;
+import static org.baddev.currency.ui.validation.ViewValidation.isValid;
 
 /**
  * Created by IPOTAPCHUK on 6/9/2016.
@@ -34,7 +38,7 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
 
     public static final String NAME = "scheduler";
 
-    private static final String P_CNL_BTN = "canceling";
+    private static final String P_CNL_BTN = "cancellation";
     private static final String P_EXEC_BTN = "execution";
 
     private TextField amountF = new TextField("Amount:");
@@ -49,11 +53,14 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
         super.init();
         setup(CronExchangeOperation.class, MyUI.myUI().exchangeManager().getScheduledTasks().keySet(), P_ID, P_EXC_AM);
         addGeneratedButton(P_CNL_BTN, "Cancel", e -> {
-            boolean canceled = MyUI.myUI().exchangeManager().cancel(((CronExchangeOperation) e.getItemId()).getId());
-            log.debug("Task canceled: {}", canceled);
+            boolean canceled = myUI().exchangeManager().cancel(((CronExchangeOperation) e.getItemId()).getId());
+            log.debug("Exchange task {} canceled: {}", ((CronExchangeOperation) e.getItemId()).getId(), canceled);
             container().removeItem(e.getItemId());
         });
-        addGeneratedButton(P_EXEC_BTN, "Execute", e -> MyUI.myUI().exchangeManager().execute((ExchangeOperation) e.getItemId()));
+        addGeneratedButton(P_EXEC_BTN, "Execute", e -> myUI().exchangeManager().execute((ExchangeOperation) e.getItemId()));
+        grid.getColumn(P_DATE).setHeaderCaption("Date Added");
+        grid.getColumn(P_CRON).setHeaderCaption("Cron Expression");
+        grid.getColumn(P_AM).setRenderer(new HtmlRenderer(), new DoubleAmountToStringConverter());
         grid.setColumnOrder(P_DATE, P_AM_CD, P_EXC_AM_CD, P_AM, P_CRON, P_EXEC_BTN, P_CNL_BTN);
         grid.sort(P_DATE, SortDirection.DESCENDING);
     }
@@ -68,10 +75,10 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
     @Override
     protected void customizeTopBar(HorizontalLayout topBar) {
         Collection<BaseExchangeRate> rates;
-        rates = MyUI.myUI().rateDao().findLastRates();
+        rates = myUI().rateDao().findLastRates();
         if (rates.isEmpty())
             try {
-                rates = MyUI.myUI().fetcher().fetchCurrent();
+                rates = myUI().fetcher().fetchCurrent();
             } catch (NoRatesFoundException e) {
                 Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
             }
@@ -84,7 +91,7 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
             cb.setItemCaptionMode(AbstractSelect.ItemCaptionMode.PROPERTY);
             cb.setImmediate(true);
             cb.setRequired(true);
-            cb.setRequiredError("Choose currency option");
+            cb.setRequiredError("Currency must be selected");
             cb.setItemCaptionPropertyId(BaseExchangeRate.P_CCY);
             cb.setContainerDataSource(c);
             cb.addValueChangeListener((Property.ValueChangeListener) event -> {
@@ -101,7 +108,7 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
 
         amountF.setInputPrompt("Enter amount...");
         amountF.setConverter(new StringToDoubleConverter());
-        amountF.setConversionError("Only Numbers allowed");
+        amountF.setConversionError("Only numbers allowed");
         amountF.addValidator(new DoubleRangeValidator("Allowed range is from 0 to 9.9 billions", 0d, 9999999999d));
         amountF.setMaxLength(10);
         amountF.addValueChangeListener((Property.ValueChangeListener) event -> {
@@ -116,7 +123,7 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
                         deactivateSchBtn();
                         cronF.focus();
                     }
-                } else {
+                } else if (isValid(toCcyChoiseF, fromCcyChoiseF)) {
                     cronF.setEnabled(true);
                     cronF.focus();
                 }
@@ -125,7 +132,7 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
         amountF.focus();
 
         cronF.setInputPrompt("Enter expression...");
-        cronF.addValidator(new CronValidator("Enter valid cron expression"));
+        cronF.addValidator(new CronValidator("Cron expression is invalid"));
         cronF.setMaxLength(20);
         cronF.addValueChangeListener((Property.ValueChangeListener) event -> {
             if (isValid(cronF))
@@ -145,14 +152,14 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
                     .date(LocalDate.fromDateFields(new Date()))
                     .amount((double) amountF.getConvertedValue())
                     .build();
-            MyUI.myUI().exchangeManager().schedule(exc, cronF.getValue());
-            refresh(MyUI.myUI().exchangeManager().getScheduledTasks().keySet(), ExchangeOperation.P_DATE, SortDirection.DESCENDING);
+            myUI().exchangeManager().schedule(exc, cronF.getValue());
+            refresh(myUI().exchangeManager().getScheduledTasks().keySet(), ExchangeOperation.P_DATE, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();
         });
         scheduleBtn.setImmediate(true);
 
-        resetBtn.setIcon(FontAwesome.REMOVE, "Reset");
+        resetBtn.setIcon(FontAwesome.REMOVE);
         resetBtn.setStyleName(ValoTheme.BUTTON_DANGER);
         resetBtn.setImmediate(true);
         resetBtn.addClickListener((Button.ClickListener) event -> {
@@ -174,16 +181,12 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
 
     private void doCbValChange(Property.ValueChangeEvent event, ComboBox another) {
         if (event.getProperty().getValue() != null) {
-            if (!another.isEmpty() && !amountF.isEmpty())
+            if (isValid(another, amountF))
                 cronF.setEnabled(true);
-            else if (!another.isEmpty() && amountF.isEmpty())
+            else if (isValid(another) && !isValid(amountF))
                 amountF.focus();
             else another.focus();
         }
-    }
-
-    private static boolean isValid(Field f) {
-        return f.isValid() && f.getValue() != null;
     }
 
     private void activateSchBtn() {

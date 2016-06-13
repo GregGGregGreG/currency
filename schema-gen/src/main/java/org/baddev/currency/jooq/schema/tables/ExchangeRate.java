@@ -4,20 +4,16 @@
 package org.baddev.currency.jooq.schema.tables;
 
 
-import java.sql.Date;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Generated;
-
 import org.baddev.currency.jooq.schema.Exchanger;
 import org.baddev.currency.jooq.schema.Keys;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeRateRecord;
-import org.jooq.Field;
-import org.jooq.Table;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
+import org.jooq.*;
 import org.jooq.impl.TableImpl;
+
+import javax.annotation.Generated;
+import java.sql.Date;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -33,7 +29,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExchangeRate extends TableImpl<ExchangeRateRecord> {
 
-	private static final long serialVersionUID = 1877006541;
+	private static final long serialVersionUID = -1002531429;
 
 	/**
 	 * The reference instance of <code>exchanger.exchange_rate</code>
@@ -93,6 +89,14 @@ public class ExchangeRate extends TableImpl<ExchangeRateRecord> {
 
 	private ExchangeRate(String alias, Table<ExchangeRateRecord> aliased, Field<?>[] parameters) {
 		super(alias, Exchanger.EXCHANGER, aliased, parameters, "");
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Identity<ExchangeRateRecord, Long> getIdentity() {
+		return Keys.IDENTITY_EXCHANGE_RATE;
 	}
 
 	/**

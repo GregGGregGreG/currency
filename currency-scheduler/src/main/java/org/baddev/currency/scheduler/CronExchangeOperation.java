@@ -11,6 +11,9 @@ public class CronExchangeOperation extends ExchangeOperation {
 
     public static final String P_CRON = "cron";
 
+    public CronExchangeOperation() {
+    }
+
     public CronExchangeOperation(String cron, ExchangeOperation operation) {
         super.setId(operation.getId());
         super.setAmount(operation.getAmount());
