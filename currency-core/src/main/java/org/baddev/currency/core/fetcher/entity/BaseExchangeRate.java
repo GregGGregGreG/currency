@@ -7,17 +7,17 @@ import org.joda.time.LocalDate;
  */
 public class BaseExchangeRate implements ExchangeRate {
 
-    private long id;
-    private String baseCcyCode;
-    private String ccyCode;
+    private long      id;
+    private String    baseCcyCode;
+    private String    ccyCode;
     private LocalDate date;
-    private double rate;
+    private double    rate;
 
-    public static final String P_ID = "id";
+    public static final String P_ID      = "id";
     public static final String P_BASE_CD = "baseCcyCode";
-    public static final String P_CCY = "ccyCode";
-    public static final String P_DATE = "date";
-    public static final String P_RATE = "rate";
+    public static final String P_CCY     = "ccyCode";
+    public static final String P_DATE    = "date";
+    public static final String P_RATE    = "rate";
 
     public BaseExchangeRate() {
     }
@@ -118,11 +118,11 @@ public class BaseExchangeRate implements ExchangeRate {
     }
 
     public static final class Builder {
-        private long id;
-        private String baseCcyCode;
-        private String ccyCode;
+        private long      id;
+        private String    baseCcyCode;
+        private String    ccyCode;
         private LocalDate date;
-        private double rate;
+        private double    rate;
 
         private Builder() {
         }

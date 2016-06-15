@@ -26,8 +26,7 @@ public class Iso4217CcyServiceImpl implements Iso4217CcyService {
     private static final Logger log = LoggerFactory.getLogger(Iso4217CcyServiceImpl.class);
 
     @Resource(name = "IsoCurCcys")
-    private List<IsoCcyEntry> isoCurCcyEntries;
-
+    private List<IsoCcyEntry>     isoCurCcyEntries;
     @Resource(name = "IsoHistCcys")
     private List<IsoCcyHistEntry> isoHistCcyEntries;
 

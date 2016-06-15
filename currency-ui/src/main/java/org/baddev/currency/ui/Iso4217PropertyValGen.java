@@ -14,8 +14,7 @@ public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
 
     private final Iso4217CcyService.Parameter param;
     private final Iso4217CcyService.Parameter keyParam;
-    private final Iso4217CcyService service;
-    private static final String GEN_COL_NULL_REPR = "Unknown";
+    private final Iso4217CcyService           service;
 
     public Iso4217PropertyValGen(Iso4217CcyService.Parameter param, Iso4217CcyService.Parameter keyParam,
                                  Iso4217CcyService service) {
@@ -26,14 +25,9 @@ public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
 
     @Override
     public String getValue(Item item, Object itemId, Object propertyId) {
-        List<String> vals = service.findCcyParamValues(param, keyParam,
-                item.getItemProperty(keyParam.fieldName()).getValue().toString());
-        if (vals.isEmpty())
-            return GEN_COL_NULL_REPR;
-        StringBuilder sb = new StringBuilder();
-        vals.forEach(s -> sb.append(s).append(", "));
-        sb.delete(sb.toString().length() - 2, sb.toString().length() - 1);
-        return sb.toString();
+        return FormatUtils.formatCcyNamesList(
+                service.findCcyParamValues(param, keyParam, item.getItemProperty(keyParam.fieldName()).getValue().toString())
+        );
     }
 
     @Override

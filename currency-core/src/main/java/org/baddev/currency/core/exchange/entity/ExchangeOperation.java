@@ -19,19 +19,19 @@ import java.util.Collection;
 public class ExchangeOperation implements Identity<Long> {
 
     @XmlAttribute
-    private Long id;
-    private String amountCurrencyCode;
-    private double amount;
-    private String exchangedAmountCurrencyCode;
-    private double exchangedAmount;
+    private Long      id;
+    private String    amountCurrencyCode;
+    private double    amount;
+    private String    exchangedAmountCurrencyCode;
+    private double    exchangedAmount;
     private LocalDate date;
 
-    public static final String P_ID = "id";
-    public static final String P_AM_CD = "amountCurrencyCode";
-    public static final String P_AM = "amount";
+    public static final String P_ID        = "id";
+    public static final String P_AM_CD     = "amountCurrencyCode";
+    public static final String P_AM        = "amount";
     public static final String P_EXC_AM_CD = "exchangedAmountCurrencyCode";
-    public static final String P_EXC_AM = "exchangedAmount";
-    public static final String P_DATE = "date";
+    public static final String P_EXC_AM    = "exchangedAmount";
+    public static final String P_DATE      = "date";
 
     public ExchangeOperation() {
     }
@@ -132,11 +132,11 @@ public class ExchangeOperation implements Identity<Long> {
     }
 
     public static final class Builder {
-        private Long id;
-        private String amountCurrencyCode;
-        private double amount;
-        private String exchangedAmountCurrencyCode;
-        private double exchangedAmount;
+        private Long      id;
+        private String    amountCurrencyCode;
+        private double    amount;
+        private String    exchangedAmountCurrencyCode;
+        private double    exchangedAmount;
         private LocalDate date;
 
         private Builder() {

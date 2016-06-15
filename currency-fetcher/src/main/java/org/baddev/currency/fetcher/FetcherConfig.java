@@ -32,18 +32,12 @@ public class FetcherConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FetcherConfig.class);
 
-    @Value("${source_nbu}")
-    String nbuSourceURI;
-    @Value("${enabled}")
-    String proxyEnabled;
-    @Value("${server}")
-    String proxyHost;
-    @Value("${port}")
-    String proxyPort;
-    @Value("${source_iso_cur}")
-    String isoCurSourceURI;
-    @Value("${source_iso_hist}")
-    String isoHistSourceURI;
+    @Value("${source_nbu}")      String nbuSourceURI;
+    @Value("${enabled}")         String proxyEnabled;
+    @Value("${server}")          String proxyHost;
+    @Value("${port}")            String proxyPort;
+    @Value("${source_iso_cur}")  String isoCurSourceURI;
+    @Value("${source_iso_hist}") String isoHistSourceURI;
 
     @Bean(name = "NBUClient")
     public WebClient nbuClient() {

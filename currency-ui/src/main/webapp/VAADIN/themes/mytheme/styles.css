@@ -4586,7 +4586,7 @@ div.v-layout.v-horizontal.v-widget {
 	right: 0;
 	bottom: 0;
 	left: 0;
-	border: 2px solid #197de1;
+	border: none;
 	display: none;
 	pointer-events: none;
 }
@@ -12951,4 +12951,9 @@ div.v-layout.v-horizontal.v-widget {
 
 .mytheme .v-margin-bottom {
 	padding-bottom: 20px;
+}
+
+.mytheme .v-menubar:focus:after {
+	border-color: transparent;
+	box-shadow: none;
 }

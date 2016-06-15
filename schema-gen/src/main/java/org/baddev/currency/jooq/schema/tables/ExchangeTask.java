@@ -28,7 +28,7 @@ import java.sql.Date;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExchangeTask extends TableImpl<ExchangeTaskRecord> {
 
-	private static final long serialVersionUID = -674735032;
+	private static final long serialVersionUID = -775496575;
 
 	/**
 	 * The reference instance of <code>exchanger.exchange_task</code>
@@ -72,6 +72,11 @@ public class ExchangeTask extends TableImpl<ExchangeTaskRecord> {
 	 * The column <code>exchanger.exchange_task.cron</code>.
 	 */
 	public final TableField<ExchangeTaskRecord, String> CRON = createField("cron", org.jooq.impl.SQLDataType.VARCHAR.length(30).nullable(false), this, "");
+
+	/**
+	 * The column <code>exchanger.exchange_task.active</code>.
+	 */
+	public final TableField<ExchangeTaskRecord, Byte> ACTIVE = createField("active", org.jooq.impl.SQLDataType.TINYINT.nullable(false).defaulted(true), this, "");
 
 	/**
 	 * Create a <code>exchanger.exchange_task</code> table reference

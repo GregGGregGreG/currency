@@ -21,6 +21,7 @@ CREATE TABLE exchange_task
     date_added DATE NOT NULL,
     from_ccy VARCHAR(3) NOT NULL,
     to_ccy VARCHAR(3) NOT NULL,
-    amount DOUBLE(6,3) NOT NULL,
-    cron VARCHAR(30) NOT NULL
+    amount DOUBLE NOT NULL,
+    cron VARCHAR(30) NOT NULL,
+    active TINYINT(1) DEFAULT '1' NOT NULL
 );

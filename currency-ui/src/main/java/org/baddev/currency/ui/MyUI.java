@@ -30,18 +30,12 @@ import javax.servlet.annotation.WebServlet;
 @SpringUI
 public class MyUI extends UI {
 
-    @Autowired
-    private SpringViewProvider viewProvider;
-    @NBU
-    private ExchangeRateFetcher<BaseExchangeRate> fetcher;
-    @Autowired
-    private Exchanger exchanger;
-    @Autowired
-    private ExchangeOperationDao exchangeDao;
-    @Autowired
-    private ExchangeRateDao rateDao;
-    @Autowired
-    private ScheduledExchangeManager exchangeManager;
+    @Autowired private SpringViewProvider                    viewProvider;
+    @NBU       private ExchangeRateFetcher<BaseExchangeRate> fetcher;
+    @Autowired private Exchanger                             exchanger;
+    @Autowired private ExchangeOperationDao                  exchangeDao;
+    @Autowired private ExchangeRateDao                       rateDao;
+    @Autowired private ScheduledExchangeManager              exchangeManager;
 
     public ExchangeRateFetcher<BaseExchangeRate> fetcher() {
         return fetcher;

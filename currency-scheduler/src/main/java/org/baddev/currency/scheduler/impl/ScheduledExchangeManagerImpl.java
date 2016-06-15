@@ -8,9 +8,11 @@ import org.baddev.currency.dao.utils.ConverterUtils;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.scheduler.CronExchangeOperation;
 import org.baddev.currency.scheduler.ScheduledExchangeManager;
+import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
@@ -18,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 
 import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
@@ -32,17 +34,10 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledExchangeManagerImpl.class);
 
-    @Autowired
-    private Exchanger exchanger;
-
-    @NBU
-    private ExchangeRateFetcher fetcher;
-
-    @Autowired
-    private DSLContext dsl;
-
-    @Resource(name = "taskScheduler")
-    private ThreadPoolTaskScheduler scheduler;
+    @Autowired private Exchanger               exchanger;
+    @NBU       private ExchangeRateFetcher     fetcher;
+    @Autowired private DSLContext              dsl;
+    @Autowired private ThreadPoolTaskScheduler scheduler;
 
     private Map<CronExchangeOperation, ScheduledFuture> activeCronTasks = new HashMap<>();
 
@@ -51,7 +46,11 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
         private ExchangeOperation operation;
 
         public ExchangeTask(ExchangeOperation operation) {
-            this.operation = operation;
+            //copying to change rate's date to operation's performing date
+            ExchangeOperation copied = new ExchangeOperation();
+            BeanUtils.copyProperties(operation, copied);
+            copied.setDate(new LocalDate());
+            this.operation = copied;
         }
 
         @Override
@@ -67,6 +66,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     @PostConstruct
     @Transactional(readOnly = true)
     public void init() {
+        List<Long> canceled = new ArrayList<>();
         List<CronExchangeOperation> ops = dsl.selectFrom(EXCHANGE_TASK)
                 .fetch(record -> {
                     ExchangeOperation op = ExchangeOperation.newBuilder()
@@ -76,17 +76,24 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
                             .from(record.getFromCcy())
                             .to(record.getToCcy())
                             .build();
+                    if (record.getActive().intValue() == 0)
+                        canceled.add(op.getId());
                     return new CronExchangeOperation(record.getCron(), op);
                 });
-        if (ops.size() > 0) {
-            ops.forEach(this::schedule);
-            log.info("{} tasks loaded and scheduled", ops.size());
+        if (!ops.isEmpty()) {
+            ops.forEach(op -> {
+                ScheduledFuture task = schedule(op);
+                if (canceled.contains(op.getId()))
+                    task.cancel(false);
+            });
+            log.info("{} task(s) loaded and scheduled", ops.size());
         }
     }
 
-    private void schedule(CronExchangeOperation op) {
+    private ScheduledFuture schedule(CronExchangeOperation op) {
         ScheduledFuture task = scheduler.schedule(new ExchangeTask(op), new CronTrigger(op.getCron()));
         activeCronTasks.put(op, task);
+        return task;
     }
 
     @Override
@@ -107,30 +114,53 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     }
 
     @Override
+    public void reschedule(CronExchangeOperation reschedulingData) {
+        if (!activeCronTasks.containsKey(reschedulingData))
+            throw new IllegalArgumentException("Can't reschedule unknown task");
+        if (!activeCronTasks.get(reschedulingData).isCancelled())
+            throw new IllegalArgumentException("Can't reschedule. Given task is already running");
+        schedule(reschedulingData);
+        dsl.update(EXCHANGE_TASK)
+                .set(EXCHANGE_TASK.ACTIVE, Byte.parseByte("1"))
+                .where(EXCHANGE_TASK.ID.eq(reschedulingData.getId()))
+                .execute();
+    }
+
+    @Override
     public void execute(ExchangeOperation taskData) {
         scheduler.execute(new ExchangeTask(taskData));
     }
 
     @Override
     @Transactional
-    public boolean cancel(Long id) {
+    public boolean cancel(Long id, boolean remove) {
         Optional<CronExchangeOperation> found = activeCronTasks.keySet().stream()
                 .filter(op -> Objects.equals(op.getId(), id))
                 .findFirst();
         if (!found.isPresent())
             return false;
-        ScheduledFuture task = activeCronTasks.remove(found.get());
+        CronExchangeOperation taskData = found.get();
+        ScheduledFuture task = activeCronTasks.get(taskData);
         boolean result = task.cancel(false);
-        dsl.deleteFrom(EXCHANGE_TASK).where(EXCHANGE_TASK.ID.eq(id)).execute();
+        if (remove) {
+            dsl.deleteFrom(EXCHANGE_TASK).where(EXCHANGE_TASK.ID.eq(id)).execute();
+            activeCronTasks.remove(taskData);
+        }
+        dsl.update(EXCHANGE_TASK)
+                .set(EXCHANGE_TASK.ACTIVE, Byte.parseByte("0"))
+                .where(EXCHANGE_TASK.ID.eq(id))
+                .execute();
         return result;
     }
 
     @Override
     @Transactional
-    public void cancelAll() {
+    public void cancelAll(boolean remove) {
         activeCronTasks.values().forEach(t -> t.cancel(false));
         activeCronTasks.clear();
-        dsl.deleteFrom(EXCHANGE_TASK).execute();
+        if (remove)
+            dsl.deleteFrom(EXCHANGE_TASK).execute();
+        dsl.update(EXCHANGE_TASK).set(EXCHANGE_TASK.ACTIVE, Byte.parseByte("0")).execute();
     }
 
     @Override
@@ -140,7 +170,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
 
     @Override
     public int getActiveCount() {
-        return activeCronTasks.size();
+        return activeCronTasks.size() - (int) activeCronTasks.values().stream().filter(Future::isCancelled).count();
     }
 
 }

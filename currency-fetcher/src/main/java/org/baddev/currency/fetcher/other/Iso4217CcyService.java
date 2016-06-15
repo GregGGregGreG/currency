@@ -8,12 +8,12 @@ import java.util.List;
  */
 public interface Iso4217CcyService {
 
-    String CTRY_NM_PARAM = "CtryNm";
-    String CCY_NM_PARAM = "CcyNm";
-    String CCY_PARAM = "Ccy";
-    String CCY_NBR_PARAM = "CcyNbr";
+    String CTRY_NM_PARAM      = "CtryNm";
+    String CCY_NM_PARAM       = "CcyNm";
+    String CCY_PARAM          = "Ccy";
+    String CCY_NBR_PARAM      = "CcyNbr";
     String CCY_MNR_UNTS_PARAM = "CcyMnrUnts";
-    String WTHDRWL_DT_PARAM = "WthdrwlDt";
+    String WTHDRWL_DT_PARAM   = "WthdrwlDt";
 
     enum Parameter {
         CTRY_NM(CTRY_NM_PARAM, "countryName"),

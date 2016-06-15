@@ -36,16 +36,16 @@ import static org.baddev.currency.ui.MyUI.myUI;
 @SpringView(name = RatesView.NAME)
 public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
 
-    public static final String NAME = "rates";
+    public  static final String NAME           = "rates";
     private static final String P_GEN_CCY_NAME = Iso4217CcyService.Parameter.CCY_NM.fieldName();
 
     @Value("${min_date_nbu}")
     private String minDateVal;
 
-    private ComboBox fetchOptCb = new ComboBox("Fetch:");
-    private PopupDateField df = new PopupDateField("Select Date:");
-    private Button fetchBtn = new Button("Fetch");
-    private TextField filter = new TextField();
+    private ComboBox       fetchOptCb = new ComboBox("Fetch:");
+    private PopupDateField df         = new PopupDateField("Select Date:");
+    private Button         fetchBtn   = new Button("Fetch");
+    private TextField      filter     = new TextField();
 
     private interface FetchOption {
         String ALL = "All";
@@ -157,15 +157,15 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             String option = (String) event.getProperty().getValue();
             switch (option) {
                 case FetchOption.ALL:
-                    toggleVisibility(false, df, fetchBtn);
+                    toggleVisible(false, df, fetchBtn);
                     refresh(myUI().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
-                    toggleVisibility(false, df, fetchBtn);
+                    toggleVisible(false, df, fetchBtn);
                     refresh(fetchCurrentRates(), P_CCY, null);
                     break;
                 case FetchOption.CUST_DT:
-                    toggleVisibility(true, df, fetchBtn);
+                    toggleVisible(true, df, fetchBtn);
                     break;
             }
         });
@@ -186,7 +186,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
         topBar.setComponentAlignment(fetchBtn, Alignment.BOTTOM_LEFT);
         topBar.setComponentAlignment(filter, Alignment.BOTTOM_RIGHT);
         topBar.setImmediate(true);
-        toggleVisibility(false, df, fetchBtn);
+        toggleVisible(false, df, fetchBtn);
     }
 
     @Override
@@ -194,4 +194,5 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
         menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
                 (MenuBar.Command) selectedItem -> myUI().getNavigator().navigateTo(ExchangesView.NAME));
     }
+
 }

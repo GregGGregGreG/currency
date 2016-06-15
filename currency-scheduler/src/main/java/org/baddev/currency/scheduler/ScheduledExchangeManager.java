@@ -10,4 +10,5 @@ import java.util.concurrent.ScheduledFuture;
  */
 public interface ScheduledExchangeManager extends CcyTaskScheduler<ExchangeOperation> {
     Map<CronExchangeOperation, ScheduledFuture> getScheduledTasks();
+    void reschedule(CronExchangeOperation reschedulingData);
 }

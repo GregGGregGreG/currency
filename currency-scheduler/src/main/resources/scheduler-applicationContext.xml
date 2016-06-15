@@ -11,7 +11,7 @@
 
     <bean id="taskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
         <property name="poolSize" value="10"/>
-        <property name="removeOnCancelPolicy" value="true"/>
+        <property name="removeOnCancelPolicy" value="false"/>
         <property name="waitForTasksToCompleteOnShutdown" value="true"/>
     </bean>
 

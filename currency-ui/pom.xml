@@ -63,6 +63,16 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>net.redhogs.cronparser</groupId>
+            <artifactId>cron-parser-spring</artifactId>
+            <version>2.9</version>
+        </dependency>
+        <dependency>
+            <groupId>net.redhogs.cronparser</groupId>
+            <artifactId>cron-parser-core</artifactId>
+            <version>2.9</version>
+        </dependency>
+        <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-spring</artifactId>
             <version>1.0.0</version>

@@ -10,10 +10,11 @@ import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.Notification;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.renderers.ClickableRenderer;
+import com.vaadin.ui.renderers.HtmlRenderer;
+import org.baddev.currency.ui.StringValueRenderer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,6 +90,8 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
     protected abstract void customizeTopBar(HorizontalLayout topBar);
 
     /**
+     * Refreshes and sorts an underlying datasource container
+     *
      * @param data       data to be stored
      * @param sortPropId if null then there is no sort applied
      * @param direction  if null and {@code sortPropId} not null, then asc
@@ -103,7 +106,6 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
             else
                 grid.sort(sortPropId, SortDirection.ASCENDING);
         }
-        Notification.show("Fetched " + data.size() + " records", Notification.Type.TRAY_NOTIFICATION);
     }
 
     protected void filter(String text) {
@@ -116,11 +118,29 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         }
     }
 
+    /**
+     * Adds button with static string value to grid
+     *
+     * @param propertyId
+     * @param value
+     * @param listener
+     */
     protected void addGeneratedButton(String propertyId, String value, ClickableRenderer.RendererClickListener listener) {
+        addGeneratedButton(propertyId, r -> value, listener);
+    }
+
+    /**
+     * Adds button with dynamic string value to grid
+     *
+     * @param propertyId
+     * @param r          decides which value to render
+     * @param listener
+     */
+    protected void addGeneratedButton(String propertyId, StringValueRenderer r, ClickableRenderer.RendererClickListener listener) {
         containerWrapper().addGeneratedProperty(propertyId, new PropertyValueGenerator<String>() {
             @Override
             public String getValue(Item item, Object itemId, Object propertyId) {
-                return value;
+                return r.render(itemId);
             }
 
             @Override
@@ -128,8 +148,26 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
                 return String.class;
             }
         });
-        grid.getColumn(propertyId).setRenderer(new ButtonRenderer(listener));
+        setupGenButton(propertyId, listener);
+    }
 
+    private void setupGenButton(String propId, ClickableRenderer.RendererClickListener listener) {
+        grid.getColumn(propId).setRenderer(new ButtonRenderer(listener));
+    }
+
+    protected void addGeneratedStringProperty(String propertyId, boolean html, StringValueRenderer r) {
+        containerWrapper().addGeneratedProperty(propertyId, new PropertyValueGenerator<String>() {
+            @Override
+            public String getValue(Item item, Object itemId, Object propertyId) {
+                return r.render(itemId);
+            }
+
+            @Override
+            public Class<String> getType() {
+                return String.class;
+            }
+        });
+        if (html) grid.getColumn(propertyId).setRenderer(new HtmlRenderer());
     }
 
 }

@@ -59,7 +59,7 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
         });
     }
 
-    public static void toggleVisibility(boolean visible, Component... components) {
+    public static void toggleVisible(boolean visible, Component... components) {
         Arrays.stream(components).forEach(c -> c.setVisible(visible));
     }
 

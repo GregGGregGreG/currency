@@ -12,5 +12,4 @@ public abstract class AbstractCcyFormView extends AbstractCcyView {
         return super.contentRoot();
     }
 
-
 }

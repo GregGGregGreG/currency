@@ -32,17 +32,14 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
     private static final Logger log = LoggerFactory.getLogger(NBUExchangeRateFetcher.class);
     private static final DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd");
 
-    @Value("${param_date_nbu}")
-    private String dateParam;
-    @Value("${param_currency_nbu}")
-    private String currencyParam;
+    @Value("${param_date_nbu}")    private String dateParam;
+    @Value("${param_currency_nbu}")private String currencyParam;
 
     @Resource(name = "NBUClient")
     private WebClient client;
 
     @Autowired
     private ExchangeRateDao rateDao;
-
 
     public static final class NoRatesLocallyFoundException extends RuntimeException {
         //nothing to add

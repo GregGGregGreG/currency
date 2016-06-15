@@ -9,9 +9,9 @@ public interface CcyTaskScheduler<T> {
 
     void execute(T taskData);
 
-    boolean cancel(Long id);
+    boolean cancel(Long id, boolean remove);
 
-    void cancelAll();
+    void cancelAll(boolean remove);
 
     int getActiveCount();
 
