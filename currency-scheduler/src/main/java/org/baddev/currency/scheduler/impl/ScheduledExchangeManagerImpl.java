@@ -6,8 +6,10 @@ import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.dao.utils.ConverterUtils;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
+import org.baddev.currency.notifier.Notifier;
 import org.baddev.currency.scheduler.CronExchangeOperation;
 import org.baddev.currency.scheduler.ScheduledExchangeManager;
+import org.baddev.currency.scheduler.event.ExchangeCompletionEvent;
 import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
@@ -34,10 +36,16 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledExchangeManagerImpl.class);
 
-    @Autowired private Exchanger               exchanger;
-    @NBU       private ExchangeRateFetcher     fetcher;
-    @Autowired private DSLContext              dsl;
-    @Autowired private ThreadPoolTaskScheduler scheduler;
+    @Autowired
+    private Exchanger exchanger;
+    @NBU
+    private ExchangeRateFetcher fetcher;
+    @Autowired
+    private DSLContext dsl;
+    @Autowired
+    private ThreadPoolTaskScheduler scheduler;
+    @Autowired
+    private Notifier notifier;
 
     private Map<CronExchangeOperation, ScheduledFuture> activeCronTasks = new HashMap<>();
 
@@ -55,12 +63,17 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
 
         @Override
         public void run() {
+            boolean success = true;
             try {
                 exchanger.exchange(operation, fetcher.fetchCurrent());
             } catch (NoRatesFoundException e) {
+                success = false;
                 log.error("Rates are not available", e);
+            } finally {
+                notifier.doNotify(new ExchangeCompletionEvent(this, operation, success));
             }
         }
+
     }
 
     @PostConstruct
@@ -82,7 +95,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
                 });
         if (!ops.isEmpty()) {
             ops.forEach(op -> {
-                ScheduledFuture task = schedule(op);
+                ScheduledFuture task = scheduleTask(op);
                 if (canceled.contains(op.getId()))
                     task.cancel(false);
             });
@@ -90,17 +103,17 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
         }
     }
 
-    private ScheduledFuture schedule(CronExchangeOperation op) {
-        ScheduledFuture task = scheduler.schedule(new ExchangeTask(op), new CronTrigger(op.getCron()));
-        activeCronTasks.put(op, task);
-        return task;
-    }
-
     @Override
     @Transactional
     public Long schedule(final ExchangeOperation taskData, String cron) {
         if (taskData.getId() == null)
             throw new IllegalArgumentException("Id must be a non-null value");
+        persist(taskData, cron);
+        scheduleTask(new CronExchangeOperation(cron, taskData));
+        return taskData.getId();
+    }
+
+    private void persist(ExchangeOperation taskData, String cron) {
         dsl.insertInto(EXCHANGE_TASK)
                 .set(EXCHANGE_TASK.ID, taskData.getId())
                 .set(EXCHANGE_TASK.AMOUNT, taskData.getAmount())
@@ -109,17 +122,22 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
                 .set(EXCHANGE_TASK.FROM_CCY, taskData.getAmountCurrencyCode())
                 .set(EXCHANGE_TASK.CRON, cron)
                 .execute();
-        schedule(new CronExchangeOperation(cron, taskData));
-        return taskData.getId();
+    }
+
+    private ScheduledFuture scheduleTask(final CronExchangeOperation op) {
+        ScheduledFuture scheduled = scheduler.schedule(new ExchangeTask(op), new CronTrigger(op.getCron()));
+        activeCronTasks.put(op, scheduled);
+        return scheduled;
     }
 
     @Override
+    @Transactional
     public void reschedule(CronExchangeOperation reschedulingData) {
         if (!activeCronTasks.containsKey(reschedulingData))
             throw new IllegalArgumentException("Can't reschedule unknown task");
         if (!activeCronTasks.get(reschedulingData).isCancelled())
             throw new IllegalArgumentException("Can't reschedule. Given task is already running");
-        schedule(reschedulingData);
+        scheduleTask(reschedulingData);
         dsl.update(EXCHANGE_TASK)
                 .set(EXCHANGE_TASK.ACTIVE, Byte.parseByte("1"))
                 .where(EXCHANGE_TASK.ID.eq(reschedulingData.getId()))

@@ -44,17 +44,18 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
 
     public static final String NAME = "scheduler";
 
-    private static final String P_STATUS   = "status";
+    private static final String P_STATUS = "status";
     private static final String P_EXEC_BTN = "execution";
-    private static final String P_MNG_BTN  = "managing";
-    private static final String P_RMV_BTN  = "removal";
+    private static final String P_MNG_BTN = "managing";
+    private static final String P_RMV_BTN = "removal";
+    private static final String P_NOTIF = "notifications";
 
-    private TextField amountF        = new TextField("Amount:");
-    private ComboBox  fromCcyChoiseF = new ComboBox("From:");
-    private ComboBox  toCcyChoiseF   = new ComboBox("To:");
-    private TextField cronF          = new TextField("Cron Expression:");
-    private Button    scheduleBtn    = new Button("Schedule");
-    private Button    resetBtn       = new Button("Reset");
+    private TextField amountF = new TextField("Amount:");
+    private ComboBox fromCcyChoiseF = new ComboBox("From:");
+    private ComboBox toCcyChoiseF = new ComboBox("To:");
+    private TextField cronF = new TextField("Cron Expression:");
+    private Button scheduleBtn = new Button("Schedule");
+    private Button resetBtn = new Button("Reset");
 
     private Grid.FooterRow footer = grid.prependFooterRow();
 
@@ -62,42 +63,42 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
     public void init() {
         super.init();
 
-        setup(CronExchangeOperation.class, MyUI.myUI().exchangeManager().getScheduledTasks().keySet(), P_ID, P_EXC_AM);
+        setup(CronExchangeOperation.class, MyUI.myUI().scheduler().getScheduledTasks().keySet(), P_ID, P_EXC_AM);
 
         //footer refresh
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             footer.getCell(P_RMV_BTN).setHtml("<b>Total: " + grid.getContainerDataSource().size() + "</b>");
-            footer.getCell(P_STATUS).setHtml("<b>Active: " + myUI().exchangeManager().getActiveCount() + "</b>");
+            footer.getCell(P_STATUS).setHtml("<b>Active: " + myUI().scheduler().getActiveCount() + "</b>");
         });
 
         addGeneratedStringProperty(P_STATUS, true, itemId ->
-                myUI().exchangeManager().getScheduledTasks().get(itemId).isCancelled()
+                myUI().scheduler().getScheduledTasks().get(itemId).isCancelled()
                         ? "<b>Canceled</b>" : "<b>Active</b>");
 
         addGeneratedButton(P_EXEC_BTN, "Execute", e -> {
-            myUI().exchangeManager().execute((ExchangeOperation) e.getItemId());
+            myUI().scheduler().execute((ExchangeOperation) e.getItemId());
             log.debug("Task {} executed manually", ((ExchangeOperation) e.getItemId()).getId());
         });
 
         addGeneratedButton(P_MNG_BTN,
-                itemId -> myUI().exchangeManager().getScheduledTasks().get(itemId).isCancelled()
+                itemId -> myUI().scheduler().getScheduledTasks().get(itemId).isCancelled()
                         ? "Run" : "Cancel",
                 event -> {
                     CronExchangeOperation op = (CronExchangeOperation) event.getItemId();
-                    ScheduledFuture task = myUI().exchangeManager().getScheduledTasks().get(op);
+                    ScheduledFuture task = myUI().scheduler().getScheduledTasks().get(op);
                     if (task.isCancelled()) {
-                        myUI().exchangeManager().reschedule(op);
+                        myUI().scheduler().reschedule(op);
                         log.debug("Exchange task {} has been rescheduled", op.getId());
                     } else {
-                        myUI().exchangeManager().cancel(op.getId(), false);
+                        myUI().scheduler().cancel(op.getId(), false);
                         log.debug("Exchange task {} has been canceled", op.getId());
                     }
-                    refresh(myUI().exchangeManager().getScheduledTasks().keySet(), P_ID, SortDirection.DESCENDING);
+                    refresh(myUI().scheduler().getScheduledTasks().keySet(), P_ID, SortDirection.DESCENDING);
                 }
         );
 
         addGeneratedButton(P_RMV_BTN, "Remove", e -> {
-            myUI().exchangeManager().cancel(((CronExchangeOperation) e.getItemId()).getId(), true);
+            myUI().scheduler().cancel(((CronExchangeOperation) e.getItemId()).getId(), true);
             grid.getContainerDataSource().removeItem(e.getItemId());
             log.debug("Exchange task {} was removed", ((CronExchangeOperation) e.getItemId()).getId());
         });
@@ -218,8 +219,8 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
                     .date(LocalDate.fromDateFields(new Date()))
                     .amount((double) amountF.getConvertedValue())
                     .build();
-            myUI().exchangeManager().schedule(exc, cronF.getValue());
-            refresh(myUI().exchangeManager().getScheduledTasks().keySet(), ExchangeOperation.P_ID, SortDirection.DESCENDING);
+            myUI().scheduler().schedule(exc, cronF.getValue());
+            refresh(myUI().scheduler().getScheduledTasks().keySet(), ExchangeOperation.P_ID, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();
         });

@@ -25,3 +25,8 @@ CREATE TABLE exchange_task
     cron VARCHAR(30) NOT NULL,
     active TINYINT(1) DEFAULT '1' NOT NULL
 );
+CREATE TABLE exchange_operation_notification
+(
+    exchange_opration_id BIGINT(20) NOT NULL,
+    ui_notification TINYINT(1) DEFAULT '0' NOT NULL
+);

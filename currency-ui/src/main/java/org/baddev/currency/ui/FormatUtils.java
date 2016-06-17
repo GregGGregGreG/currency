@@ -7,14 +7,12 @@ import java.util.List;
  */
 public final class FormatUtils {
 
-    private static final String GEN_COL_NULL_REPR = "Unknown";
-
     private FormatUtils() {
     }
 
     public static String formatCcyNamesList(List<String> ccyNames){
         if (ccyNames.isEmpty())
-            return GEN_COL_NULL_REPR;
+            return "Unknown";
         StringBuilder sb = new StringBuilder();
         ccyNames.forEach(s -> sb.append(s).append(", "));
         sb.delete(sb.toString().length() - 2, sb.toString().length() - 1);
