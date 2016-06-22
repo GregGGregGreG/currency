@@ -11,7 +11,10 @@ import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
@@ -24,10 +27,10 @@ import java.util.List;
 @Configuration
 @ComponentScan("org.baddev.currency.fetcher")
 @EnableAspectJAutoProxy
-@PropertySources({
-        @PropertySource("classpath:api_sources.properties"),
-        @PropertySource("classpath:proxy.properties")
-})
+//@PropertySources({
+//        @PropertySource("classpath:api_sources.properties"),
+//        @PropertySource("classpath:proxy.properties")
+//})
 public class FetcherConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FetcherConfig.class);

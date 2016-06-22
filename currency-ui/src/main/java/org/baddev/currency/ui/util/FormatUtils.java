@@ -1,4 +1,4 @@
-package org.baddev.currency.ui;
+package org.baddev.currency.ui.util;
 
 import java.util.List;
 

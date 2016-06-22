@@ -1,4 +1,4 @@
-package org.baddev.currency.ui;
+package org.baddev.currency.ui.util;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;

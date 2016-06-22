@@ -1,7 +1,6 @@
-package org.baddev.currency.scheduler.event;
+package org.baddev.currency.notifier.event;
 
 import org.baddev.currency.core.exchange.entity.ExchangeOperation;
-import org.baddev.currency.notifier.event.BaseNotificationEvent;
 
 /**
  * Created by IPotapchuk on 6/17/2016.

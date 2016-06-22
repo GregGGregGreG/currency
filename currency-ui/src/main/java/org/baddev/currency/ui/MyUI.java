@@ -20,17 +20,12 @@ import org.baddev.currency.dao.exchange.ExchangeOperationDao;
 import org.baddev.currency.dao.fetcher.ExchangeRateDao;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.notifier.Notifier;
-import org.baddev.currency.notifier.NotifierService;
+import org.baddev.currency.notifier.event.ExchangeCompletionEvent;
 import org.baddev.currency.notifier.event.NotificationEvent;
 import org.baddev.currency.notifier.listener.NotificationListener;
 import org.baddev.currency.scheduler.ScheduledExchangeManager;
-import org.baddev.currency.scheduler.event.ExchangeCompletionEvent;
-import org.baddev.currency.ui.components.RatesView;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
+import org.baddev.currency.ui.component.RatesView;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.ContextLoaderListener;
 
@@ -41,7 +36,7 @@ import javax.servlet.annotation.WebServlet;
 @Widgetset("org.baddev.currency.ui.MyAppWidgetset")
 @SpringUI
 @Push
-public class MyUI extends UI implements NotificationListener, InitializingBean, ApplicationContextAware {
+public class MyUI extends UI implements NotificationListener{
 
     @Autowired
     private SpringViewProvider viewProvider;
@@ -55,17 +50,8 @@ public class MyUI extends UI implements NotificationListener, InitializingBean, 
     private ExchangeRateDao rateDao;
     @Autowired
     private ScheduledExchangeManager scheduler;
-
-    private ApplicationContext ctx;
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        ctx = applicationContext;
-    }
-
-    public ApplicationContext getApplicationContext() {
-        return ctx;
-    }
+    @Autowired
+    private Notifier notifier;
 
     public ExchangeRateFetcher<BaseExchangeRate> fetcher() {
         return fetcher;
@@ -87,15 +73,33 @@ public class MyUI extends UI implements NotificationListener, InitializingBean, 
         return scheduler;
     }
 
+    @Override
+    public <T extends NotificationEvent> void onNotificationReceived(T e) {
+        if (e instanceof ExchangeCompletionEvent) {
+            ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
+            //push notification to UI
+            access(() -> {
+                String exchInfo = String.format("Exchange task %d completed. %.2f %s -> %.2f %s.",
+                        operation.getId(),
+                        operation.getAmount(),
+                        operation.getAmountCurrencyCode(),
+                        operation.getExchangedAmount(),
+                        operation.getExchangedAmountCurrencyCode());
+                Notification.show("Exchange task completion", exchInfo, Notification.Type.TRAY_NOTIFICATION);
+            });
+        }
+    }
+
     public static MyUI myUI() {
         return (MyUI) UI.getCurrent();
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        //subscribe to event publisher notifications
-        Notifier n = ctx.getBean(NotifierService.class);
-        n.subscribe(this);
+    public void registerListener(NotificationListener l) {
+        notifier.subscribe(l);
+    }
+
+    public void unregisterListener(NotificationListener l) {
+        notifier.unsubscribe(l);
     }
 
     @Override
@@ -103,21 +107,6 @@ public class MyUI extends UI implements NotificationListener, InitializingBean, 
         Navigator navigator = new Navigator(this, this);
         navigator.addProvider(viewProvider);
         navigator.navigateTo(RatesView.NAME);
-    }
-
-    //handle task's events
-    @Override
-    public void onNotify(NotificationEvent e) {
-        if (e instanceof ExchangeCompletionEvent) {
-            ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
-            //push notification to UI
-            access(() -> Notification.show("Exchange task completion",
-                    String.format("Exchanged amount: %.2f %s",
-                            operation.getExchangedAmount(),
-                            operation.getExchangedAmountCurrencyCode()),
-                    Notification.Type.TRAY_NOTIFICATION)
-            );
-        }
     }
 
     @WebServlet(urlPatterns = "/*", name = "MyUIServlet", asyncSupported = true)

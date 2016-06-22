@@ -10,9 +10,9 @@
     <context:component-scan base-package="org.baddev.currency.scheduler"/>
 
     <bean id="taskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
-        <property name="poolSize" value="10"/>
-        <property name="removeOnCancelPolicy" value="false"/>
-        <property name="waitForTasksToCompleteOnShutdown" value="true"/>
+        <property name="poolSize" value="${scheduler.poolSize}"/>
+        <property name="removeOnCancelPolicy" value="${scheduler.removeOnCancelPolicy}"/>
+        <property name="waitForTasksToCompleteOnShutdown" value="${scheduler.waitForTasksToCompleteOnShutdown}"/>
     </bean>
 
     <bean id="notifier" class="org.baddev.currency.notifier.NotifierService"/>

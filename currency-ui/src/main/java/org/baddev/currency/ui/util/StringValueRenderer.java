@@ -1,4 +1,4 @@
-package org.baddev.currency.ui;
+package org.baddev.currency.ui.util;
 
 /**
  * Created by IPOTAPCHUK on 6/15/2016.

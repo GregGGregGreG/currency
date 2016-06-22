@@ -1,4 +1,4 @@
-package org.baddev.currency.ui;
+package org.baddev.currency.ui.converter;
 
 import com.vaadin.data.util.converter.Converter;
 

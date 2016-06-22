@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.components;
+package org.baddev.currency.ui.component;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Property;
@@ -18,12 +18,13 @@ import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.scheduler.CronExchangeOperation;
-import org.baddev.currency.ui.DoubleAmountToStringConverter;
-import org.baddev.currency.ui.FormatUtils;
 import org.baddev.currency.ui.MyUI;
-import org.baddev.currency.ui.components.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.base.AbstractCcyGridView;
+import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
+import org.baddev.currency.ui.util.FormatUtils;
 import org.baddev.currency.ui.validation.CronValidator;
 import org.joda.time.LocalDate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.ParseException;
 import java.util.Arrays;
@@ -41,6 +42,9 @@ import static org.baddev.currency.ui.validation.ViewValidation.isValid;
  */
 @SpringView(name = SchedulerView.NAME)
 public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
+
+    @Autowired
+    private SettingsWindow settings;
 
     public static final String NAME = "scheduler";
 
@@ -133,9 +137,12 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
 
     @Override
     protected void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Rates", FontAwesome.DOLLAR, (MenuBar.Command) selectedItem -> MyUI.myUI().getNavigator().navigateTo(RatesView.NAME));
+        menuBar.addItem("Rates", FontAwesome.DOLLAR,
+                selectedItem -> myUI().getNavigator().navigateTo(RatesView.NAME));
         menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
-                (MenuBar.Command) selectedItem -> MyUI.myUI().getNavigator().navigateTo(ExchangesView.NAME));
+                selectedItem -> myUI().getNavigator().navigateTo(ExchangesView.NAME));
+        menuBar.addItem("Settings...", FontAwesome.GEAR,
+                selectedItem -> myUI().addWindow(settings));
     }
 
     @Override

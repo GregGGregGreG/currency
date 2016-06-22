@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.components.base;
+package org.baddev.currency.ui.component.base;
 
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;

@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.components.base;
+package org.baddev.currency.ui.component.base;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
@@ -14,7 +14,7 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.renderers.ClickableRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import org.baddev.currency.ui.StringValueRenderer;
+import org.baddev.currency.ui.util.StringValueRenderer;
 
 import java.util.ArrayList;
 import java.util.Collection;

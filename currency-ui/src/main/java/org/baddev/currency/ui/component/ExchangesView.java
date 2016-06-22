@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.components;
+package org.baddev.currency.ui.component;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Property;
@@ -18,9 +18,9 @@ import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.ui.DoubleAmountToStringConverter;
-import org.baddev.currency.ui.FormatUtils;
-import org.baddev.currency.ui.components.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.base.AbstractCcyGridView;
+import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
+import org.baddev.currency.ui.util.FormatUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
