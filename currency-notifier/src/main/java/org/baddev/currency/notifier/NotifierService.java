@@ -15,7 +15,7 @@ public class NotifierService implements Notifier {
 
     @Override
     public <T extends NotificationEvent> void doNotify(T event) {
-        listeners.forEach(l -> l.onNotificationReceived(event));
+        listeners.forEach(l -> l.onNotificationEventReceived(event));
     }
 
     @Override

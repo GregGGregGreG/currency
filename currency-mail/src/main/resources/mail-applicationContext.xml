@@ -25,4 +25,11 @@
         <property name="replyTo" value="noreply"/>
     </bean>
 
+    <bean id="mailerPool" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="${mail.pool.coreSize}"/>
+        <property name="keepAliveSeconds" value="${mail.pool.keepAlive}"/>
+        <property name="maxPoolSize" value="${mail.pool.maxSize}"/>
+        <property name="allowCoreThreadTimeOut" value="${mail.pool.coreTimeout}"/>
+    </bean>
+
 </beans>

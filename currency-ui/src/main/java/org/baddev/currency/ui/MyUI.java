@@ -1,9 +1,6 @@
 package org.baddev.currency.ui;
 
-import com.vaadin.annotations.Push;
-import com.vaadin.annotations.Theme;
-import com.vaadin.annotations.VaadinServletConfiguration;
-import com.vaadin.annotations.Widgetset;
+import com.vaadin.annotations.*;
 import com.vaadin.navigator.Navigator;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.EnableVaadin;
@@ -34,9 +31,10 @@ import javax.servlet.annotation.WebServlet;
 
 @Theme("mytheme")
 @Widgetset("org.baddev.currency.ui.MyAppWidgetset")
+@PreserveOnRefresh
 @SpringUI
 @Push
-public class MyUI extends UI implements NotificationListener{
+public class MyUI extends UI implements NotificationListener {
 
     @Autowired
     private SpringViewProvider viewProvider;
@@ -74,7 +72,7 @@ public class MyUI extends UI implements NotificationListener{
     }
 
     @Override
-    public <T extends NotificationEvent> void onNotificationReceived(T e) {
+    public <T extends NotificationEvent> void onNotificationEventReceived(T e) {
         if (e instanceof ExchangeCompletionEvent) {
             ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
             //push notification to UI
@@ -104,13 +102,15 @@ public class MyUI extends UI implements NotificationListener{
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {
+        if (Boolean.TRUE.equals(getSession().getAttribute("uiNotif")))
+            notifier.subscribe(this);
         Navigator navigator = new Navigator(this, this);
         navigator.addProvider(viewProvider);
         navigator.navigateTo(RatesView.NAME);
     }
 
     @WebServlet(urlPatterns = "/*", name = "MyUIServlet", asyncSupported = true)
-    @VaadinServletConfiguration(ui = MyUI.class, productionMode = false)
+    @VaadinServletConfiguration(ui = MyUI.class, productionMode = false, heartbeatInterval = 60)
     public static class MyUIServlet extends SpringVaadinServlet {
     }
 

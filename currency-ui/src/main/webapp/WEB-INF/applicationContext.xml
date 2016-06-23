@@ -10,9 +10,9 @@
     <context:component-scan base-package="org.baddev.currency.ui"/>
 
     <context:property-placeholder
-            location="classpath:db.properties, classpath:scheduler.properties,
-            classpath:api_sources.properties, classpath:proxy.properties, classpath:mail.properties"
-            ignore-unresolvable="true" />
+            location="classpath:db.properties, classpath:scheduler.pool.properties,
+            classpath:api_sources.properties, classpath:proxy.properties, classpath:mail.properties,
+            classpath:mail.pool.properties" ignore-unresolvable="true" />
 
     <bean class="org.baddev.currency.ui.MyUI.MyConfiguration"/>
     <import resource="classpath:dao-applicationContext.xml"/>
