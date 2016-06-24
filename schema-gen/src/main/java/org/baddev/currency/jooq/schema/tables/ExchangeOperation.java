@@ -4,14 +4,17 @@
 package org.baddev.currency.jooq.schema.tables;
 
 
+import org.baddev.currency.jooq.config.DateToLocalDateConverter;
+import org.baddev.currency.jooq.config.TimestampToLocalDateTimeConverter;
 import org.baddev.currency.jooq.schema.Exchanger;
 import org.baddev.currency.jooq.schema.Keys;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.jooq.*;
 import org.jooq.impl.TableImpl;
 
 import javax.annotation.Generated;
-import java.sql.Date;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,7 +32,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExchangeOperation extends TableImpl<ExchangeOperationRecord> {
 
-	private static final long serialVersionUID = 113276410;
+	private static final long serialVersionUID = -1385213605;
 
 	/**
 	 * The reference instance of <code>exchanger.exchange_operation</code>
@@ -50,14 +53,14 @@ public class ExchangeOperation extends TableImpl<ExchangeOperationRecord> {
 	public final TableField<ExchangeOperationRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
 	/**
-	 * The column <code>exchanger.exchange_operation.from_currency_code</code>.
+	 * The column <code>exchanger.exchange_operation.from_ccy</code>.
 	 */
-	public final TableField<ExchangeOperationRecord, String> FROM_CURRENCY_CODE = createField("from_currency_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false), this, "");
+	public final TableField<ExchangeOperationRecord, String> FROM_CCY = createField("from_ccy", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false), this, "");
 
 	/**
-	 * The column <code>exchanger.exchange_operation.to_currency_code</code>.
+	 * The column <code>exchanger.exchange_operation.to_ccy</code>.
 	 */
-	public final TableField<ExchangeOperationRecord, String> TO_CURRENCY_CODE = createField("to_currency_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false), this, "");
+	public final TableField<ExchangeOperationRecord, String> TO_CCY = createField("to_ccy", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false), this, "");
 
 	/**
 	 * The column <code>exchanger.exchange_operation.from_amount</code>.
@@ -70,9 +73,14 @@ public class ExchangeOperation extends TableImpl<ExchangeOperationRecord> {
 	public final TableField<ExchangeOperationRecord, Double> TO_AMOUNT = createField("to_amount", org.jooq.impl.SQLDataType.DOUBLE.nullable(false), this, "");
 
 	/**
-	 * The column <code>exchanger.exchange_operation.date</code>.
+	 * The column <code>exchanger.exchange_operation.rates_date</code>.
 	 */
-	public final TableField<ExchangeOperationRecord, Date> DATE = createField("date", org.jooq.impl.SQLDataType.DATE.nullable(false), this, "");
+	public final TableField<ExchangeOperationRecord, LocalDate> RATES_DATE = createField("rates_date", org.jooq.impl.SQLDataType.DATE.nullable(false), this, "", new DateToLocalDateConverter());
+
+	/**
+	 * The column <code>exchanger.exchange_operation.perform_datetime</code>.
+	 */
+	public final TableField<ExchangeOperationRecord, LocalDateTime> PERFORM_DATETIME = createField("perform_datetime", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false).defaulted(true), this, "", new TimestampToLocalDateTimeConverter());
 
 	/**
 	 * Create a <code>exchanger.exchange_operation</code> table reference

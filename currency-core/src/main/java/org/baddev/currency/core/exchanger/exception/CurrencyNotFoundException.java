@@ -1,4 +1,4 @@
-package org.baddev.currency.core.exchange.exception;
+package org.baddev.currency.core.exchanger.exception;
 
 /**
  * Created by IPotapchuk on 3/15/2016.

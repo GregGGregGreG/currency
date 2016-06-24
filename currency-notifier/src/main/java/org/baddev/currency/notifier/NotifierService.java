@@ -3,6 +3,7 @@ package org.baddev.currency.notifier;
 import org.baddev.currency.notifier.event.NotificationEvent;
 import org.baddev.currency.notifier.listener.NotificationListener;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,5 +27,10 @@ public class NotifierService implements Notifier {
     @Override
     public boolean unsubscribe(NotificationListener listener) {
         return listeners.remove(listener);
+    }
+
+    @Override
+    public Collection<NotificationListener> getSubscribers() {
+        return listeners;
     }
 }

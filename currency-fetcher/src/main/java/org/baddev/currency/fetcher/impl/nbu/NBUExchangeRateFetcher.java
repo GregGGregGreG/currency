@@ -46,7 +46,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
     }
 
     private Collection<BaseExchangeRate> searchLocally(LocalDate date) {
-        Collection<BaseExchangeRate> localRates = rateDao.loadByDate(date);
+        Collection<BaseExchangeRate> localRates = rateDao.findByDate(date);
         if (!localRates.isEmpty()) {
             log.info("{} rates found locally.", localRates.size());
             return localRates;
@@ -64,7 +64,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
             rates = convert(client
                     .accept(MediaType.TEXT_XML_TYPE)
                     .get(NBUExchange.class));
-            rateDao.saveAll(rates);
+            rateDao.save(rates);
         }
         return rates;
     }
@@ -79,7 +79,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
                     .accept(MediaType.TEXT_XML_TYPE)
                     .query(dateParam, date.toString(fmt))
                     .get(NBUExchange.class));
-            rateDao.saveAll(rates);
+            rateDao.save(rates);
         }
         return rates;
     }
@@ -103,7 +103,7 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
 
     private BaseExchangeRate filter(Currency currency, Collection<BaseExchangeRate> rates) {
         return rates.stream()
-                .filter(rate -> rate.getCcyCode().equals(currency.getCurrencyCode()))
+                .filter(rate -> rate.getCcy().equals(currency.getCurrencyCode()))
                 .findFirst()
                 .orElseThrow(NoRatesLocallyFoundException::new);
     }
@@ -115,10 +115,10 @@ public class NBUExchangeRateFetcher implements ExchangeRateFetcher<BaseExchangeR
         }
         log.info("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
         return exchange.getExchangeRates().stream()
-                .filter(r -> isNotEmpty(r.getCcyCode())) //ignoring records without ccy
+                .filter(r -> isNotEmpty(r.getCcy())) //ignoring records without ccy
                 .map(r -> BaseExchangeRate.newBuilder()
-                        .baseCurrencyCode(r.getBaseCcyCode())
-                        .ccyCode(r.getCcyCode())
+                        .baseCcy(r.getBaseCcy())
+                        .ccy(r.getCcy())
                         .date(r.getDate())
                         .rate(r.getRate())
                         .build()

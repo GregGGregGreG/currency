@@ -44,8 +44,6 @@ public class Iso4217CcyServiceImpl implements Iso4217CcyService {
     public List<String> findCcyParamValues(Parameter target,
                                            Parameter keyParam,
                                            String keyParamVal) {
-        if (isoHistCcyEntries.isEmpty() || isoHistCcyEntries.isEmpty())
-            throw new ServiceException("Currency info service is currently unavailable. Try again later.");
         Set<String> vals = Stream.concat(
                 isoCurCcyEntries.stream(), isoHistCcyEntries.stream()
         ).filter(entry -> getValue(keyParam, entry).equalsIgnoreCase(keyParamVal)

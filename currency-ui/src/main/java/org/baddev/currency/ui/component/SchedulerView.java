@@ -13,27 +13,25 @@ import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import net.redhogs.cronparser.CronExpressionDescriptor;
 import net.redhogs.cronparser.Options;
-import org.baddev.currency.core.exchange.entity.ExchangeOperation;
+import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.scheduler.CronExchangeOperation;
+import org.baddev.currency.scheduler.entity.CronExchangeTaskData;
 import org.baddev.currency.ui.MyUI;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.FormatUtils;
 import org.baddev.currency.ui.validation.CronValidator;
-import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 
-import static org.baddev.currency.core.exchange.entity.ExchangeOperation.*;
-import static org.baddev.currency.scheduler.CronExchangeOperation.P_CRON;
+import static org.baddev.currency.scheduler.entity.CronExchangeTaskData.*;
 import static org.baddev.currency.ui.MyUI.myUI;
 import static org.baddev.currency.ui.validation.ViewValidation.isValid;
 
@@ -41,7 +39,7 @@ import static org.baddev.currency.ui.validation.ViewValidation.isValid;
  * Created by IPOTAPCHUK on 6/9/2016.
  */
 @SpringView(name = SchedulerView.NAME)
-public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
+public class SchedulerView extends AbstractCcyGridView<CronExchangeTaskData> {
 
     @Autowired
     private SettingsWindow settings;
@@ -52,7 +50,6 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
     private static final String P_EXEC_BTN = "execution";
     private static final String P_MNG_BTN = "managing";
     private static final String P_RMV_BTN = "removal";
-    private static final String P_NOTIF = "notifications";
 
     private TextField amountF = new TextField("Amount:");
     private ComboBox fromCcyChoiseF = new ComboBox("From:");
@@ -67,7 +64,7 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
     public void init() {
         super.init();
 
-        setup(CronExchangeOperation.class, MyUI.myUI().scheduler().getScheduledTasks().keySet(), P_ID, P_EXC_AM);
+        setup(CronExchangeTaskData.class, MyUI.myUI().scheduler().getScheduledTasks().keySet(), P_ID);
 
         //footer refresh
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
@@ -80,15 +77,15 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
                         ? "<b>Canceled</b>" : "<b>Active</b>");
 
         addGeneratedButton(P_EXEC_BTN, "Execute", e -> {
-            myUI().scheduler().execute((ExchangeOperation) e.getItemId());
-            log.debug("Task {} executed manually", ((ExchangeOperation) e.getItemId()).getId());
+            myUI().scheduler().execute((CronExchangeTaskData) e.getItemId());
+            log.debug("Task {} executed manually", ((CronExchangeTaskData) e.getItemId()).getId());
         });
 
         addGeneratedButton(P_MNG_BTN,
                 itemId -> myUI().scheduler().getScheduledTasks().get(itemId).isCancelled()
                         ? "Run" : "Cancel",
                 event -> {
-                    CronExchangeOperation op = (CronExchangeOperation) event.getItemId();
+                    CronExchangeTaskData op = (CronExchangeTaskData) event.getItemId();
                     ScheduledFuture task = myUI().scheduler().getScheduledTasks().get(op);
                     if (task.isCancelled()) {
                         myUI().scheduler().reschedule(op);
@@ -102,9 +99,9 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
         );
 
         addGeneratedButton(P_RMV_BTN, "Remove", e -> {
-            myUI().scheduler().cancel(((CronExchangeOperation) e.getItemId()).getId(), true);
+            myUI().scheduler().cancel(((CronExchangeTaskData) e.getItemId()).getId(), true);
             grid.getContainerDataSource().removeItem(e.getItemId());
-            log.debug("Exchange task {} was removed", ((CronExchangeOperation) e.getItemId()).getId());
+            log.debug("Exchange task {} was removed", ((CronExchangeTaskData) e.getItemId()).getId());
         });
 
         //description for cron an ccy cells
@@ -126,12 +123,12 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
             return "";
         });
 
-        grid.getColumn(P_DATE).setHeaderCaption("Date Added");
+        grid.getColumn(P_AD_DT).setHeaderCaption("Added");
         grid.getColumn(P_CRON).setHeaderCaption("Cron Expression");
         grid.getColumn(P_AM_CD).setHeaderCaption("From");
         grid.getColumn(P_EXC_AM_CD).setHeaderCaption("To");
         grid.getColumn(P_AM).setRenderer(new HtmlRenderer(), new DoubleAmountToStringConverter());
-        grid.setColumnOrder(P_STATUS, P_DATE, P_AM_CD, P_EXC_AM_CD, P_AM, P_CRON, P_EXEC_BTN, P_MNG_BTN);
+        grid.setColumnOrder(P_STATUS, P_AD_DT, P_AM_CD, P_EXC_AM_CD, P_AM, P_CRON, P_EXEC_BTN, P_MNG_BTN);
         grid.sort(P_ID, SortDirection.DESCENDING);
     }
 
@@ -219,14 +216,15 @@ public class SchedulerView extends AbstractCcyGridView<CronExchangeOperation> {
 
         scheduleBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         scheduleBtn.addClickListener((Button.ClickListener) event -> {
-            ExchangeOperation exc = ExchangeOperation.newBuilder()
+            CronExchangeTaskData taskData = CronExchangeTaskData.newBuilder()
                     .id(System.currentTimeMillis())
-                    .from(((BaseExchangeRate) fromCcyChoiseF.getValue()).getCcyCode())
-                    .to(((BaseExchangeRate) toCcyChoiseF.getValue()).getCcyCode())
-                    .date(LocalDate.fromDateFields(new Date()))
+                    .fromCcy(((BaseExchangeRate) fromCcyChoiseF.getValue()).getCcy())
+                    .toCcy(((BaseExchangeRate) toCcyChoiseF.getValue()).getCcy())
+                    .addedDate(LocalDateTime.now())
                     .amount((double) amountF.getConvertedValue())
+                    .cron(cronF.getValue())
                     .build();
-            myUI().scheduler().schedule(exc, cronF.getValue());
+            myUI().scheduler().schedule(taskData);
             refresh(myUI().scheduler().getScheduledTasks().keySet(), ExchangeOperation.P_ID, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();

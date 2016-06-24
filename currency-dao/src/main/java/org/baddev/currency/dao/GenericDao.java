@@ -1,7 +1,5 @@
 package org.baddev.currency.dao;
 
-import org.joda.time.LocalDate;
-
 import java.util.Collection;
 
 /**
@@ -13,6 +11,6 @@ public interface GenericDao<T> {
     void remove(Long id);
     T load(Long id);
     Collection<T> loadAll();
-    Collection<T> loadByDate(LocalDate date);
+
 
 }

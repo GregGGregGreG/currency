@@ -40,8 +40,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         grid.setContainerDataSource(wrapperContainer);
         grid.setImmediate(true);
         if (excludeProps.length != 0)
-            for (String prop : excludeProps)
-                wrapperContainer.removeContainerProperty(prop);
+            for (String prop : excludeProps) wrapperContainer.removeContainerProperty(prop);
     }
 
     private HorizontalLayout topBar() {

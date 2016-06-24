@@ -9,11 +9,11 @@ import com.vaadin.spring.navigator.SpringViewProvider;
 import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
-import org.baddev.currency.core.exchange.entity.ExchangeOperation;
-import org.baddev.currency.core.exchange.job.Exchanger;
+import org.baddev.currency.core.exchanger.Exchanger;
+import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
 import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
-import org.baddev.currency.dao.exchange.ExchangeOperationDao;
+import org.baddev.currency.dao.exchanger.ExchangeOperationDao;
 import org.baddev.currency.dao.fetcher.ExchangeRateDao;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.notifier.Notifier;
@@ -80,9 +80,9 @@ public class MyUI extends UI implements NotificationListener {
                 String exchInfo = String.format("Exchange task %d completed. %.2f %s -> %.2f %s.",
                         operation.getId(),
                         operation.getAmount(),
-                        operation.getAmountCurrencyCode(),
+                        operation.getFromCcy(),
                         operation.getExchangedAmount(),
-                        operation.getExchangedAmountCurrencyCode());
+                        operation.getToCcy());
                 Notification.show("Exchange task completion", exchInfo, Notification.Type.TRAY_NOTIFICATION);
             });
         }

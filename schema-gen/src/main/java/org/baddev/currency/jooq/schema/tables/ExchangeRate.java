@@ -4,14 +4,15 @@
 package org.baddev.currency.jooq.schema.tables;
 
 
+import org.baddev.currency.jooq.config.DateToLocalDateConverter;
 import org.baddev.currency.jooq.schema.Exchanger;
 import org.baddev.currency.jooq.schema.Keys;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeRateRecord;
+import org.joda.time.LocalDate;
 import org.jooq.*;
 import org.jooq.impl.TableImpl;
 
 import javax.annotation.Generated;
-import java.sql.Date;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,7 +30,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExchangeRate extends TableImpl<ExchangeRateRecord> {
 
-	private static final long serialVersionUID = -1002531429;
+	private static final long serialVersionUID = -1702915590;
 
 	/**
 	 * The reference instance of <code>exchanger.exchange_rate</code>
@@ -50,19 +51,19 @@ public class ExchangeRate extends TableImpl<ExchangeRateRecord> {
 	public final TableField<ExchangeRateRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
 	/**
-	 * The column <code>exchanger.exchange_rate.base_liter_code</code>.
+	 * The column <code>exchanger.exchange_rate.base_ccy</code>.
 	 */
-	public final TableField<ExchangeRateRecord, String> BASE_LITER_CODE = createField("base_liter_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false).defaulted(true), this, "");
+	public final TableField<ExchangeRateRecord, String> BASE_CCY = createField("base_ccy", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false).defaulted(true), this, "");
 
 	/**
-	 * The column <code>exchanger.exchange_rate.liter_code</code>.
+	 * The column <code>exchanger.exchange_rate.ccy</code>.
 	 */
-	public final TableField<ExchangeRateRecord, String> LITER_CODE = createField("liter_code", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false).defaulted(true), this, "");
+	public final TableField<ExchangeRateRecord, String> CCY = createField("ccy", org.jooq.impl.SQLDataType.VARCHAR.length(3).nullable(false), this, "");
 
 	/**
 	 * The column <code>exchanger.exchange_rate.exchange_date</code>.
 	 */
-	public final TableField<ExchangeRateRecord, Date> EXCHANGE_DATE = createField("exchange_date", org.jooq.impl.SQLDataType.DATE.nullable(false), this, "");
+	public final TableField<ExchangeRateRecord, LocalDate> EXCHANGE_DATE = createField("exchange_date", org.jooq.impl.SQLDataType.DATE.nullable(false), this, "", new DateToLocalDateConverter());
 
 	/**
 	 * The column <code>exchanger.exchange_rate.rate</code>.

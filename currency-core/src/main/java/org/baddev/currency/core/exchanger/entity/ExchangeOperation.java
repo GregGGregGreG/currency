@@ -1,9 +1,10 @@
-package org.baddev.currency.core.exchange.entity;
+package org.baddev.currency.core.exchanger.entity;
 
 import org.baddev.currency.core.Identity;
 import org.baddev.currency.core.ServiceException;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -19,30 +20,33 @@ import java.util.Collection;
 public class ExchangeOperation implements Identity<Long> {
 
     @XmlAttribute
-    private Long      id;
-    private String    amountCurrencyCode;
-    private double    amount;
-    private String    exchangedAmountCurrencyCode;
-    private double    exchangedAmount;
-    private LocalDate date;
+    private Long          id;
+    private String        fromCcy;
+    private double        amount;
+    private String        toCcy;
+    private double        exchangedAmount;
+    private LocalDate     ratesDate;
+    private LocalDateTime performDate;
 
     public static final String P_ID        = "id";
-    public static final String P_AM_CD     = "amountCurrencyCode";
+    public static final String P_AM_CD     = "fromCcy";
     public static final String P_AM        = "amount";
-    public static final String P_EXC_AM_CD = "exchangedAmountCurrencyCode";
+    public static final String P_EXC_AM_CD = "toCcy";
     public static final String P_EXC_AM    = "exchangedAmount";
-    public static final String P_DATE      = "date";
+    public static final String P_DATE      = "ratesDate";
+    public static final String P_PERF_DT   = "performDate";
 
     public ExchangeOperation() {
     }
 
     private ExchangeOperation(Builder builder) {
         setId(builder.id);
-        setAmountCurrencyCode(builder.amountCurrencyCode);
+        setFromCcy(builder.amountCurrencyCode);
         setAmount(builder.amount);
-        setExchangedAmountCurrencyCode(builder.exchangedAmountCurrencyCode);
+        setToCcy(builder.exchangedAmountCurrencyCode);
         setExchangedAmount(builder.exchangedAmount);
-        setDate(builder.date);
+        setRatesDate(builder.ratesDate);
+        performDate = builder.performDate;
     }
 
     public static Builder newBuilder() {
@@ -57,12 +61,16 @@ public class ExchangeOperation implements Identity<Long> {
         this.id = id;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getRatesDate() {
+        return ratesDate;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setRatesDate(LocalDate ratesDate) {
+        this.ratesDate = ratesDate;
+    }
+
+    public LocalDateTime getPerformDate() {
+        return performDate;
     }
 
     public double getAmount() {
@@ -73,20 +81,20 @@ public class ExchangeOperation implements Identity<Long> {
         this.amount = amount;
     }
 
-    public String getAmountCurrencyCode() {
-        return amountCurrencyCode;
+    public String getFromCcy() {
+        return fromCcy;
     }
 
-    public void setAmountCurrencyCode(String amountCurrencyCode) {
-        this.amountCurrencyCode = amountCurrencyCode;
+    public void setFromCcy(String fromCcy) {
+        this.fromCcy = fromCcy;
     }
 
-    public String getExchangedAmountCurrencyCode() {
-        return exchangedAmountCurrencyCode;
+    public String getToCcy() {
+        return toCcy;
     }
 
-    public void setExchangedAmountCurrencyCode(String exchangedAmountCurrencyCode) {
-        this.exchangedAmountCurrencyCode = exchangedAmountCurrencyCode;
+    public void setToCcy(String toCcy) {
+        this.toCcy = toCcy;
     }
 
     public double getExchangedAmount() {
@@ -98,13 +106,14 @@ public class ExchangeOperation implements Identity<Long> {
     }
 
     public double exchange(Collection<ExchangeRate> rates) {
-        if (amountCurrencyCode.equals("UAH")) {
-            double rate = findRate(rates, exchangedAmountCurrencyCode);
+        performDate = LocalDateTime.now();
+        if (fromCcy.equals("UAH")) {
+            double rate = findRate(rates, toCcy);
             exchangedAmount = rate * amount;
         } else {
-            double fPairRate = findRate(rates, amountCurrencyCode);
+            double fPairRate = findRate(rates, fromCcy);
             double inDefaultBase = fPairRate * amount;
-            double sPairRate = findRate(rates, exchangedAmountCurrencyCode);
+            double sPairRate = findRate(rates, toCcy);
             exchangedAmount = inDefaultBase / sPairRate;
         }
         return exchangedAmount;
@@ -112,32 +121,20 @@ public class ExchangeOperation implements Identity<Long> {
 
     private static Double findRate(Collection<ExchangeRate> rates, String ccy) {
         return rates.stream()
-                .filter(r -> r.getCcyCode().equals(ccy))
+                .filter(r -> r.getCcy().equals(ccy))
                 .mapToDouble(ExchangeRate::getRate)
                 .findFirst()
                 .orElseThrow(ServiceException::new);
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("ExchangeOperation{");
-        sb.append("id=").append(id);
-        sb.append(", amountCurrencyCode='").append(amountCurrencyCode).append('\'');
-        sb.append(", amount=").append(amount);
-        sb.append(", exchangedAmountCurrencyCode='").append(exchangedAmountCurrencyCode).append('\'');
-        sb.append(", exchangedAmount=").append(exchangedAmount);
-        sb.append(", date=").append(date);
-        sb.append('}');
-        return sb.toString();
-    }
-
     public static final class Builder {
-        private Long      id;
-        private String    amountCurrencyCode;
-        private double    amount;
-        private String    exchangedAmountCurrencyCode;
-        private double    exchangedAmount;
-        private LocalDate date;
+        private Long          id;
+        private String        amountCurrencyCode;
+        private double        amount;
+        private String        exchangedAmountCurrencyCode;
+        private double        exchangedAmount;
+        private LocalDate     ratesDate;
+        private LocalDateTime performDate;
 
         private Builder() {
         }
@@ -167,8 +164,13 @@ public class ExchangeOperation implements Identity<Long> {
             return this;
         }
 
-        public Builder date(LocalDate val) {
-            date = val;
+        public Builder ratesDate(LocalDate val) {
+            ratesDate = val;
+            return this;
+        }
+
+        public Builder performDate(LocalDateTime val){
+            performDate = val;
             return this;
         }
 

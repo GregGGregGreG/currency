@@ -4,15 +4,16 @@
 package org.baddev.currency.jooq.schema.tables;
 
 
+import org.baddev.currency.jooq.config.TimestampToLocalDateTimeConverter;
 import org.baddev.currency.jooq.schema.Exchanger;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeTaskRecord;
+import org.joda.time.LocalDateTime;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.impl.TableImpl;
 
 import javax.annotation.Generated;
-import java.sql.Date;
 
 
 /**
@@ -28,7 +29,7 @@ import java.sql.Date;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExchangeTask extends TableImpl<ExchangeTaskRecord> {
 
-	private static final long serialVersionUID = -775496575;
+	private static final long serialVersionUID = 1871324065;
 
 	/**
 	 * The reference instance of <code>exchanger.exchange_task</code>
@@ -49,9 +50,9 @@ public class ExchangeTask extends TableImpl<ExchangeTaskRecord> {
 	public final TableField<ExchangeTaskRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
 	/**
-	 * The column <code>exchanger.exchange_task.date_added</code>.
+	 * The column <code>exchanger.exchange_task.added_datetime</code>.
 	 */
-	public final TableField<ExchangeTaskRecord, Date> DATE_ADDED = createField("date_added", org.jooq.impl.SQLDataType.DATE.nullable(false), this, "");
+	public final TableField<ExchangeTaskRecord, LocalDateTime> ADDED_DATETIME = createField("added_datetime", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false).defaulted(true), this, "", new TimestampToLocalDateTimeConverter());
 
 	/**
 	 * The column <code>exchanger.exchange_task.from_ccy</code>.

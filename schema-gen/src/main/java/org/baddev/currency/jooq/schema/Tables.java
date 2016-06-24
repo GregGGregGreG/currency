@@ -5,7 +5,6 @@ package org.baddev.currency.jooq.schema;
 
 
 import org.baddev.currency.jooq.schema.tables.ExchangeOperation;
-import org.baddev.currency.jooq.schema.tables.ExchangeOperationNotification;
 import org.baddev.currency.jooq.schema.tables.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.ExchangeTask;
 
@@ -29,11 +28,6 @@ public class Tables {
 	 * The table exchanger.exchange_operation
 	 */
 	public static final ExchangeOperation EXCHANGE_OPERATION = org.baddev.currency.jooq.schema.tables.ExchangeOperation.EXCHANGE_OPERATION;
-
-	/**
-	 * The table exchanger.exchange_operation_notification
-	 */
-	public static final ExchangeOperationNotification EXCHANGE_OPERATION_NOTIFICATION = org.baddev.currency.jooq.schema.tables.ExchangeOperationNotification.EXCHANGE_OPERATION_NOTIFICATION;
 
 	/**
 	 * The table exchanger.exchange_rate

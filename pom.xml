@@ -25,6 +25,7 @@
         <dbcp.version>1.4</dbcp.version>
         <mysql.version>5.1.38</mysql.version>
         <aspect.version>1.6.11</aspect.version>
+        <groovy.version>2.4.6</groovy.version>
     </properties>
 
     <dependencyManagement>
@@ -151,7 +152,11 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>${groovy.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

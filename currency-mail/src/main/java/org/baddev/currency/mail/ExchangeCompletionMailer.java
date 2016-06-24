@@ -1,6 +1,6 @@
 package org.baddev.currency.mail;
 
-import org.baddev.currency.core.exchange.entity.ExchangeOperation;
+import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
 import org.baddev.currency.notifier.event.ExchangeCompletionEvent;
 import org.baddev.currency.notifier.event.NotificationEvent;
 import org.baddev.currency.notifier.listener.NotificationListener;
@@ -27,7 +27,7 @@ public class ExchangeCompletionMailer implements NotificationListener {
     @Autowired
     private MailSender sender;
     @Autowired
-    private SimpleMailMessage msg;
+    private SimpleMailMessage template;
     @Resource(name="mailerPool")
     private ThreadPoolTaskExecutor pool;
 
@@ -39,9 +39,10 @@ public class ExchangeCompletionMailer implements NotificationListener {
                 String exchInfo = String.format("Exchange task %d completed. %.2f %s <> %.2f %s.",
                         operation.getId(),
                         operation.getAmount(),
-                        operation.getAmountCurrencyCode(),
+                        operation.getFromCcy(),
                         operation.getExchangedAmount(),
-                        operation.getExchangedAmountCurrencyCode());
+                        operation.getToCcy());
+                SimpleMailMessage msg = new SimpleMailMessage(template);
                 msg.setTo("ilya_potapchuk@mail.ru");
                 msg.setSentDate(new Date());
                 msg.setSubject("Currency Exchange Task Completion");

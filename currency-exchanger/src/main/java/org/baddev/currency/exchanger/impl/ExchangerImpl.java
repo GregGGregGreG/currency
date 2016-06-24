@@ -1,9 +1,9 @@
-package org.baddev.currency.exchange.impl;
+package org.baddev.currency.exchanger.impl;
 
-import org.baddev.currency.core.exchange.entity.ExchangeOperation;
-import org.baddev.currency.core.exchange.job.Exchanger;
+import org.baddev.currency.core.exchanger.Exchanger;
+import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
-import org.baddev.currency.dao.exchange.ExchangeOperationDao;
+import org.baddev.currency.dao.exchanger.ExchangeOperationDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ public class ExchangerImpl implements Exchanger {
     public ExchangeOperation exchange(ExchangeOperation operation, Collection<ExchangeRate> rates) {
         operation.exchange(rates);
         log.info("Exchanged amount: [{}]{}", operation.getExchangedAmount(),
-                operation.getExchangedAmountCurrencyCode());
+                operation.getToCcy());
         exchangeDao.save(operation);
         return operation;
     }

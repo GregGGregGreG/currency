@@ -18,7 +18,7 @@ public interface Iso4217CcyService {
     enum Parameter {
         CTRY_NM(CTRY_NM_PARAM, "countryName"),
         CCY_NM(CCY_NM_PARAM, "ccyName"),
-        CCY(CCY_PARAM, "ccyCode"),
+        CCY(CCY_PARAM, "ccy"),
         CCY_NBR(CCY_NBR_PARAM, "ccyNumber"),
         CCY_MNR_UNTS(CCY_MNR_UNTS_PARAM, "ccyMnrUnts"),
         WTHDRWL_DT(WTHDRWL_DT_PARAM, "withdrawDate");

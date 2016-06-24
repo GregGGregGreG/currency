@@ -5,7 +5,6 @@ package org.baddev.currency.jooq.schema;
 
 
 import org.baddev.currency.jooq.schema.tables.ExchangeOperation;
-import org.baddev.currency.jooq.schema.tables.ExchangeOperationNotification;
 import org.baddev.currency.jooq.schema.tables.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.ExchangeTask;
 import org.jooq.Table;
@@ -30,7 +29,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Exchanger extends SchemaImpl {
 
-	private static final long serialVersionUID = -331588669;
+	private static final long serialVersionUID = 716238731;
 
 	/**
 	 * The reference instance of <code>exchanger</code>
@@ -54,7 +53,6 @@ public class Exchanger extends SchemaImpl {
 	private final List<Table<?>> getTables0() {
 		return Arrays.<Table<?>>asList(
 			ExchangeOperation.EXCHANGE_OPERATION,
-			ExchangeOperationNotification.EXCHANGE_OPERATION_NOTIFICATION,
 			ExchangeRate.EXCHANGE_RATE,
 			ExchangeTask.EXCHANGE_TASK);
 	}

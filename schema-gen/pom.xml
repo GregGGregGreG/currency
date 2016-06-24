@@ -13,6 +13,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
         </dependency>
@@ -94,6 +98,28 @@
                                         <database>
                                             <name>org.jooq.util.mysql.MySQLDatabase</name>
                                             <inputSchema>exchanger</inputSchema>
+                                            <customTypes>
+                                                <customType>
+                                                    <name>LocalDate</name>
+                                                    <type>org.joda.time.LocalDate</type>
+                                                    <converter>org.baddev.currency.jooq.config.DateToLocalDateConverter</converter>
+                                                </customType>
+                                                <customType>
+                                                    <name>LocalDateTime</name>
+                                                    <type>org.joda.time.LocalDateTime</type>
+                                                    <converter>org.baddev.currency.jooq.config.TimestampToLocalDateTimeConverter</converter>
+                                                </customType>
+                                            </customTypes>
+                                            <forcedTypes>
+                                                <forcedType>
+                                                    <name>LocalDate</name>
+                                                    <types>.*DATE.*</types>
+                                                </forcedType>
+                                                <forcedType>
+                                                    <name>LocalDateTime</name>
+                                                    <types>.*TIMESTAMP.*</types>
+                                                </forcedType>
+                                            </forcedTypes>
                                         </database>
                                         <target>
                                             <packageName>org.baddev.currency.jooq.schema</packageName>

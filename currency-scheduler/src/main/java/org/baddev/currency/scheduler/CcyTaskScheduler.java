@@ -5,7 +5,7 @@ package org.baddev.currency.scheduler;
  */
 public interface CcyTaskScheduler<T> {
 
-    Long schedule(T taskData, String cron);
+    Long schedule(T taskData);
 
     void execute(T taskData);
 

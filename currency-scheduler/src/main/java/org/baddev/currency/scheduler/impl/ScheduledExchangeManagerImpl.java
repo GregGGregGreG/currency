@@ -1,20 +1,18 @@
 package org.baddev.currency.scheduler.impl;
 
-import org.baddev.currency.core.exchange.entity.ExchangeOperation;
-import org.baddev.currency.core.exchange.job.Exchanger;
+import org.baddev.currency.core.exchanger.Exchanger;
+import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
 import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
-import org.baddev.currency.dao.utils.ConverterUtils;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.notifier.Notifier;
 import org.baddev.currency.notifier.event.ExchangeCompletionEvent;
-import org.baddev.currency.scheduler.CronExchangeOperation;
 import org.baddev.currency.scheduler.ScheduledExchangeManager;
+import org.baddev.currency.scheduler.entity.CronExchangeTaskData;
 import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
@@ -47,18 +45,20 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     @Autowired
     private Notifier notifier;
 
-    private Map<CronExchangeOperation, ScheduledFuture> activeCronTasks = new HashMap<>();
+    private Map<CronExchangeTaskData, ScheduledFuture> activeCronTasks = new HashMap<>();
 
     private class ExchangeTask implements Runnable {
 
         private ExchangeOperation operation;
 
-        public ExchangeTask(ExchangeOperation operation) {
-            //copying to change rate's date to operation's performing date
-            ExchangeOperation copied = new ExchangeOperation();
-            BeanUtils.copyProperties(operation, copied);
-            copied.setDate(new LocalDate());
-            this.operation = copied;
+        ExchangeTask(final CronExchangeTaskData taskData) {
+            operation = ExchangeOperation.newBuilder()
+                    .id(taskData.getId())
+                    .from(taskData.getFromCcy())
+                    .to(taskData.getToCcy())
+                    .amount(taskData.getAmount())
+                    .ratesDate(LocalDate.now())
+                    .build();
         }
 
         @Override
@@ -70,7 +70,8 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
                 success = false;
                 log.error("Rates are not available", e);
             } finally {
-                notifier.doNotify(new ExchangeCompletionEvent(this, operation, success));
+                if (!notifier.getSubscribers().isEmpty())
+                    notifier.doNotify(new ExchangeCompletionEvent(this, operation, success));
             }
         }
 
@@ -80,18 +81,19 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     @Transactional(readOnly = true)
     public void init() {
         List<Long> canceled = new ArrayList<>();
-        List<CronExchangeOperation> ops = dsl.selectFrom(EXCHANGE_TASK)
+        List<CronExchangeTaskData> ops = dsl.selectFrom(EXCHANGE_TASK)
                 .fetch(record -> {
-                    ExchangeOperation op = ExchangeOperation.newBuilder()
+                    CronExchangeTaskData taskData = CronExchangeTaskData.newBuilder()
                             .id(record.getId())
+                            .fromCcy(record.getFromCcy())
+                            .toCcy(record.getToCcy())
                             .amount(record.getAmount())
-                            .date(ConverterUtils.fromSqlDate(record.getDateAdded()))
-                            .from(record.getFromCcy())
-                            .to(record.getToCcy())
+                            .cron(record.getCron())
+                            .addedDate(record.getAddedDatetime())
                             .build();
                     if (record.getActive().intValue() == 0)
-                        canceled.add(op.getId());
-                    return new CronExchangeOperation(record.getCron(), op);
+                        canceled.add(taskData.getId());
+                    return taskData;
                 });
         if (!ops.isEmpty()) {
             ops.forEach(op -> {
@@ -105,26 +107,26 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
 
     @Override
     @Transactional
-    public Long schedule(final ExchangeOperation taskData, String cron) {
+    public Long schedule(final CronExchangeTaskData taskData) {
         if (taskData.getId() == null)
             throw new IllegalArgumentException("Id must be a non-null value");
-        persist(taskData, cron);
-        scheduleTask(new CronExchangeOperation(cron, taskData));
+        persist(taskData);
+        scheduleTask(taskData);
         return taskData.getId();
     }
 
-    private void persist(ExchangeOperation taskData, String cron) {
+    private void persist(CronExchangeTaskData taskData) {
         dsl.insertInto(EXCHANGE_TASK)
                 .set(EXCHANGE_TASK.ID, taskData.getId())
                 .set(EXCHANGE_TASK.AMOUNT, taskData.getAmount())
-                .set(EXCHANGE_TASK.DATE_ADDED, ConverterUtils.toSqlDate(taskData.getDate()))
-                .set(EXCHANGE_TASK.TO_CCY, taskData.getExchangedAmountCurrencyCode())
-                .set(EXCHANGE_TASK.FROM_CCY, taskData.getAmountCurrencyCode())
-                .set(EXCHANGE_TASK.CRON, cron)
+                .set(EXCHANGE_TASK.ADDED_DATETIME, taskData.getAddedDate())
+                .set(EXCHANGE_TASK.TO_CCY, taskData.getToCcy())
+                .set(EXCHANGE_TASK.FROM_CCY, taskData.getFromCcy())
+                .set(EXCHANGE_TASK.CRON, taskData.getCron())
                 .execute();
     }
 
-    private ScheduledFuture scheduleTask(final CronExchangeOperation op) {
+    private ScheduledFuture scheduleTask(final CronExchangeTaskData op) {
         ScheduledFuture scheduled = scheduler.schedule(new ExchangeTask(op), new CronTrigger(op.getCron()));
         activeCronTasks.put(op, scheduled);
         return scheduled;
@@ -132,7 +134,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
 
     @Override
     @Transactional
-    public void reschedule(CronExchangeOperation reschedulingData) {
+    public void reschedule(CronExchangeTaskData reschedulingData) {
         if (!activeCronTasks.containsKey(reschedulingData))
             throw new IllegalArgumentException("Can't reschedule unknown task");
         if (!activeCronTasks.get(reschedulingData).isCancelled())
@@ -145,19 +147,19 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     }
 
     @Override
-    public void execute(ExchangeOperation taskData) {
+    public void execute(CronExchangeTaskData taskData) {
         scheduler.execute(new ExchangeTask(taskData));
     }
 
     @Override
     @Transactional
     public boolean cancel(Long id, boolean remove) {
-        Optional<CronExchangeOperation> found = activeCronTasks.keySet().stream()
+        Optional<CronExchangeTaskData> found = activeCronTasks.keySet().stream()
                 .filter(op -> Objects.equals(op.getId(), id))
                 .findFirst();
         if (!found.isPresent())
             return false;
-        CronExchangeOperation taskData = found.get();
+        CronExchangeTaskData taskData = found.get();
         ScheduledFuture task = activeCronTasks.get(taskData);
         boolean result = task.cancel(false);
         if (remove) {
@@ -182,7 +184,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     }
 
     @Override
-    public Map<CronExchangeOperation, ScheduledFuture> getScheduledTasks() {
+    public Map<CronExchangeTaskData, ScheduledFuture> getScheduledTasks() {
         return activeCronTasks;
     }
 

@@ -2,52 +2,72 @@ package org.baddev.currency.core.fetcher.entity;
 
 import org.joda.time.LocalDate;
 
+import java.util.Objects;
+
 /**
  * Created by IPotapchuk on 4/4/2016.
  */
 public class BaseExchangeRate implements ExchangeRate {
 
-    private long      id;
-    private String    baseCcyCode;
-    private String    ccyCode;
+    private long id;
+    private String baseCcy;
+    private String ccy;
     private LocalDate date;
-    private double    rate;
+    private double rate;
 
-    public static final String P_ID      = "id";
-    public static final String P_BASE_CD = "baseCcyCode";
-    public static final String P_CCY     = "ccyCode";
-    public static final String P_DATE    = "date";
-    public static final String P_RATE    = "rate";
+    public static final String P_ID = "id";
+    public static final String P_BASE_CD = "baseCcy";
+    public static final String P_CCY = "ccy";
+    public static final String P_DATE = "date";
+    public static final String P_RATE = "rate";
 
     public BaseExchangeRate() {
     }
 
     private BaseExchangeRate(Builder builder) {
         id = builder.id;
-        setBaseCcyCode(builder.baseCcyCode);
-        setCcyCode(builder.ccyCode);
+        setBaseCcy(builder.baseCcy);
+        setCcy(builder.ccy);
         setDate(builder.date);
         setRate(builder.rate);
+    }
+
+    private static void checkCcy(String ccy) {
+        Objects.requireNonNull(ccy);
+        if (ccy.isEmpty() || ccy.length() != 3)
+            throw new IllegalArgumentException("Currency code must consist of 3 characters");
     }
 
     public static Builder newBuilder() {
         return new Builder();
     }
 
-    public String getBaseCcyCode() {
-        return baseCcyCode;
+    @Override
+    public Long getId() {
+        return id;
     }
 
-    public void setBaseCcyCode(String baseCcyCode) {
-        this.baseCcyCode = baseCcyCode;
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getCcyCode() {
-        return ccyCode;
+    public String getBaseCcy() {
+        return baseCcy;
     }
 
-    public void setCcyCode(String ccyCode) {
-        this.ccyCode = ccyCode;
+    public void setBaseCcy(String baseCcy) {
+        checkCcy(baseCcy);
+        this.baseCcy = baseCcy;
+    }
+
+    public String getCcy() {
+        return ccy;
+    }
+
+    public void setCcy(String ccy) {
+        checkCcy(ccy);
+        this.ccy = ccy;
     }
 
     @Override
@@ -68,61 +88,12 @@ public class BaseExchangeRate implements ExchangeRate {
         this.rate = rate;
     }
 
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        BaseExchangeRate that = (BaseExchangeRate) o;
-
-        if (id != that.id) return false;
-        if (Double.compare(that.rate, rate) != 0) return false;
-        if (!baseCcyCode.equals(that.baseCcyCode)) return false;
-        if (!ccyCode.equals(that.ccyCode)) return false;
-        return date.equals(that.date);
-    }
-
-    @Override
-    public int hashCode() {
-        int result;
-        long temp;
-        result = (int) (id ^ (id >>> 32));
-        result = 31 * result + baseCcyCode.hashCode();
-        result = 31 * result + ccyCode.hashCode();
-        result = 31 * result + date.hashCode();
-        temp = Double.doubleToLongBits(rate);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("BaseExchangeRate{");
-        sb.append("id=").append(id);
-        sb.append(", baseCcyCode='").append(baseCcyCode).append('\'');
-        sb.append(", ccyCode='").append(ccyCode).append('\'');
-        sb.append(", date=").append(date);
-        sb.append(", rate=").append(rate);
-        sb.append('}');
-        return sb.toString();
-    }
-
     public static final class Builder {
-        private long      id;
-        private String    baseCcyCode;
-        private String    ccyCode;
+        private long id;
+        private String baseCcy;
+        private String ccy;
         private LocalDate date;
-        private double    rate;
+        private double rate;
 
         private Builder() {
         }
@@ -132,13 +103,13 @@ public class BaseExchangeRate implements ExchangeRate {
             return this;
         }
 
-        public Builder baseCurrencyCode(String val) {
-            baseCcyCode = val;
+        public Builder baseCcy(String val) {
+            baseCcy = val;
             return this;
         }
 
-        public Builder ccyCode(String val) {
-            ccyCode = val;
+        public Builder ccy(String val) {
+            ccy = val;
             return this;
         }
 

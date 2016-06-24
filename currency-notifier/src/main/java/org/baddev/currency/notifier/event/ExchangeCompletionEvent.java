@@ -1,6 +1,6 @@
 package org.baddev.currency.notifier.event;
 
-import org.baddev.currency.core.exchange.entity.ExchangeOperation;
+import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
 
 /**
  * Created by IPotapchuk on 6/17/2016.

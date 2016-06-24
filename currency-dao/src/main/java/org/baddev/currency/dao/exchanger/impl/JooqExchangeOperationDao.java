@@ -1,10 +1,10 @@
-package org.baddev.currency.dao.exchange.impl;
+package org.baddev.currency.dao.exchanger.impl;
 
-import org.baddev.currency.core.exchange.entity.ExchangeOperation;
-import org.baddev.currency.dao.exchange.ExchangeOperationDao;
-import org.baddev.currency.dao.utils.ConverterUtils;
+import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
+import org.baddev.currency.dao.exchanger.ExchangeOperationDao;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.jooq.DSLContext;
 import org.jooq.RecordMapper;
 import org.slf4j.Logger;
@@ -34,11 +34,12 @@ public class JooqExchangeOperationDao implements ExchangeOperationDao {
         public ExchangeOperation map(ExchangeOperationRecord record) {
             return ExchangeOperation.newBuilder()
                     .id(record.getId())
-                    .date(ConverterUtils.fromSqlDate(record.getDate()))
+                    .ratesDate(record.getRatesDate())
+                    .performDate(record.getPerformDatetime())
+                    .from(record.getFromCcy())
                     .amount(record.getFromAmount())
+                    .to(record.getToCcy())
                     .exchangedAmount(record.getToAmount())
-                    .from(record.getFromCurrencyCode())
-                    .to(record.getToCurrencyCode())
                     .build();
         }
     }
@@ -46,44 +47,43 @@ public class JooqExchangeOperationDao implements ExchangeOperationDao {
     @Override
     public void save(ExchangeOperation record) {
         dsl.insertInto(EXCHANGE_OPERATION)
-                .set(EXCHANGE_OPERATION.FROM_CURRENCY_CODE, record.getAmountCurrencyCode())
-                .set(EXCHANGE_OPERATION.TO_CURRENCY_CODE, record.getExchangedAmountCurrencyCode())
+                .set(EXCHANGE_OPERATION.FROM_CCY, record.getFromCcy())
+                .set(EXCHANGE_OPERATION.TO_CCY, record.getToCcy())
                 .set(EXCHANGE_OPERATION.FROM_AMOUNT, record.getAmount())
                 .set(EXCHANGE_OPERATION.TO_AMOUNT, record.getExchangedAmount())
-                .set(EXCHANGE_OPERATION.DATE, ConverterUtils.toSqlDate(record.getDate()))
+                .set(EXCHANGE_OPERATION.RATES_DATE, record.getRatesDate())
+                .set(EXCHANGE_OPERATION.PERFORM_DATETIME, record.getPerformDate())
                 .execute();
     }
 
     @Override
     public void remove(Long id) {
-        ExchangeOperationRecord rec = dsl.selectFrom(EXCHANGE_OPERATION)
-                .where(EXCHANGE_OPERATION.ID.eq(id))
-                .fetchOne();
-        if(rec != null)
-            rec.delete();
-        else
-            log.warn("Record with id [{}] not found.", id);
-
+        dsl.deleteFrom(EXCHANGE_OPERATION).where(EXCHANGE_OPERATION.ID.eq(id)).execute();
     }
 
     @Override
     public ExchangeOperation load(Long id) {
         return dsl.selectFrom(EXCHANGE_OPERATION)
                 .where(EXCHANGE_OPERATION.ID.eq(id))
-                .fetch(new ExchangeOperationMapper())
-                .get(0);
+                .fetchOne(new ExchangeOperationMapper());
     }
 
     @Override
     public Collection<ExchangeOperation> loadAll() {
+        return dsl.selectFrom(EXCHANGE_OPERATION).fetch(new ExchangeOperationMapper());
+    }
+
+    @Override
+    public Collection<ExchangeOperation> loadByRatesDate(LocalDate date) {
         return dsl.selectFrom(EXCHANGE_OPERATION)
+                .where(EXCHANGE_OPERATION.RATES_DATE.eq(date))
                 .fetch(new ExchangeOperationMapper());
     }
 
     @Override
-    public Collection<ExchangeOperation> loadByDate(LocalDate date) {
+    public Collection<ExchangeOperation> loadByPerformDateTime(LocalDateTime dateTime){
         return dsl.selectFrom(EXCHANGE_OPERATION)
-                .where(EXCHANGE_OPERATION.DATE.eq(ConverterUtils.toSqlDate(date)))
+                .where(EXCHANGE_OPERATION.PERFORM_DATETIME.eq(dateTime))
                 .fetch(new ExchangeOperationMapper());
     }
 }
