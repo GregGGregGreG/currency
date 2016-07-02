@@ -1,12 +1,12 @@
 package org.baddev.currency.scheduler.entity;
 
-import org.baddev.currency.core.Identity;
+import org.baddev.currency.core.MutableIdentity;
 import org.joda.time.LocalDateTime;
 
 /**
  * Created by IPOTAPCHUK on 6/9/2016.
  */
-public class CronExchangeTaskData implements Identity<Long> {
+public class CronExchangeTaskData implements MutableIdentity<Long> {
 
     private Long id;
     private LocalDateTime addedDate;

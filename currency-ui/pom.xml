@@ -73,29 +73,37 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.baddev</groupId>
+            <artifactId>currency-security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>net.redhogs.cronparser</groupId>
             <artifactId>cron-parser-spring</artifactId>
-            <version>2.9</version>
         </dependency>
         <dependency>
             <groupId>net.redhogs.cronparser</groupId>
             <artifactId>cron-parser-core</artifactId>
-            <version>2.9</version>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-spring</artifactId>
-            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>

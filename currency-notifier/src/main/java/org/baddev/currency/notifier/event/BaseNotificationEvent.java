@@ -1,11 +1,9 @@
 package org.baddev.currency.notifier.event;
 
-import org.baddev.currency.core.Identity;
-
 /**
  * Created by IPotapchuk on 6/17/2016.
  */
-public class BaseNotificationEvent<T extends Identity> implements NotificationEvent<T>{
+public class BaseNotificationEvent<T> implements NotificationEvent<T>{
 
     private Object source;
     private T eventData;

@@ -14,11 +14,11 @@
             classpath:api_sources.properties, classpath:proxy.properties, classpath:mail.properties,
             classpath:mail.pool.properties" ignore-unresolvable="true" />
 
-    <bean class="org.baddev.currency.ui.MyUI.MyConfiguration"/>
     <import resource="classpath:dao-applicationContext.xml"/>
     <bean class="org.baddev.currency.fetcher.FetcherConfig"/>
     <import resource="classpath:exchanger-applicationContext.xml"/>
     <import resource="classpath:scheduler-applicationContext.xml"/>
     <import resource="classpath:mail-applicationContext.xml"/>
+    <import resource="classpath:security-applicationContext.xml"/>
 
 </beans>

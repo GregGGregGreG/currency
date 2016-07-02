@@ -48,4 +48,12 @@ public interface Iso4217CcyService {
 
     List<String> findCcyParamValues(Parameter target, Parameter keyParam, String keyParamVal);
 
+    default List<String> findCcyNamesByCode(String ccyCode){
+        return findCcyParamValues(Parameter.CCY_NM, Parameter.CCY, ccyCode);
+    }
+
+    default List<String> findCcyCountriesByCode(String ccyCode){
+        return findCcyParamValues(Parameter.CTRY_NM, Parameter.CCY, ccyCode);
+    }
+
 }

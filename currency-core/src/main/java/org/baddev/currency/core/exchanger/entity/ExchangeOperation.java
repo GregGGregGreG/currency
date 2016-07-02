@@ -1,6 +1,6 @@
 package org.baddev.currency.core.exchanger.entity;
 
-import org.baddev.currency.core.Identity;
+import org.baddev.currency.core.MutableIdentity;
 import org.baddev.currency.core.ServiceException;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
 import org.joda.time.LocalDate;
@@ -17,7 +17,7 @@ import java.util.Collection;
  */
 @XmlRootElement(name = "exchange")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ExchangeOperation implements Identity<Long> {
+public class ExchangeOperation implements MutableIdentity<Long> {
 
     @XmlAttribute
     private Long          id;

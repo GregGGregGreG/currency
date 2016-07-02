@@ -1,41 +1,57 @@
 package org.baddev.currency.ui.util;
 
-import com.vaadin.server.VaadinSession;
+import com.vaadin.server.AbstractClientConnector;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
 import org.baddev.currency.notifier.listener.NotificationListener;
-import org.baddev.currency.ui.MyUI;
+import org.baddev.currency.ui.CurrencyUI;
 
-import static org.baddev.currency.ui.MyUI.myUI;
-import static org.baddev.currency.ui.util.SessionAttribute.NOTIFICATION_MAIL_ATTR;
-import static org.baddev.currency.ui.util.SessionAttribute.NOTIFICATION_UI_ATTR;
+import static org.baddev.currency.ui.CurrencyUI.currencyUI;
+import static org.baddev.currency.ui.util.SessionAttribute.NTF_MAIL_ATTR;
+import static org.baddev.currency.ui.util.SessionAttribute.NTF_UI_ATTR;
+import static org.baddev.currency.ui.util.VaadinSessionUtils.*;
 
 /**
  * Created by IPotapchuk on 6/23/2016.
  */
 public final class AppSettingsUtils {
 
-    private AppSettingsUtils(){}
+    private AppSettingsUtils() {
+    }
+
+    public static void initializeSettings(){
+        if(!getSession().getUIs().stream().anyMatch(AbstractClientConnector::isAttached)) {
+            setSessionAttributes(false, SessionAttribute.NTF_MAIL_ATTR, SessionAttribute.NTF_UI_ATTR);
+        }
+    }
 
     public static void toggleUINotifications(boolean enabled) {
-        setNotificationFlag(NOTIFICATION_UI_ATTR, enabled);
-        VaadinSession.getCurrent().getUIs().forEach(ui -> {
-            if (ui instanceof MyUI) {
+        setSessionAttributes(enabled, NTF_UI_ATTR);
+        getSession().getUIs().forEach(ui -> {
+            if (ui instanceof CurrencyUI) {
                 if (enabled)
-                    ((MyUI) ui).registerListener((NotificationListener) ui);
-                else ((MyUI) ui).unregisterListener((NotificationListener) ui);
+                    ((CurrencyUI) ui).registerListener((NotificationListener) ui);
+                else ((CurrencyUI) ui).unregisterListener((NotificationListener) ui);
             }
         });
     }
 
-    public static void toggleMailNotifications(boolean enabled, ExchangeCompletionMailer mailListener) {
-        setNotificationFlag(NOTIFICATION_MAIL_ATTR, true);
-        if (enabled)
-            myUI().registerListener(mailListener);
-        else myUI().unregisterListener(mailListener);
+    public static boolean isUINotificationsEnabled() {
+        return isNotificationEnabled(SessionAttribute.NTF_UI_ATTR);
     }
 
-    private static void setNotificationFlag(String attr, boolean flag) {
-        VaadinSession.getCurrent().setAttribute(attr, flag);
+    public static boolean isMailNotificationEnabled() {
+        return isNotificationEnabled(SessionAttribute.NTF_MAIL_ATTR);
+    }
+
+    private static boolean isNotificationEnabled(String name) {
+        return (Boolean) getSessionAttribute(name);
+    }
+
+    public static void toggleMailNotifications(boolean enabled, ExchangeCompletionMailer mailListener) {
+        setSessionAttributes(enabled, NTF_MAIL_ATTR);
+        if (enabled)
+            currencyUI().registerListener(mailListener);
+        else currencyUI().unregisterListener(mailListener);
     }
 
 }

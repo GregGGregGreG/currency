@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.component;
+package org.baddev.currency.ui.component.view;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.util.IndexedContainer;
@@ -15,6 +15,7 @@ import com.vaadin.ui.renderers.HtmlRenderer;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
+import org.baddev.currency.security.RoleEnum;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.Iso4217PropertyValGen;
@@ -22,18 +23,20 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.annotation.security.DeclareRoles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 
 import static org.baddev.currency.core.fetcher.entity.BaseExchangeRate.*;
-import static org.baddev.currency.ui.MyUI.myUI;
+import static org.baddev.currency.ui.CurrencyUI.currencyUI;
 
 /**
  * Created by IPotapchuk on 4/8/2016.
  */
 @SpringView(name = RatesView.NAME)
+@DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
 public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
 
     public  static final String NAME           = "rates";
@@ -87,7 +90,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     private Collection<BaseExchangeRate> fetchCurrentRates() {
         Collection<BaseExchangeRate> data;
         try {
-            data = myUI().fetcher().fetchCurrent();
+            data = currencyUI().fetcher().fetchCurrent();
         } catch (NoRatesFoundException e) {
             data = new ArrayList<>();
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
@@ -136,7 +139,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             if (df.getValue() != null) {
                 try {
                     Collection<BaseExchangeRate> rates =
-                            myUI().fetcher().fetchByDate(new LocalDate(df.getValue()));
+                            currencyUI().fetcher().fetchByDate(new LocalDate(df.getValue()));
                     refresh(rates, P_CCY, null);
                 } catch (NoRatesFoundException e) {
                     refresh(new ArrayList<>(), null, null);
@@ -158,7 +161,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisible(false, df, fetchBtn);
-                    refresh(myUI().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
+                    refresh(currencyUI().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisible(false, df, fetchBtn);
@@ -192,7 +195,7 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     @Override
     protected void customizeMenuBar(MenuBar menuBar) {
         menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
-                (MenuBar.Command) selectedItem -> myUI().getNavigator().navigateTo(ExchangesView.NAME));
+                (MenuBar.Command) selectedItem -> navigateTo(ExchangesView.NAME));
     }
 
 }

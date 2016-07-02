@@ -109,6 +109,11 @@
                                                     <type>org.joda.time.LocalDateTime</type>
                                                     <converter>org.baddev.currency.jooq.config.TimestampToLocalDateTimeConverter</converter>
                                                 </customType>
+                                                <customType>
+                                                    <name>Boolean</name>
+                                                    <type>java.lang.Boolean</type>
+                                                    <converter>org.baddev.currency.jooq.config.ByteToBooleanConverter</converter>
+                                                </customType>
                                             </customTypes>
                                             <forcedTypes>
                                                 <forcedType>
@@ -119,8 +124,17 @@
                                                     <name>LocalDateTime</name>
                                                     <types>.*TIMESTAMP.*</types>
                                                 </forcedType>
+                                                <forcedType>
+                                                    <name>Boolean</name>
+                                                    <types>.*TINYINT.*</types>
+                                                </forcedType>
                                             </forcedTypes>
                                         </database>
+                                        <!--<generate>-->
+                                            <!--<deprecated>false</deprecated>-->
+                                            <!--<daos>true</daos>-->
+                                            <!--<interfaces>true</interfaces>-->
+                                        <!--</generate>-->
                                         <target>
                                             <packageName>org.baddev.currency.jooq.schema</packageName>
                                             <directory>${project.basedir}/target/generated-sources/jooq</directory>

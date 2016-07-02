@@ -1,17 +1,24 @@
 package org.baddev.currency.ui.component.base;
 
+import com.google.common.eventbus.EventBus;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.server.FontAwesome;
 import com.vaadin.ui.AbstractOrderedLayout;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.VerticalLayout;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.ui.MyUI;
+import org.baddev.currency.security.SecurityUtils;
+import org.baddev.currency.ui.CurrencyUI;
+import org.baddev.currency.ui.component.window.SettingsWindow;
+import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.util.Arrays;
 
@@ -23,15 +30,22 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
     @Resource(name = "Iso4217Service")
     protected Iso4217CcyService iso4217Service;
 
+    @Autowired
+    protected EventBus bus;
+
+    @Autowired
+    private SettingsWindow settingsWindow;
+
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     @PostConstruct
-    public void init(){
+    public void init() {
         setSizeFull();
         addComponent(contentRoot());
+        log.debug("View created {}, {}", getClass().getName(), hashCode());
     }
 
-    protected VerticalLayout contentRoot(){
+    protected VerticalLayout contentRoot() {
         VerticalLayout content = new VerticalLayout();
         content.addComponent(menuBar());
         content.setSizeFull();
@@ -42,6 +56,12 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
         MenuBar menuBar = new MenuBar();
         menuBar.setWidth(100.0f, Unit.PERCENTAGE);
         menuBar.addStyleName("small");
+        String loggedIn = SecurityUtils.loggedInUser();
+        if (loggedIn != null) {
+            MenuBar.MenuItem parent = menuBar.addItem(loggedIn, FontAwesome.USER, null);
+            parent.addItem("Settings", FontAwesome.GEAR, selectedItem -> CurrencyUI.currencyUI().addWindow(settingsWindow));
+            parent.addItem("Logout", FontAwesome.SIGN_OUT, selectedItem -> bus.post(new LogoutEvent(this)));
+        }
         customizeMenuBar(menuBar);
         return menuBar;
     }
@@ -49,7 +69,7 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
     protected abstract void customizeMenuBar(MenuBar menuBar);
 
     protected final void navigateTo(String viewName) {
-        MyUI.myUI().getNavigator().navigateTo(viewName);
+        CurrencyUI.currencyUI().getNavigator().navigateTo(viewName);
     }
 
     public static void attachComponents(AbstractOrderedLayout l, Component... cs) {
@@ -71,4 +91,10 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
     public void enter(ViewChangeListener.ViewChangeEvent event) {
 
     }
+
+    @PreDestroy
+    public void destroy(){
+        log.debug("View destroyed {}", getClass().getName(), hashCode());
+    }
+
 }

@@ -91,7 +91,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
                             .cron(record.getCron())
                             .addedDate(record.getAddedDatetime())
                             .build();
-                    if (record.getActive().intValue() == 0)
+                    if (!record.getActive())
                         canceled.add(taskData.getId());
                     return taskData;
                 });
@@ -141,7 +141,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
             throw new IllegalArgumentException("Can't reschedule. Given task is already running");
         scheduleTask(reschedulingData);
         dsl.update(EXCHANGE_TASK)
-                .set(EXCHANGE_TASK.ACTIVE, Byte.parseByte("1"))
+                .set(EXCHANGE_TASK.ACTIVE, true)
                 .where(EXCHANGE_TASK.ID.eq(reschedulingData.getId()))
                 .execute();
     }
@@ -167,7 +167,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
             activeCronTasks.remove(taskData);
         }
         dsl.update(EXCHANGE_TASK)
-                .set(EXCHANGE_TASK.ACTIVE, Byte.parseByte("0"))
+                .set(EXCHANGE_TASK.ACTIVE, false)
                 .where(EXCHANGE_TASK.ID.eq(id))
                 .execute();
         return result;
@@ -180,7 +180,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
         activeCronTasks.clear();
         if (remove)
             dsl.deleteFrom(EXCHANGE_TASK).execute();
-        dsl.update(EXCHANGE_TASK).set(EXCHANGE_TASK.ACTIVE, Byte.parseByte("0")).execute();
+        dsl.update(EXCHANGE_TASK).set(EXCHANGE_TASK.ACTIVE, false).execute();
     }
 
     @Override

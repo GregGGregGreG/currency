@@ -14,11 +14,11 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.renderers.ClickableRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import org.baddev.currency.ui.util.StringValueRenderer;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Created by IPotapchuk on 4/5/2016.
@@ -132,14 +132,14 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
      * Adds button with dynamic string value to grid
      *
      * @param propertyId
-     * @param r          decides which value to render
+     * @param r          function which decides which value to render
      * @param listener
      */
-    protected void addGeneratedButton(String propertyId, StringValueRenderer r, ClickableRenderer.RendererClickListener listener) {
+    protected void addGeneratedButton(String propertyId, Function<Object, String> r, ClickableRenderer.RendererClickListener listener) {
         containerWrapper().addGeneratedProperty(propertyId, new PropertyValueGenerator<String>() {
             @Override
             public String getValue(Item item, Object itemId, Object propertyId) {
-                return r.render(itemId);
+                return r.apply(itemId);
             }
 
             @Override
@@ -154,11 +154,11 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         grid.getColumn(propId).setRenderer(new ButtonRenderer(listener));
     }
 
-    protected void addGeneratedStringProperty(String propertyId, boolean html, StringValueRenderer r) {
+    protected void addGeneratedStringProperty(String propertyId, boolean html, Function<Object, String> r) {
         containerWrapper().addGeneratedProperty(propertyId, new PropertyValueGenerator<String>() {
             @Override
             public String getValue(Item item, Object itemId, Object propertyId) {
-                return r.render(itemId);
+                return r.apply(itemId);
             }
 
             @Override

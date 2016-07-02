@@ -7,9 +7,9 @@ import java.util.Arrays;
 /**
  * Created by IPOTAPCHUK on 6/13/2016.
  */
-public final class ViewValidation {
+public final class ViewComponentValidation {
 
-    private ViewValidation() {
+    private ViewComponentValidation() {
     }
 
     public static boolean isValid(Field... f) {

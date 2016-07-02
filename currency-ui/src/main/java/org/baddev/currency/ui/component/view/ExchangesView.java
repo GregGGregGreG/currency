@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.component;
+package org.baddev.currency.ui.component.view;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Property;
@@ -18,7 +18,7 @@ import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
 import org.baddev.currency.core.fetcher.NoRatesFoundException;
 import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
 import org.baddev.currency.core.fetcher.entity.ExchangeRate;
-import org.baddev.currency.fetcher.other.Iso4217CcyService;
+import org.baddev.currency.security.RoleEnum;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DateToLocalDateTimeConverter;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
@@ -27,6 +27,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.annotation.security.DeclareRoles;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,13 +35,14 @@ import java.util.Collection;
 import java.util.Date;
 
 import static org.baddev.currency.core.exchanger.entity.ExchangeOperation.*;
-import static org.baddev.currency.ui.MyUI.myUI;
-import static org.baddev.currency.ui.validation.ViewValidation.isValid;
+import static org.baddev.currency.ui.CurrencyUI.currencyUI;
+import static org.baddev.currency.ui.validation.ViewComponentValidation.isValid;
 
 /**
  * Created by IPotapchuk on 4/8/2016.
  */
 @SpringView(name = ExchangesView.NAME)
+@DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
 public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
 
     public static final String NAME = "exchanges";
@@ -58,13 +60,12 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
     @Override
     public void init() {
         super.init();
-        setup(ExchangeOperation.class, myUI().exchangeDao().loadAll(), P_ID);
+        setup(ExchangeOperation.class, currencyUI().exchangeDao().loadAll(), P_ID);
 
         grid.setCellDescriptionGenerator(cell -> {
             if (cell.getPropertyId().equals(P_AM_CD) || cell.getPropertyId().equals(P_EXC_AM_CD))
-                return FormatUtils.formatCcyNamesList(
-                        iso4217Service.findCcyParamValues(Iso4217CcyService.Parameter.CCY_NM,
-                                Iso4217CcyService.Parameter.CCY, (String) cell.getValue())
+                return FormatUtils.formatCcyParamValuesList(
+                        iso4217Service.findCcyNamesByCode((String) cell.getValue())
                 );
             return "";
         });
@@ -83,8 +84,8 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
 
     @Override
     protected void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Rates", FontAwesome.DOLLAR, (MenuBar.Command) selectedItem -> myUI().getNavigator().navigateTo(RatesView.NAME));
-        menuBar.addItem("Scheduler", FontAwesome.GEARS, (MenuBar.Command) selectedItem -> myUI().getNavigator().navigateTo(SchedulerView.NAME));
+        menuBar.addItem("Rates", FontAwesome.DOLLAR, selectedItem -> navigateTo(RatesView.NAME));
+        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> navigateTo(SchedulerView.NAME));
     }
 
     @Override
@@ -120,7 +121,7 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
         exchDateF.addValueChangeListener((Property.ValueChangeListener) event -> {
             Collection<BaseExchangeRate> rates = new ArrayList<>();
             try {
-                rates = myUI().fetcher().fetchByDate(LocalDate.fromDateFields(exchDateF.getValue()));
+                rates = currencyUI().fetcher().fetchByDate(LocalDate.fromDateFields(exchDateF.getValue()));
             } catch (NoRatesFoundException e) {
                 Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
             }
@@ -171,8 +172,8 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
                     .ratesDate(LocalDate.fromDateFields(exchDateF.getValue()))
                     .amount((double) amountF.getConvertedValue())
                     .build();
-            myUI().exchanger().exchange(exc, ((Collection<ExchangeRate>) fromCcyChoiseF.getItemIds()));
-            refresh(myUI().exchangeDao().loadAll(), P_PERF_DT, SortDirection.DESCENDING);
+            currencyUI().exchanger().exchange(exc, ((Collection<ExchangeRate>) fromCcyChoiseF.getItemIds()));
+            refresh(currencyUI().exchangeDao().loadAll(), P_PERF_DT, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();
         });
