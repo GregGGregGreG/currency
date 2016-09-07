@@ -11,10 +11,8 @@ import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.*;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
@@ -26,11 +24,9 @@ import java.util.List;
  */
 @Configuration
 @ComponentScan("org.baddev.currency.fetcher")
+@ImportResource("classpath:jooq-daos-applicationContext.xml")
 @EnableAspectJAutoProxy
-//@PropertySources({
-//        @PropertySource("classpath:api_sources.properties"),
-//        @PropertySource("classpath:proxy.properties")
-//})
+@EnableTransactionManagement
 public class FetcherConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FetcherConfig.class);

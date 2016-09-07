@@ -14,7 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>org.baddev</groupId>
-            <artifactId>currency-notifier</artifactId>
+            <artifactId>currency-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -32,18 +32,14 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>dumbster</groupId>
             <artifactId>dumbster</artifactId>
-            <version>1.6</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

@@ -3,7 +3,7 @@ package org.baddev.currency.security;
 /**
  * Created by IPotapchuk on 6/30/2016.
  */
-public class SuchUserExistsException extends RuntimeException {
+public class SuchUserExistsException extends SignUpException {
 
     private static final String MSG_PART = "User with username \"%s\" already exists";
 

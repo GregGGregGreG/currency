@@ -4,6 +4,7 @@ import org.baddev.currency.security.UserDetailsServiceImpl;
 import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -13,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 @Configuration
+@ImportResource("classpath:security-applicationContext.xml")
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends GlobalMethodSecurityConfiguration {
 

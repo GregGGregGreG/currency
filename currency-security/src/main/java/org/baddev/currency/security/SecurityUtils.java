@@ -23,7 +23,7 @@ public final class SecurityUtils {
         return authentication != null && authentication.getAuthorities().contains(new SimpleGrantedAuthority(role));
     }
 
-    public static String loggedInUser() {
+    public static String loggedInUserName() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null)
             return ((UserDetails) auth.getPrincipal()).getUsername();

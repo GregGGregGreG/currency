@@ -27,12 +27,12 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
 
     protected Grid grid = new Grid();
 
-    protected void setup(Class<T> type, Collection<T> items, String... excludeProps) {
+    protected void setup(Class<T> type, Collection<T> items, Object... excludeProps) {
         setup(type, excludeProps);
         refresh(items, null, null);
     }
 
-    private void setup(Class<T> type, String... excludeProps) {
+    private void setup(Class<T> type, Object... excludeProps) {
         grid.setSizeFull();
         grid.setSelectionMode(Grid.SelectionMode.SINGLE);
         BeanItemContainer<T> container = new BeanItemContainer<>(type);
@@ -40,7 +40,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         grid.setContainerDataSource(wrapperContainer);
         grid.setImmediate(true);
         if (excludeProps.length != 0)
-            for (String prop : excludeProps) wrapperContainer.removeContainerProperty(prop);
+            for (Object prop : excludeProps) wrapperContainer.removeContainerProperty(prop);
     }
 
     private HorizontalLayout topBar() {
@@ -95,7 +95,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
      * @param sortPropId if null then there is no sort applied
      * @param direction  if null and {@code sortPropId} not null, then asc
      */
-    protected void refresh(Collection<T> data, String sortPropId, SortDirection direction) {
+    protected void refresh(Collection<T> data, Object sortPropId, SortDirection direction) {
         container().removeAllItems();
         container().addAll(data);
         grid.clearSortOrder();
@@ -105,6 +105,10 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
             else
                 grid.sort(sortPropId, SortDirection.ASCENDING);
         }
+    }
+
+    protected void refresh(Collection<T> data, Object sortPropId) {
+        refresh(data, sortPropId, SortDirection.ASCENDING);
     }
 
     protected void filter(String text) {

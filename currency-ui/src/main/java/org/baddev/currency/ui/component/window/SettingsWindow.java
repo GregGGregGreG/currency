@@ -8,8 +8,8 @@ import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.TabSheet;
 import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
+import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
-import org.baddev.currency.notifier.listener.NotificationListener;
 import org.baddev.currency.ui.CurrencyUI;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,7 +26,6 @@ public class SettingsWindow extends Window {
 
     @Autowired
     private ExchangeCompletionMailer mailListener;
-
 
     @PostConstruct
     public void init() {

@@ -30,7 +30,7 @@ public final class VaadinSessionUtils {
         Arrays.asList(attributes).forEach(attr -> getSession().setAttribute(attr, value));
     }
 
-    public static <T> void setSessionAttribute(Class<T> type, T value){
+    public static void setSessionAttribute(Class type, Object value){
         getSession().setAttribute(type, value);
     }
 

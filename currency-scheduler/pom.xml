@@ -19,17 +19,12 @@
         </dependency>
         <dependency>
             <groupId>org.baddev</groupId>
-            <artifactId>currency-notifier</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.baddev</groupId>
             <artifactId>currency-fetcher</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.baddev</groupId>
-            <artifactId>schema-gen</artifactId>
+            <artifactId>currency-exchanger</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -41,6 +36,5 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
     </dependencies>
-
 
 </project>

@@ -1,14 +1,16 @@
 package org.baddev.currency.scheduler.impl;
 
-import org.baddev.currency.core.exchanger.Exchanger;
-import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
-import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
-import org.baddev.currency.core.fetcher.NoRatesFoundException;
+import org.baddev.currency.core.event.ExchangeCompletionEvent;
+import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.core.notifier.Notifier;
+import org.baddev.currency.exchanger.ExchangerService;
+import org.baddev.currency.fetcher.ExchangeRateFetchingService;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
-import org.baddev.currency.notifier.Notifier;
-import org.baddev.currency.notifier.event.ExchangeCompletionEvent;
+import org.baddev.currency.jooq.schema.tables.daos.ExchangeTaskDao;
+import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
+import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.scheduler.ScheduledExchangeManager;
-import org.baddev.currency.scheduler.entity.CronExchangeTaskData;
 import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
@@ -35,37 +37,38 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     private static final Logger log = LoggerFactory.getLogger(ScheduledExchangeManagerImpl.class);
 
     @Autowired
-    private Exchanger exchanger;
+    private ExchangerService<ExchangeOperation, ExchangeRate> exchanger;
     @NBU
-    private ExchangeRateFetcher fetcher;
+    private ExchangeRateFetchingService<ExchangeRate> fetcher;
     @Autowired
     private DSLContext dsl;
     @Autowired
-    private ThreadPoolTaskScheduler scheduler;
+    private ThreadPoolTaskScheduler pool;
     @Autowired
     private Notifier notifier;
+    @Autowired
+    private ExchangeTaskDao exchangeTaskDao;
 
-    private Map<CronExchangeTaskData, ScheduledFuture> activeCronTasks = new HashMap<>();
+    private Set<ExchangeTask> exchangeTasks = new HashSet<>();
+    private Map<Long, ScheduledFuture> exchangeTasksJobsMap = new HashMap<>();
 
-    private class ExchangeTask implements Runnable {
+    private class ExchangeJob implements Runnable {
 
         private ExchangeOperation operation;
 
-        ExchangeTask(final CronExchangeTaskData taskData) {
-            operation = ExchangeOperation.newBuilder()
-                    .id(taskData.getId())
-                    .from(taskData.getFromCcy())
-                    .to(taskData.getToCcy())
-                    .amount(taskData.getAmount())
-                    .ratesDate(LocalDate.now())
-                    .build();
+        ExchangeJob(final ExchangeTask taskData) {
+            operation = new ExchangeOperation()
+                    .setFromCcy(taskData.getFromCcy())
+                    .setToCcy(taskData.getToCcy())
+                    .setFromAmount(taskData.getAmount())
+                    .setRatesDate(LocalDate.now());
         }
 
         @Override
         public void run() {
             boolean success = true;
             try {
-                exchanger.exchange(operation, fetcher.fetchCurrent());
+                operation = exchanger.exchange(operation, fetcher.fetchCurrent());
             } catch (NoRatesFoundException e) {
                 success = false;
                 log.error("Rates are not available", e);
@@ -80,117 +83,98 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     @PostConstruct
     @Transactional(readOnly = true)
     public void init() {
-        List<Long> canceled = new ArrayList<>();
-        List<CronExchangeTaskData> ops = dsl.selectFrom(EXCHANGE_TASK)
-                .fetch(record -> {
-                    CronExchangeTaskData taskData = CronExchangeTaskData.newBuilder()
-                            .id(record.getId())
-                            .fromCcy(record.getFromCcy())
-                            .toCcy(record.getToCcy())
-                            .amount(record.getAmount())
-                            .cron(record.getCron())
-                            .addedDate(record.getAddedDatetime())
-                            .build();
-                    if (!record.getActive())
-                        canceled.add(taskData.getId());
-                    return taskData;
-                });
-        if (!ops.isEmpty()) {
-            ops.forEach(op -> {
-                ScheduledFuture task = scheduleTask(op);
-                if (canceled.contains(op.getId()))
-                    task.cancel(false);
-            });
-            log.info("{} task(s) loaded and scheduled", ops.size());
-        }
+        List<ExchangeTask> tasks = exchangeTaskDao.findAll();
+        tasks.forEach(t -> {
+            ScheduledFuture task = scheduleTask(t);
+            if (!t.getActive())
+                task.cancel(false);
+        });
+        log.info("{} task(s) loaded and scheduled", tasks.size());
     }
 
     @Override
     @Transactional
-    public Long schedule(final CronExchangeTaskData taskData) {
+    public Long schedule(final ExchangeTask taskData) {
         if (taskData.getId() == null)
             throw new IllegalArgumentException("Id must be a non-null value");
-        persist(taskData);
+        if (taskData.getActive() == null || !taskData.getActive())
+            taskData.setActive(true);
+        exchangeTaskDao.insert(taskData);
         scheduleTask(taskData);
         return taskData.getId();
     }
 
-    private void persist(CronExchangeTaskData taskData) {
-        dsl.insertInto(EXCHANGE_TASK)
-                .set(EXCHANGE_TASK.ID, taskData.getId())
-                .set(EXCHANGE_TASK.AMOUNT, taskData.getAmount())
-                .set(EXCHANGE_TASK.ADDED_DATETIME, taskData.getAddedDate())
-                .set(EXCHANGE_TASK.TO_CCY, taskData.getToCcy())
-                .set(EXCHANGE_TASK.FROM_CCY, taskData.getFromCcy())
-                .set(EXCHANGE_TASK.CRON, taskData.getCron())
-                .execute();
-    }
-
-    private ScheduledFuture scheduleTask(final CronExchangeTaskData op) {
-        ScheduledFuture scheduled = scheduler.schedule(new ExchangeTask(op), new CronTrigger(op.getCron()));
-        activeCronTasks.put(op, scheduled);
+    private ScheduledFuture scheduleTask(final ExchangeTask op) {
+        ScheduledFuture scheduled = pool.schedule(new ExchangeJob(op), new CronTrigger(op.getCron()));
+        exchangeTasks.add(op);
+        exchangeTasksJobsMap.put(op.getId(), scheduled);
         return scheduled;
     }
 
     @Override
     @Transactional
-    public void reschedule(CronExchangeTaskData reschedulingData) {
-        if (!activeCronTasks.containsKey(reschedulingData))
+    public void reschedule(ExchangeTask reschedulingData) {
+        if (reschedulingData.getId() == null)
+            throw new IllegalArgumentException("Id must be a non-null value");
+        if (!exchangeTasks.contains(reschedulingData))
             throw new IllegalArgumentException("Can't reschedule unknown task");
-        if (!activeCronTasks.get(reschedulingData).isCancelled())
-            throw new IllegalArgumentException("Can't reschedule. Given task is already running");
+        if (!exchangeTasksJobsMap.containsKey(reschedulingData.getId()))
+            throw new IllegalStateException("Task data exists but linked job was not found");
+        ScheduledFuture task = exchangeTasksJobsMap.get(reschedulingData.getId());
+        if (!task.isCancelled())
+            throw new IllegalArgumentException("Can't reschedule. Given task is already scheduled");
+        if (reschedulingData.getActive() && task.isCancelled())
+            throw new IllegalStateException("Task's data state is not synchronized with pool task's state");
         scheduleTask(reschedulingData);
-        dsl.update(EXCHANGE_TASK)
-                .set(EXCHANGE_TASK.ACTIVE, true)
-                .where(EXCHANGE_TASK.ID.eq(reschedulingData.getId()))
-                .execute();
+        exchangeTaskDao.update(reschedulingData.setActive(true));
     }
 
     @Override
-    public void execute(CronExchangeTaskData taskData) {
-        scheduler.execute(new ExchangeTask(taskData));
+    public void execute(ExchangeTask taskData) {
+        pool.execute(new ExchangeJob(taskData));
     }
 
     @Override
     @Transactional
     public boolean cancel(Long id, boolean remove) {
-        Optional<CronExchangeTaskData> found = activeCronTasks.keySet().stream()
-                .filter(op -> Objects.equals(op.getId(), id))
-                .findFirst();
-        if (!found.isPresent())
-            return false;
-        CronExchangeTaskData taskData = found.get();
-        ScheduledFuture task = activeCronTasks.get(taskData);
+        ExchangeTask taskData = exchangeTasks.stream()
+                .filter(t -> t.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Task with id " + id + " not found"));
+        taskData.setActive(false);
+        ScheduledFuture task = exchangeTasksJobsMap.get(id);
         boolean result = task.cancel(false);
         if (remove) {
-            dsl.deleteFrom(EXCHANGE_TASK).where(EXCHANGE_TASK.ID.eq(id)).execute();
-            activeCronTasks.remove(taskData);
-        }
-        dsl.update(EXCHANGE_TASK)
-                .set(EXCHANGE_TASK.ACTIVE, false)
-                .where(EXCHANGE_TASK.ID.eq(id))
-                .execute();
+            exchangeTaskDao.deleteById(id);
+            result &= exchangeTasks.remove(taskData);
+            result &= exchangeTasksJobsMap.remove(id) != null;
+        } else exchangeTaskDao.update(taskData);
         return result;
     }
 
     @Override
     @Transactional
     public void cancelAll(boolean remove) {
-        activeCronTasks.values().forEach(t -> t.cancel(false));
-        activeCronTasks.clear();
+        exchangeTasksJobsMap.values().forEach(t -> t.cancel(false));
+        exchangeTasksJobsMap.clear();
+        exchangeTasks.clear();
         if (remove)
             dsl.deleteFrom(EXCHANGE_TASK).execute();
-        dsl.update(EXCHANGE_TASK).set(EXCHANGE_TASK.ACTIVE, false).execute();
+        else dsl.update(EXCHANGE_TASK).set(EXCHANGE_TASK.ACTIVE, false).execute();
     }
 
     @Override
-    public Map<CronExchangeTaskData, ScheduledFuture> getScheduledTasks() {
-        return activeCronTasks;
+    public Map<Long, ScheduledFuture> getJobsMap() {
+        return Collections.unmodifiableMap(exchangeTasksJobsMap);
+    }
+
+    public Collection<ExchangeTask> getExchangeTasks() {
+        return Collections.unmodifiableSet(exchangeTasks);
     }
 
     @Override
     public int getActiveCount() {
-        return activeCronTasks.size() - (int) activeCronTasks.values().stream().filter(Future::isCancelled).count();
+        return exchangeTasksJobsMap.size() - (int) exchangeTasksJobsMap.values().stream().filter(Future::isCancelled).count();
     }
 
 }

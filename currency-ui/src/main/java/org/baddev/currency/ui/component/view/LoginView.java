@@ -38,7 +38,7 @@ public class LoginView extends AbstractFormView implements Button.ClickListener 
 
     @Override
     public void buttonClick(Button.ClickEvent event) {
-        bus.post(new LoginEvent(this, new LoginData(userName.getValue(), password.getValue())));
+        facade().postEvent(new LoginEvent(this, new LoginData(userName.getValue(), password.getValue())));
     }
 
     @Override

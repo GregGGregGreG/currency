@@ -13,10 +13,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
         </dependency>
@@ -27,6 +23,18 @@
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq-codegen</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-dbcp</groupId>
+            <artifactId>commons-dbcp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -41,22 +49,37 @@
             <artifactId>spring-jdbc</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-        </dependency>
     </dependencies>
 
     <profiles>
         <profile>
+
             <id>schema-gen</id>
+
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>jitpack.io</id>
+                    <url>http://jitpack.io</url>
+                </pluginRepository>
+            </pluginRepositories>
+
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.github.regulate</groupId>
+                        <artifactId>jooq-codegen-pojo-extension</artifactId>
+                        <version>${codegen.pojo.ext.version}</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+
             <build>
                 <plugins>
                     <plugin>
@@ -95,6 +118,12 @@
                                         <password>${db.password}</password>
                                     </jdbc>
                                     <generator>
+                                        <!--<name>org.jooq.util.JavaGenerator</name>-->
+                                        <name>org.baddev.jooq.CustomGenerator</name>
+                                        <strategy>
+                                            <!--<name>org.baddev.jooq.CustomGeneratorStrategy</name>-->
+                                            <name>org.jooq.util.DefaultGeneratorStrategy</name>
+                                        </strategy>
                                         <database>
                                             <name>org.jooq.util.mysql.MySQLDatabase</name>
                                             <inputSchema>exchanger</inputSchema>
@@ -102,17 +131,22 @@
                                                 <customType>
                                                     <name>LocalDate</name>
                                                     <type>org.joda.time.LocalDate</type>
-                                                    <converter>org.baddev.currency.jooq.config.DateToLocalDateConverter</converter>
+                                                    <converter>
+                                                        org.baddev.currency.jooq.config.DateToLocalDateConverter
+                                                    </converter>
                                                 </customType>
                                                 <customType>
                                                     <name>LocalDateTime</name>
                                                     <type>org.joda.time.LocalDateTime</type>
-                                                    <converter>org.baddev.currency.jooq.config.TimestampToLocalDateTimeConverter</converter>
+                                                    <converter>
+                                                        org.baddev.currency.jooq.config.TimestampToLocalDateTimeConverter
+                                                    </converter>
                                                 </customType>
                                                 <customType>
                                                     <name>Boolean</name>
                                                     <type>java.lang.Boolean</type>
-                                                    <converter>org.baddev.currency.jooq.config.ByteToBooleanConverter</converter>
+                                                    <converter>org.baddev.currency.jooq.config.ByteToBooleanConverter
+                                                    </converter>
                                                 </customType>
                                             </customTypes>
                                             <forcedTypes>
@@ -130,11 +164,18 @@
                                                 </forcedType>
                                             </forcedTypes>
                                         </database>
-                                        <!--<generate>-->
-                                            <!--<deprecated>false</deprecated>-->
-                                            <!--<daos>true</daos>-->
-                                            <!--<interfaces>true</interfaces>-->
-                                        <!--</generate>-->
+                                        <generate>
+                                            <interfaces>true</interfaces>
+                                            <daos>true</daos>
+                                            <pojos>true</pojos>
+                                            <springAnnotations>true</springAnnotations>
+                                            <fluentSetters>true</fluentSetters>
+                                            <pojosToString>true</pojosToString>
+                                            <pojosEqualsAndHashCode>true</pojosEqualsAndHashCode>
+                                            <jpaAnnotations>true</jpaAnnotations>
+                                            <propertiesConstants>true</propertiesConstants>
+                                            <jaxbAnnotations>true</jaxbAnnotations>
+                                        </generate>
                                         <target>
                                             <packageName>org.baddev.currency.jooq.schema</packageName>
                                             <directory>${project.basedir}/target/generated-sources/jooq</directory>
@@ -149,27 +190,32 @@
                                 <artifactId>mysql-connector-java</artifactId>
                                 <version>${mysql.version}</version>
                             </dependency>
+                            <dependency>
+                                <groupId>com.github.regulate</groupId>
+                                <artifactId>jooq-codegen-pojo-extension</artifactId>
+                                <version>${codegen.pojo.ext.version}</version>
+                            </dependency>
                         </dependencies>
                     </plugin>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.7</version>
-                        <executions>
-                            <execution>
-                                <phase>generate-sources</phase>
-                                <configuration>
-                                    <target>
-                                        <move todir="src/main/java">
-                                            <fileset dir="target/generated-sources/jooq" includes="**/*.java" />
-                                        </move>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
+                    <!--<plugin>-->
+                        <!--<artifactId>maven-antrun-plugin</artifactId>-->
+                        <!--<version>1.7</version>-->
+                        <!--<executions>-->
+                            <!--<execution>-->
+                                <!--<phase>generate-sources</phase>-->
+                                <!--<configuration>-->
+                                    <!--<target>-->
+                                        <!--<move todir="src/main/java">-->
+                                            <!--<fileset dir="target/generated-sources/jooq" includes="**/*.java"/>-->
+                                        <!--</move>-->
+                                    <!--</target>-->
+                                <!--</configuration>-->
+                                <!--<goals>-->
+                                    <!--<goal>run</goal>-->
+                                <!--</goals>-->
+                            <!--</execution>-->
+                        <!--</executions>-->
+                    <!--</plugin>-->
                 </plugins>
             </build>
         </profile>

@@ -1,8 +1,8 @@
 package org.baddev.currency.ui.util;
 
 import com.vaadin.server.AbstractClientConnector;
+import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
-import org.baddev.currency.notifier.listener.NotificationListener;
 import org.baddev.currency.ui.CurrencyUI;
 
 import static org.baddev.currency.ui.CurrencyUI.currencyUI;

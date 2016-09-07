@@ -999,7 +999,7 @@
  */
 
 .v-vaadin-version:after {
-	content: "7.6.7";
+	content: "7.7.0";
 }
 
 .v-widget {
@@ -3098,21 +3098,20 @@ div.v-layout.v-horizontal.v-widget {
 	-ms-backface-visibility: hidden;
 	backface-visibility: hidden;
 	padding: 4px 4px;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
-	position: relative;
-	z-index: 1;
-}
-
-.mytheme .v-filterselect-suggestpopup [class$="suggestmenu"][style*="height"] {
 	-webkit-box-sizing: content-box;
 	-moz-box-sizing: content-box;
 	box-sizing: content-box;
+	position: relative;
+	z-index: 1;
+	display: block;
 }
 
 .mytheme .v-filterselect-suggestpopup table, .mytheme .v-filterselect-suggestpopup tbody, .mytheme .v-filterselect-suggestpopup tr, .mytheme .v-filterselect-suggestpopup td {
 	display: block;
+	width: 100%;
+	overflow-y: hidden;
+	float: left;
+	clear: both;
 }
 
 .mytheme .v-filterselect-suggestpopup .gwt-MenuItem {
@@ -3123,6 +3122,10 @@ div.v-layout.v-horizontal.v-widget {
 	font-weight: 400;
 	white-space: nowrap;
 	position: relative;
+	height: 27px;
+	box-sizing: border-box;
+	text-overflow: ellipsis;
+	overflow-x: hidden;
 }
 
 .mytheme .v-filterselect-suggestpopup .gwt-MenuItem:active:before {
@@ -9224,6 +9227,11 @@ div.v-layout.v-horizontal.v-widget {
 	display: inline;
 }
 
+.mytheme .v-on.v-disabled, .mytheme .v-off.v-disabled {
+	opacity: 0.5;
+	filter: alpha(opacity=50) ;
+}
+
 .mytheme .v-off:before {
 	visibility: hidden;
 }
@@ -10941,6 +10949,12 @@ div.v-layout.v-horizontal.v-widget {
 	content: "\f054";
 }
 
+.mytheme .v-select-twincol-error .v-select-twincol-options, .mytheme .v-select-twincol-error .v-select-twincol-selections {
+	border-color: #ed473b !important;
+	background: #fffbfb;
+	color: #6c2621;
+}
+
 .mytheme .v-select select {
 	border: 1px solid #c5c5c5;
 	background-color: #fafafa;
@@ -10967,6 +10981,12 @@ div.v-layout.v-horizontal.v-widget {
 .mytheme .v-select-select  + .v-textfield  + .v-nativebutton {
 	margin-top: 9px;
 	margin-left: 9px;
+}
+
+.mytheme .v-select-error .v-select-select {
+	border-color: #ed473b !important;
+	background: #fffbfb;
+	color: #6c2621;
 }
 
 .mytheme .v-calendar-header-day {
@@ -11409,6 +11429,11 @@ div.v-layout.v-horizontal.v-widget {
 	user-select: text;
 }
 
+.mytheme .v-label.v-disabled {
+	opacity: 0.5;
+	filter: alpha(opacity=50) ;
+}
+
 .mytheme .v-label-undef-w {
 	white-space: nowrap;
 }
@@ -11689,6 +11714,12 @@ div.v-layout.v-horizontal.v-widget {
 .mytheme .v-select-select  + .v-textfield  + .v-nativebutton {
 	margin-top: 9px;
 	margin-left: 9px;
+}
+
+.mytheme .v-select-error .v-select-select {
+	border-color: #ed473b !important;
+	background: #fffbfb;
+	color: #6c2621;
 }
 
 .mytheme .v-popupview {

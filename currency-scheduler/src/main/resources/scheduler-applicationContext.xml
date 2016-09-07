@@ -15,8 +15,8 @@
         <property name="waitForTasksToCompleteOnShutdown" value="${scheduler.pool.waitForTasksToCompleteOnShutdown}"/>
     </bean>
 
-    <bean id="notifier" class="org.baddev.currency.notifier.NotifierService"/>
+    <bean id="notifier" class="org.baddev.currency.core.notifier.NotifierService"/>
 
-    <import resource="classpath:jooq-applicationContext.xml"/>
+    <import resource="classpath:jooq-daos-applicationContext.xml"/>
 
 </beans>

@@ -1,6 +1,7 @@
 package org.baddev.currency.ui.security.event;
 
-import org.baddev.currency.notifier.event.BaseNotificationEvent;
+
+import org.baddev.currency.core.event.BaseNotificationEvent;
 
 /**
  * Created by IPotapchuk on 6/29/2016.

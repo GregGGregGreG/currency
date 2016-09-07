@@ -12,15 +12,16 @@ import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import org.baddev.currency.core.fetcher.NoRatesFoundException;
-import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
+import org.baddev.currency.core.exception.NoRatesFoundException;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
+import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.security.RoleEnum;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.Iso4217PropertyValGen;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.security.DeclareRoles;
@@ -29,26 +30,28 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 
-import static org.baddev.currency.core.fetcher.entity.BaseExchangeRate.*;
-import static org.baddev.currency.ui.CurrencyUI.currencyUI;
+import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate.*;
 
 /**
  * Created by IPotapchuk on 4/8/2016.
  */
 @SpringView(name = RatesView.NAME)
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
-public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
+public class RatesView extends AbstractCcyGridView<ExchangeRate> {
 
-    public  static final String NAME           = "rates";
+    public static final String NAME = "rates";
     private static final String P_GEN_CCY_NAME = Iso4217CcyService.Parameter.CCY_NM.fieldName();
 
     @Value("${min_date_nbu}")
     private String minDateVal;
 
-    private ComboBox       fetchOptCb = new ComboBox("Fetch:");
-    private PopupDateField df         = new PopupDateField("Select Date:");
-    private Button         fetchBtn   = new Button("Fetch");
-    private TextField      filter     = new TextField();
+    private ComboBox fetchOptCb = new ComboBox("Fetch:");
+    private PopupDateField df = new PopupDateField("Select Date:");
+    private Button fetchBtn = new Button("Fetch");
+    private TextField filter = new TextField();
+
+    @Autowired
+    private Iso4217CcyService iso4217CcyService;
 
     private interface FetchOption {
         String ALL = "All";
@@ -64,33 +67,33 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
     @Override
     public void init() {
         super.init();
-        Collection<BaseExchangeRate> data = fetchCurrentRates();
-        setup(BaseExchangeRate.class, data, P_ID);
+        Collection<ExchangeRate> data = fetchCurrentRates();
+        setup(ExchangeRate.class, data, P_ID);
 
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             containerWrapper().addGeneratedProperty(P_GEN_CCY_NAME,
                     new Iso4217PropertyValGen(Iso4217CcyService.Parameter.CCY_NM, Iso4217CcyService.Parameter.CCY,
-                            iso4217Service));
+                            iso4217CcyService));
         });
 
-        refresh(data, P_CCY, null);
+        refresh(data, P_CCY);
 
-        grid.getColumn(P_BASE_CD).setHeaderCaption("Base Currency Code");
+        grid.getColumn(P_BASE_CCY).setHeaderCaption("Base Currency Code");
         grid.getColumn(P_CCY).setHeaderCaption("Currency Code");
         grid.getColumn(P_GEN_CCY_NAME).setHeaderCaption("Currency Name");
         grid.getColumn(P_RATE).setConverter(new DoubleAmountToStringConverter());
         grid.getColumns().forEach(c -> {
-            if (!c.getPropertyId().equals(P_DATE))
+            if (!c.getPropertyId().equals(P_EXCHANGE_DATE))
                 c.setRenderer(new HtmlRenderer());
         });
 
-        grid.setColumnOrder(P_DATE, P_BASE_CD, P_CCY, P_GEN_CCY_NAME, P_RATE);
+        grid.setColumnOrder(P_EXCHANGE_DATE, P_BASE_CCY, P_CCY, P_GEN_CCY_NAME, P_RATE);
     }
 
-    private Collection<BaseExchangeRate> fetchCurrentRates() {
-        Collection<BaseExchangeRate> data;
+    private Collection<ExchangeRate> fetchCurrentRates() {
+        Collection<ExchangeRate> data;
         try {
-            data = currencyUI().fetcher().fetchCurrent();
+            data = facade().fetchCurrentRates();
         } catch (NoRatesFoundException e) {
             data = new ArrayList<>();
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
@@ -138,16 +141,14 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
         fetchBtn.addClickListener(event -> {
             if (df.getValue() != null) {
                 try {
-                    Collection<BaseExchangeRate> rates =
-                            currencyUI().fetcher().fetchByDate(new LocalDate(df.getValue()));
-                    refresh(rates, P_CCY, null);
+                    Collection<ExchangeRate> rates =
+                            facade().fetchRatesByDate(new LocalDate(df.getValue()));
+                    refresh(rates, P_CCY);
                 } catch (NoRatesFoundException e) {
                     refresh(new ArrayList<>(), null, null);
                     Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
                 }
-            } else {
-                Notification.show("Select date first", Notification.Type.WARNING_MESSAGE);
-            }
+            } else Notification.show("Select date first", Notification.Type.WARNING_MESSAGE);
         });
         fetchBtn.setImmediate(true);
 
@@ -161,11 +162,11 @@ public class RatesView extends AbstractCcyGridView<BaseExchangeRate> {
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisible(false, df, fetchBtn);
-                    refresh(currencyUI().rateDao().loadAll(), P_DATE, SortDirection.DESCENDING);
+                    refresh(facade().findAllRates(), P_EXCHANGE_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisible(false, df, fetchBtn);
-                    refresh(fetchCurrentRates(), P_CCY, null);
+                    refresh(fetchCurrentRates(), P_CCY);
                     break;
                 case FetchOption.CUST_DT:
                     toggleVisible(true, df, fetchBtn);

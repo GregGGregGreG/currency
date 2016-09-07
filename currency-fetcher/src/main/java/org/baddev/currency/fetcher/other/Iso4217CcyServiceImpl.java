@@ -1,6 +1,6 @@
 package org.baddev.currency.fetcher.other;
 
-import org.baddev.currency.core.ServiceException;
+import org.baddev.currency.core.exception.ServiceException;
 import org.baddev.currency.fetcher.other.entity.BaseIsoCcyEntry;
 import org.baddev.currency.fetcher.other.entity.IsoCcyEntry;
 import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntry;
@@ -31,7 +31,7 @@ public class Iso4217CcyServiceImpl implements Iso4217CcyService {
     private List<IsoCcyHistEntry> isoHistCcyEntries;
 
     @PostConstruct
-    public void postConstruct() {
+    public void init() {
         if (isoHistCcyEntries.isEmpty() || isoHistCcyEntries.isEmpty()) {
             String msg = "Currency info service is currently unavailable. Check web client config or try again later.";
             log.error(msg + " Details: [isoCurCcyEntries:{} entries], [isoHistCcyEntries:{} entries]'",

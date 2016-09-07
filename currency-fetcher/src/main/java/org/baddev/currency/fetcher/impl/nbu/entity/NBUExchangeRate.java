@@ -1,7 +1,7 @@
 package org.baddev.currency.fetcher.impl.nbu.entity;
 
-import org.baddev.currency.core.fetcher.entity.ExchangeRate;
-import org.baddev.currency.fetcher.impl.nbu.entity.adapters.LocalDateAdapter;
+import org.baddev.currency.core.adapter.LocalDateAdapter;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.joda.time.LocalDate;
 
 import javax.xml.bind.Unmarshaller;
@@ -13,7 +13,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  */
 @XmlRootElement(name = "currency")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class NBUExchangeRate implements ExchangeRate {
+public class NBUExchangeRate implements IExchangeRate {
 
     @XmlTransient
     public static final LocalDate HRIVNA_INTR_DATE = new LocalDate(1996, 9, 2);
@@ -39,20 +39,10 @@ public class NBUExchangeRate implements ExchangeRate {
     public NBUExchangeRate() {
     }
 
-    private NBUExchangeRate(Builder builder) {
-        setId(builder.id);
-        setLiterCode(builder.literCode);
-        setExchangeDate(builder.exchangeDate);
-        if(builder.baseLiterCode==null)
-            setDfBaseCcyCd();
-        else setBaseCcyCd(builder.baseLiterCode);
-        setDigitCode(builder.digitCode);
-        setName(builder.name);
-        setRate(builder.rate);
-    }
-
-    public static Builder newBuilder() {
-        return new Builder();
+    @Override
+    public IExchangeRate setId(Long value) {
+        this.id = value;
+        return this;
     }
 
     @Override
@@ -61,54 +51,42 @@ public class NBUExchangeRate implements ExchangeRate {
     }
 
     @Override
-    public void setId(Long id) {
-        this.id = id;
+    public IExchangeRate setBaseCcy(String value) {
+        this.baseLiterCode = value;
+        return this;
     }
 
+    @Override
     public String getBaseCcy() {
         return baseLiterCode;
     }
 
-    public void setBaseCcyCd(String baseLiterCode) {
-        this.baseLiterCode = baseLiterCode;
+    @Override
+    public IExchangeRate setCcy(String value) {
+        this.literCode = value;
+        return this;
     }
 
-    public void setDfBaseCcyCd() {
-        baseLiterCode = (exchangeDate.isAfter(HRIVNA_INTR_DATE)
-                || exchangeDate.isEqual(HRIVNA_INTR_DATE)) ? "UAH" : USSR_RUBLE_CD;
-    }
-
+    @Override
     public String getCcy() {
         return literCode;
     }
 
-    public void setLiterCode(String literCode) {
-        this.literCode = literCode;
+    @Override
+    public IExchangeRate setExchangeDate(LocalDate value) {
+        this.exchangeDate = value;
+        return this;
     }
 
     @Override
-    public LocalDate getDate() {
+    public LocalDate getExchangeDate() {
         return exchangeDate;
     }
 
-    public void setExchangeDate(LocalDate exchangeDate) {
-        this.exchangeDate = exchangeDate;
-    }
-
-    public int getDigitCode() {
-        return digitCode;
-    }
-
-    public void setDigitCode(int digitCode) {
-        this.digitCode = digitCode;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public IExchangeRate setRate(Double value) {
+        this.rate = value;
+        return this;
     }
 
     @Override
@@ -116,44 +94,36 @@ public class NBUExchangeRate implements ExchangeRate {
         return rate;
     }
 
-    public void setRate(double rate) {
-        this.rate = rate;
+    public int getDigitCode() {
+        return digitCode;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void from(IExchangeRate from) {
+        setId(from.getId());
+        setBaseCcy(from.getBaseCcy());
+        setCcy(from.getCcy());
+        setExchangeDate(from.getExchangeDate());
+        setRate(from.getRate());
+    }
+
+    @Override
+    public <E extends IExchangeRate> E into(E into) {
+        into.from(this);
+        return into;
+    }
+
+    private void setDfBaseCcyCd() {
+        baseLiterCode = (exchangeDate.isAfter(HRIVNA_INTR_DATE)
+                || exchangeDate.isEqual(HRIVNA_INTR_DATE)) ? "UAH" : USSR_RUBLE_CD;
     }
 
     void afterUnmarshal(Unmarshaller u, Object parent) {
         setDfBaseCcyCd();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        NBUExchangeRate that = (NBUExchangeRate) o;
-
-        if (digitCode != that.digitCode) return false;
-        if (Double.compare(that.rate, rate) != 0) return false;
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (!baseLiterCode.equals(that.baseLiterCode)) return false;
-        if (!literCode.equals(that.literCode)) return false;
-        if (!exchangeDate.equals(that.exchangeDate)) return false;
-        return name.equals(that.name);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result;
-        long temp;
-        result = id != null ? id.hashCode() : 0;
-        result = 31 * result + baseLiterCode.hashCode();
-        result = 31 * result + literCode.hashCode();
-        result = 31 * result + exchangeDate.hashCode();
-        result = 31 * result + digitCode;
-        result = 31 * result + name.hashCode();
-        temp = Double.doubleToLongBits(rate);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        return result;
     }
 
     @Override
@@ -168,57 +138,5 @@ public class NBUExchangeRate implements ExchangeRate {
         sb.append(", rate=").append(rate);
         sb.append('}');
         return sb.toString();
-    }
-
-    public static final class Builder {
-        private Long id;
-        private String literCode;
-        private LocalDate exchangeDate;
-        private String baseLiterCode;
-        private int digitCode;
-        private String name;
-        private double rate;
-
-        private Builder() {
-        }
-
-        public Builder id(Long val) {
-            id = val;
-            return this;
-        }
-
-        public Builder literCode(String val) {
-            literCode = val;
-            return this;
-        }
-
-        public Builder exchangeDate(LocalDate val) {
-            exchangeDate = val;
-            return this;
-        }
-
-        public Builder digitCode(int val) {
-            digitCode = val;
-            return this;
-        }
-
-        public Builder baseCurrencyCode(String val) {
-            literCode = val;
-            return this;
-        }
-
-        public Builder name(String val) {
-            name = val;
-            return this;
-        }
-
-        public Builder rate(double val) {
-            rate = val;
-            return this;
-        }
-
-        public NBUExchangeRate build() {
-            return new NBUExchangeRate(this);
-        }
     }
 }

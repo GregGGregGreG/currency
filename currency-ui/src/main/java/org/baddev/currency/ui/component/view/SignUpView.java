@@ -41,7 +41,7 @@ public class SignUpView extends AbstractFormView implements Button.ClickListener
 
     @Override
     public void buttonClick(Button.ClickEvent event) {
-        bus.post(new SignUpEvent(this,
+        facade().postEvent(new SignUpEvent(this,
                 new SignUpData(userName.getValue(), password.getValue(), firstName.getValue(), lastName.getValue())));
     }
 

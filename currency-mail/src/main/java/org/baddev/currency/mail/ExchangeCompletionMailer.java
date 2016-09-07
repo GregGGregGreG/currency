@@ -1,9 +1,9 @@
 package org.baddev.currency.mail;
 
-import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
-import org.baddev.currency.notifier.event.ExchangeCompletionEvent;
-import org.baddev.currency.notifier.event.NotificationEvent;
-import org.baddev.currency.notifier.listener.NotificationListener;
+import org.baddev.currency.core.event.ExchangeCompletionEvent;
+import org.baddev.currency.core.event.NotificationEvent;
+import org.baddev.currency.core.listener.NotificationListener;
+import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,9 +38,9 @@ public class ExchangeCompletionMailer implements NotificationListener {
                 ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
                 String exchInfo = String.format("Exchange task %d completed. %.2f %s <> %.2f %s.",
                         operation.getId(),
-                        operation.getAmount(),
+                        operation.getFromAmount(),
                         operation.getFromCcy(),
-                        operation.getExchangedAmount(),
+                        operation.getToAmount(),
                         operation.getToCcy());
                 SimpleMailMessage msg = new SimpleMailMessage(template);
                 msg.setTo("ilya_potapchuk@mail.ru");

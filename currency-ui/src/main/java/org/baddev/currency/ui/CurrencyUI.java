@@ -1,6 +1,5 @@
 package org.baddev.currency.ui;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.vaadin.annotations.*;
 import com.vaadin.navigator.Navigator;
@@ -12,23 +11,14 @@ import com.vaadin.spring.navigator.SpringViewProvider;
 import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.core.exchanger.Exchanger;
-import org.baddev.currency.core.exchanger.entity.ExchangeOperation;
-import org.baddev.currency.core.fetcher.ExchangeRateFetcher;
-import org.baddev.currency.core.fetcher.entity.BaseExchangeRate;
-import org.baddev.currency.dao.exchanger.ExchangeOperationDao;
-import org.baddev.currency.dao.fetcher.ExchangeRateDao;
-import org.baddev.currency.fetcher.impl.nbu.NBU;
-import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.mail.ExchangeCompletionMailer;
-import org.baddev.currency.notifier.Notifier;
-import org.baddev.currency.notifier.event.ExchangeCompletionEvent;
-import org.baddev.currency.notifier.event.NotificationEvent;
-import org.baddev.currency.notifier.listener.NotificationListener;
-import org.baddev.currency.scheduler.ScheduledExchangeManager;
+import org.baddev.currency.core.event.ExchangeCompletionEvent;
+import org.baddev.currency.core.event.NotificationEvent;
+import org.baddev.currency.core.listener.NotificationListener;
+import org.baddev.currency.facade.UserServicesFacade;
+import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
+import org.baddev.currency.security.RoleEnum;
 import org.baddev.currency.security.SecurityUtils;
-import org.baddev.currency.security.UserDetails;
-import org.baddev.currency.security.service.SecurityService;
 import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.RatesView;
 import org.baddev.currency.ui.security.entity.LoginData;
@@ -48,7 +38,7 @@ import javax.servlet.annotation.WebListener;
 import javax.servlet.annotation.WebServlet;
 
 import static org.baddev.currency.security.SecurityUtils.isLoggedIn;
-import static org.baddev.currency.security.SecurityUtils.loggedInUser;
+import static org.baddev.currency.security.SecurityUtils.loggedInUserName;
 import static org.baddev.currency.ui.util.AppSettingsUtils.initializeSettings;
 import static org.baddev.currency.ui.util.AppSettingsUtils.toggleUINotifications;
 import static org.baddev.currency.ui.util.NotificationUtils.*;
@@ -64,45 +54,11 @@ public class CurrencyUI extends UI implements NotificationListener {
 
     @Autowired
     private SpringViewProvider viewProvider;
-    @NBU
-    private ExchangeRateFetcher<BaseExchangeRate> fetcher;
     @Autowired
-    private Exchanger exchanger;
-    @Autowired
-    private ExchangeOperationDao exchangeDao;
-    @Autowired
-    private ExchangeRateDao rateDao;
-    @Autowired
-    private ScheduledExchangeManager scheduler;
-    @Autowired
-    private Notifier notifier;
-    @Autowired
-    private EventBus bus;
-    @Autowired
-    private SecurityService security;
-    @Autowired
-    private ExchangeCompletionMailer mailer;
-    @Autowired
-    private Iso4217CcyService iso4217CcyService;
+    private UserServicesFacade facade;
 
-    public ExchangeRateFetcher<BaseExchangeRate> fetcher() {
-        return fetcher;
-    }
-
-    public Exchanger exchanger() {
-        return exchanger;
-    }
-
-    public ExchangeOperationDao exchangeDao() {
-        return exchangeDao;
-    }
-
-    public ExchangeRateDao rateDao() {
-        return rateDao;
-    }
-
-    public ScheduledExchangeManager scheduler() {
-        return scheduler;
+    public UserServicesFacade servicesFacade(){
+        return facade;
     }
 
     public static CurrencyUI currencyUI() {
@@ -110,11 +66,11 @@ public class CurrencyUI extends UI implements NotificationListener {
     }
 
     public void registerListener(NotificationListener l) {
-        notifier.subscribe(l);
+        facade.notifierSubscribe(l);
     }
 
     public void unregisterListener(NotificationListener l) {
-        notifier.unsubscribe(l);
+        facade.notifierUnsubscribe(l);
     }
 
     @Override
@@ -131,22 +87,21 @@ public class CurrencyUI extends UI implements NotificationListener {
     public <T extends NotificationEvent> void onNotificationEventReceived(T e) {
         if (e instanceof ExchangeCompletionEvent) {
             ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
-            //push notification to UI
             access(() -> {
                 String fromCcyNames = FormatUtils.formatCcyParamValuesList(
-                        iso4217CcyService.findCcyNamesByCode(operation.getFromCcy())
+                        facade.findCcyNamesByCode(operation.getFromCcy())
                 );
                 String toCcyNames = FormatUtils.formatCcyParamValuesList(
-                        iso4217CcyService.findCcyNamesByCode(operation.getToCcy())
+                        facade.findCcyNamesByCode(operation.getToCcy())
                 );
                 String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
-                        operation.getAmount(),
+                        operation.getFromAmount(),
                         fromCcyNames,
                         operation.getFromCcy(),
-                        operation.getExchangedAmount(),
+                        operation.getToAmount(),
                         toCcyNames,
                         operation.getToCcy());
-                notifyTray(String.format("Exchange task %d completion", operation.getId()), exchInfo);
+                notifyTray("Exchange task completion", exchInfo);
             });
         }
     }
@@ -154,7 +109,7 @@ public class CurrencyUI extends UI implements NotificationListener {
     @Subscribe
     private void login(LoginEvent event) {
         try {
-            security.authenticate(
+            facade.authenticate(
                     event.getEventData().getUsername(), event.getEventData().getPassword());
             VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
             getNavigator().navigateTo(RatesView.NAME);
@@ -166,7 +121,7 @@ public class CurrencyUI extends UI implements NotificationListener {
 
     @Subscribe
     private void logout(LogoutEvent event) {
-        String userName = SecurityUtils.loggedInUser();
+        String userName = SecurityUtils.loggedInUserName();
         getSession().close();
         VaadinService.getCurrentRequest().getWrappedSession().invalidate();
         getPage().reload();
@@ -180,12 +135,14 @@ public class CurrencyUI extends UI implements NotificationListener {
     @Subscribe
     private void signUp(SignUpEvent event) {
         SignUpData data = event.getEventData();
-        UserDetails details = new UserDetails(data.getFirstName(), data.getLastName());
+        UserDetails details = new UserDetails()
+                .setFirstName(data.getFirstName())
+                .setLastName(data.getLastName());
         try {
-            security.signUp(data.getUsername(), data.getPassword(), details);
+            facade.signUp(data.getUsername(), data.getPassword(), details, RoleEnum.USER);
             login(new LoginEvent(this, new LoginData(data.getUsername(), data.getPassword())));
             notifySuccess("Account Creation",
-                    String.format("Account \"%s\" successfully created", loggedInUser()));
+                    String.format("Account \"%s\" successfully created", loggedInUserName()));
         } catch (Exception e) {
             log.debug("Sign up error", e);
             notifyFailure("Sign Up Error", e.getMessage());
@@ -195,13 +152,13 @@ public class CurrencyUI extends UI implements NotificationListener {
     @Override
     public void attach() {
         super.attach();
-        bus.register(this);
+        facade.busRegister(this);
     }
 
     @Override
     public void detach() {
         toggleUINotifications(false);
-        bus.unregister(this);
+        facade.busUnregister(this);
         super.detach();
     }
 
