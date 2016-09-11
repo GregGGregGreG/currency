@@ -1,4 +1,4 @@
-package org.baddev.currency.jooq.config;
+package org.baddev.currency.jooq.converter;
 
 import org.joda.time.LocalDateTime;
 import org.jooq.Converter;

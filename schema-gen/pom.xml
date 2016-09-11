@@ -132,20 +132,20 @@
                                                     <name>LocalDate</name>
                                                     <type>org.joda.time.LocalDate</type>
                                                     <converter>
-                                                        org.baddev.currency.jooq.config.DateToLocalDateConverter
+                                                        org.baddev.currency.jooq.converter.DateToLocalDateConverter
                                                     </converter>
                                                 </customType>
                                                 <customType>
                                                     <name>LocalDateTime</name>
                                                     <type>org.joda.time.LocalDateTime</type>
                                                     <converter>
-                                                        org.baddev.currency.jooq.config.TimestampToLocalDateTimeConverter
+                                                        org.baddev.currency.jooq.converter.TimestampToLocalDateTimeConverter
                                                     </converter>
                                                 </customType>
                                                 <customType>
                                                     <name>Boolean</name>
                                                     <type>java.lang.Boolean</type>
-                                                    <converter>org.baddev.currency.jooq.config.ByteToBooleanConverter
+                                                    <converter>org.baddev.currency.jooq.converter.ByteToBooleanConverter
                                                     </converter>
                                                 </customType>
                                             </customTypes>

@@ -18,7 +18,7 @@
     </bean>
 
     <!-- Configure jOOQ's TransactionProvider as a proxy to Spring's transaction manager -->
-    <bean id="transactionProvider" class="org.baddev.currency.jooq.config.SpringTransactionProvider">
+    <bean id="transactionProvider" class="org.baddev.currency.jooq.transaction.SpringTransactionProvider">
         <property name="txMgr" ref="transactionManager"/>
     </bean>
 
@@ -34,7 +34,7 @@
     </bean>
 
     <!-- Configure the DSL object, optionally overriding jOOQ Exceptions with Spring Exceptions -->
-    <bean id="exceptionTranslator" class="org.baddev.currency.jooq.config.JOOQ2SpringExceptionTranslator"/>
+    <bean id="exceptionTranslator" class="org.baddev.currency.jooq.JOOQ2SpringExceptionTranslator"/>
 
     <bean id="config" class="org.jooq.impl.DefaultConfiguration">
         <property name="SQLDialect">

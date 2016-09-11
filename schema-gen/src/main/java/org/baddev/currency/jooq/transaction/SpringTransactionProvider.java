@@ -1,4 +1,4 @@
-package org.baddev.currency.jooq.config;
+package org.baddev.currency.jooq.transaction;
 
 import org.jooq.TransactionContext;
 import org.jooq.TransactionProvider;
