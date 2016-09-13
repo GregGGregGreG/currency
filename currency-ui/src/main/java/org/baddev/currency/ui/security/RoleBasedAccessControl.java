@@ -26,16 +26,16 @@ public class RoleBasedAccessControl implements ViewAccessControl {
 
     @Override
     public boolean isAccessGranted(UI ui, String beanName) {
-        final SpringView viewAnt = ctx.findAnnotationOnBean(beanName, SpringView.class);
-        final DeclareRoles rolesAnt = ctx.findAnnotationOnBean(beanName, DeclareRoles.class);
+        final SpringView viewAnot = ctx.findAnnotationOnBean(beanName, SpringView.class);
+        final DeclareRoles rolesAnot = ctx.findAnnotationOnBean(beanName, DeclareRoles.class);
 
-        if (viewAnt == null)
+        if (viewAnot == null)
             return false;
 
-        if (rolesAnt == null) {
+        if (rolesAnot == null) {
             return true;
         } else {
-            String[] grantedToRoles = rolesAnt.value();
+            String[] grantedToRoles = rolesAnot.value();
             List<String> actualRoles;
             Authentication current = SecurityContextHolder.getContext().getAuthentication();
             if (current != null) {

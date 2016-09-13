@@ -1,16 +1,15 @@
 package org.baddev.currency.scheduler.impl;
 
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.exception.NoRatesFoundException;
 import org.baddev.currency.core.notifier.Notifier;
 import org.baddev.currency.exchanger.ExchangerService;
-import org.baddev.currency.fetcher.ExchangeRateFetchingService;
+import org.baddev.currency.fetcher.RateFetcherService;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
-import org.baddev.currency.jooq.schema.tables.daos.ExchangeTaskDao;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
-import org.baddev.currency.scheduler.ScheduledExchangeManager;
+import org.baddev.currency.scheduler.ExchangeTaskScheduler;
+import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
 import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
@@ -32,14 +31,14 @@ import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
  * Created by IPOTAPCHUK on 6/8/2016.
  */
 @Service
-public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
+public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
 
-    private static final Logger log = LoggerFactory.getLogger(ScheduledExchangeManagerImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(ExchangeTaskSchedulerImpl.class);
 
     @Autowired
     private ExchangerService<ExchangeOperation, ExchangeRate> exchanger;
     @NBU
-    private ExchangeRateFetchingService<ExchangeRate> fetcher;
+    private RateFetcherService<ExchangeRate> fetcher;
     @Autowired
     private DSLContext dsl;
     @Autowired
@@ -47,7 +46,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     @Autowired
     private Notifier notifier;
     @Autowired
-    private ExchangeTaskDao exchangeTaskDao;
+    private ExchangeTaskService<ExchangeTask> exchangeTaskService;
 
     private Set<ExchangeTask> exchangeTasks = new HashSet<>();
     private Map<Long, ScheduledFuture> exchangeTasksJobsMap = new HashMap<>();
@@ -58,6 +57,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
 
         ExchangeJob(final ExchangeTask taskData) {
             operation = new ExchangeOperation()
+                    .setUserId(taskData.getUserId())
                     .setFromCcy(taskData.getFromCcy())
                     .setToCcy(taskData.getToCcy())
                     .setFromAmount(taskData.getAmount())
@@ -69,9 +69,9 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
             boolean success = true;
             try {
                 operation = exchanger.exchange(operation, fetcher.fetchCurrent());
-            } catch (NoRatesFoundException e) {
+            } catch (Exception e) {
                 success = false;
-                log.error("Rates are not available", e);
+                log.error("Error while performing exchange", e);
             } finally {
                 if (!notifier.getSubscribers().isEmpty())
                     notifier.doNotify(new ExchangeCompletionEvent(this, operation, success));
@@ -83,7 +83,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     @PostConstruct
     @Transactional(readOnly = true)
     public void init() {
-        List<ExchangeTask> tasks = exchangeTaskDao.findAll();
+        Collection<ExchangeTask> tasks = exchangeTaskService.findAll();
         tasks.forEach(t -> {
             ScheduledFuture task = scheduleTask(t);
             if (!t.getActive())
@@ -95,12 +95,10 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
     @Override
     @Transactional
     public Long schedule(final ExchangeTask taskData) {
-        if (taskData.getId() == null)
-            throw new IllegalArgumentException("Id must be a non-null value");
         if (taskData.getActive() == null || !taskData.getActive())
             taskData.setActive(true);
-        exchangeTaskDao.insert(taskData);
-        scheduleTask(taskData);
+        ExchangeTask saved = exchangeTaskService.saveReturning(taskData);
+        scheduleTask(saved);
         return taskData.getId();
     }
 
@@ -126,7 +124,7 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
         if (reschedulingData.getActive() && task.isCancelled())
             throw new IllegalStateException("Task's data state is not synchronized with pool task's state");
         scheduleTask(reschedulingData);
-        exchangeTaskDao.update(reschedulingData.setActive(true));
+        exchangeTaskService.update(reschedulingData.setActive(true));
     }
 
     @Override
@@ -145,10 +143,10 @@ public class ScheduledExchangeManagerImpl implements ScheduledExchangeManager {
         ScheduledFuture task = exchangeTasksJobsMap.get(id);
         boolean result = task.cancel(false);
         if (remove) {
-            exchangeTaskDao.deleteById(id);
+            exchangeTaskService.deleteById(id);
             result &= exchangeTasks.remove(taskData);
             result &= exchangeTasksJobsMap.remove(id) != null;
-        } else exchangeTaskDao.update(taskData);
+        } else exchangeTaskService.update(taskData);
         return result;
     }
 

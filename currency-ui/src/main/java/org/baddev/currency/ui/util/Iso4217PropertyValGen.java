@@ -7,16 +7,17 @@ import com.vaadin.data.util.filter.Or;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.util.filter.UnsupportedFilterException;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
+import org.baddev.currency.fetcher.other.IsoEntityParam;
 
 import java.util.List;
 
 public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
 
-    private final Iso4217CcyService.Parameter param;
-    private final Iso4217CcyService.Parameter keyParam;
+    private final IsoEntityParam param;
+    private final IsoEntityParam keyParam;
     private final Iso4217CcyService           service;
 
-    public Iso4217PropertyValGen(Iso4217CcyService.Parameter param, Iso4217CcyService.Parameter keyParam,
+    public Iso4217PropertyValGen(IsoEntityParam param, IsoEntityParam keyParam,
                                  Iso4217CcyService service) {
         this.service = service;
         this.param = param;
@@ -34,10 +35,10 @@ public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
     public Container.Filter modifyFilter(Container.Filter filter) throws UnsupportedFilterException {
         if (filter instanceof SimpleStringFilter) {
             SimpleStringFilter f = (SimpleStringFilter) filter;
-            String refParam = Iso4217CcyService.Parameter.CCY.fieldName();
+            String refParam = IsoEntityParam.CCY.fieldName();
             List<String> refParamValues = service.findCcyParamValues(
-                    Iso4217CcyService.Parameter.CCY,
-                    Iso4217CcyService.Parameter.find(f.getPropertyId().toString()),
+                    IsoEntityParam.CCY,
+                    IsoEntityParam.find(f.getPropertyId().toString()),
                     f.getFilterString()
             );
             if (refParamValues.size() > 0)

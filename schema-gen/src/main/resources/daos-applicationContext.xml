@@ -7,6 +7,4 @@
 
     <context:component-scan base-package="org.baddev.currency.jooq.schema.tables.daos"/>
 
-    <import resource="jooq-applicationContext.xml"/>
-
 </beans>

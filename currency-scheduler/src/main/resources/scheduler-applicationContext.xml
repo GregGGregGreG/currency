@@ -17,6 +17,4 @@
 
     <bean id="notifier" class="org.baddev.currency.core.notifier.NotifierService"/>
 
-    <import resource="classpath:jooq-daos-applicationContext.xml"/>
-
 </beans>

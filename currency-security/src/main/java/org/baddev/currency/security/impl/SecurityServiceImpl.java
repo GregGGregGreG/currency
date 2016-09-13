@@ -1,4 +1,4 @@
-package org.baddev.currency.security.service.impl;
+package org.baddev.currency.security.impl;
 
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDetailsDao;
@@ -8,9 +8,9 @@ import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.UserRole;
 import org.baddev.currency.jooq.schema.tables.records.UserRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserUserRoleRecord;
+import org.baddev.currency.security.SecurityService;
 import org.baddev.currency.security.SuchUserExistsException;
 import org.baddev.currency.security.UserRoleNotFoundException;
-import org.baddev.currency.security.service.SecurityService;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -94,7 +94,7 @@ public class SecurityServiceImpl implements SecurityService {
                         .collect(Collectors.toList()))
                         .execute();
             }
-        } else throw new UserRoleNotFoundException(null);
+        } else throw new UserRoleNotFoundException();
 
     }
 

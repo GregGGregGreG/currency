@@ -15,14 +15,21 @@ import com.vaadin.ui.themes.ValoTheme;
 import net.redhogs.cronparser.CronExpressionDescriptor;
 import net.redhogs.cronparser.Options;
 import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.fetcher.RateFetcherService;
+import org.baddev.currency.fetcher.impl.nbu.NBU;
+import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
+import org.baddev.currency.scheduler.ExchangeTaskScheduler;
+import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
 import org.baddev.currency.security.RoleEnum;
+import org.baddev.currency.security.user.IdentityUser;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.FormatUtils;
 import org.baddev.currency.ui.validation.CronValidator;
 import org.joda.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.security.DeclareRoles;
 import java.text.ParseException;
@@ -30,7 +37,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask.*;
-import static org.baddev.currency.ui.validation.ViewComponentValidation.isValid;
+import static org.baddev.currency.security.SecurityUtils.getUserDetails;
+import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
 
 /**
  * Created by IPOTAPCHUK on 6/9/2016.
@@ -54,44 +62,54 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
 
     private Grid.FooterRow footer = grid.prependFooterRow();
 
+    @Autowired
+    private ExchangeTaskService<ExchangeTask> exchanger;
+    @Autowired
+    private ExchangeTaskScheduler scheduler;
+    @Autowired
+    private Iso4217CcyService ccyService;
+    @NBU
+    private RateFetcherService<ExchangeRate> fetcher;
+
     @Override
     public void init() {
         super.init();
 
-        setup(ExchangeTask.class, facade().getExchangeTasks(), P_ID);
+        setup(ExchangeTask.class,
+                exchanger.findForUser(getUserDetails(IdentityUser.class).getId()),
+                P_ID, P_USER_ID);
 
-        //footer refresh
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             footer.getCell(P_GEN_RMV_BTN).setHtml("<b>Total: " + grid.getContainerDataSource().size() + "</b>");
-            footer.getCell(P_ACTIVE).setHtml("<b>Active: " + facade().getActiveTasksCount() + "</b>");
+            footer.getCell(P_ACTIVE).setHtml("<b>Active: " + scheduler.getActiveCount() + "</b>");
         });
 
         addGeneratedButton(P_GEN_EXEC_BTN, "Execute", e -> {
-            facade().executeTask((ExchangeTask) e.getItemId());
+            scheduler.execute((ExchangeTask) e.getItemId());
             log.debug("Task {} executed manually", ((ExchangeTask) e.getItemId()).getId());
         });
 
-        addGeneratedButton(P_GEN_MNG_BTN, itemId -> ((ExchangeTask)itemId).getActive() ? "Cancel" : "Schedule",
+        addGeneratedButton(P_GEN_MNG_BTN, itemId -> ((ExchangeTask) itemId).getActive() ? "Cancel" : "Schedule",
                 event -> {
                     ExchangeTask taskData = (ExchangeTask) event.getItemId();
                     if (!taskData.getActive()) {
-                        facade().rescheduleTask(taskData);
+                        scheduler.reschedule(taskData);
                         log.debug("Exchange task {} has been rescheduled", taskData.getId());
                     } else {
-                        facade().cancelTask(taskData.getId(), false);
+                        scheduler.cancel(taskData.getId(), false);
                         log.debug("Exchange task {} has been canceled", taskData.getId());
                     }
-                    refresh(facade().findExchangeTasks(), P_ID, SortDirection.DESCENDING);
+                    refresh(exchanger.findForUser(getUserDetails(IdentityUser.class).getId()),
+                            P_ID, SortDirection.DESCENDING);
                 }
         );
 
         addGeneratedButton(P_GEN_RMV_BTN, "Remove", e -> {
-            facade().cancelTask(((ExchangeTask) e.getItemId()).getId(), true);
+            scheduler.cancel(((ExchangeTask) e.getItemId()).getId(), true);
             grid.getContainerDataSource().removeItem(e.getItemId());
             log.debug("Exchange task {} was removed", ((ExchangeTask) e.getItemId()).getId());
         });
 
-        //description for cron an ccy cells
         grid.setCellDescriptionGenerator(cell -> {
             Object propId = cell.getPropertyId();
             if (P_CRON.equals(propId))
@@ -102,10 +120,9 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
                     log.error(msg, e);
                     Notification.show(msg, Notification.Type.ERROR_MESSAGE);
                 }
-            else if (P_FROM_CCY.equals(propId)
-                    || (P_TO_CCY).equals(propId))
+            else if (P_FROM_CCY.equals(propId) || (P_TO_CCY).equals(propId))
                 return FormatUtils.formatCcyParamValuesList(
-                        facade().findCcyNamesByCode((String) cell.getValue())
+                        ccyService.findCcyNamesByCode((String) cell.getValue())
                 );
             return "";
         });
@@ -119,7 +136,8 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
         grid.getColumn(P_FROM_CCY).setHeaderCaption("From");
         grid.getColumn(P_TO_CCY).setHeaderCaption("To");
         grid.getColumn(P_AMOUNT).setRenderer(new HtmlRenderer(), new DoubleAmountToStringConverter());
-        grid.setColumnOrder(P_ACTIVE,
+        grid.setColumnOrder(
+                P_ACTIVE,
                 P_ADDED_DATETIME,
                 P_FROM_CCY,
                 P_TO_CCY,
@@ -127,7 +145,8 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
                 P_CRON,
                 P_GEN_EXEC_BTN,
                 P_GEN_MNG_BTN,
-                P_GEN_RMV_BTN);
+                P_GEN_RMV_BTN
+        );
         grid.sort(P_ID, SortDirection.DESCENDING);
     }
 
@@ -142,10 +161,10 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
     @Override
     protected void customizeTopBar(HorizontalLayout topBar) {
         Collection<ExchangeRate> rates;
-        rates = facade().findLastRates();
+        rates = fetcher.findLast();
         if (rates.isEmpty())
             try {
-                rates = facade().fetchCurrentRates();
+                rates = fetcher.fetchCurrent();
             } catch (NoRatesFoundException e) {
                 Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
             }
@@ -180,18 +199,18 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
         amountF.addValidator(new DoubleRangeValidator("Allowed range is from 0 to 9.9 billions", 0d, 9999999999d));
         amountF.setMaxLength(10);
         amountF.addValueChangeListener((Property.ValueChangeListener) event -> {
-            if (isValid(amountF)) {
+            if (isAllValid(amountF)) {
                 if (!toCcyChoiseF.isEnabled() && !fromCcyChoiseF.isEnabled()) {
                     activateCcyCbs();
                     resetBtn.setEnabled(true);
                 } else if (cronF.isEnabled()) {
-                    if (isValid(cronF))
+                    if (isAllValid(cronF))
                         activateSchBtn();
                     else {
                         deactivateSchBtn();
                         cronF.focus();
                     }
-                } else if (isValid(toCcyChoiseF, fromCcyChoiseF)) {
+                } else if (isAllValid(toCcyChoiseF, fromCcyChoiseF)) {
                     cronF.setEnabled(true);
                     cronF.focus();
                 }
@@ -203,8 +222,8 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
         cronF.addValidator(new CronValidator("Cron expression is invalid"));
         cronF.setMaxLength(20);
         cronF.addValueChangeListener((Property.ValueChangeListener) event -> {
-            if (isValid(cronF))
-                if (isValid(amountF))
+            if (isAllValid(cronF))
+                if (isAllValid(amountF))
                     activateSchBtn();
                 else amountF.focus();
             else deactivateSchBtn();
@@ -214,14 +233,15 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
         scheduleBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         scheduleBtn.addClickListener((Button.ClickListener) event -> {
             ExchangeTask taskData = new ExchangeTask()
-                    .setId(System.currentTimeMillis())
+                    .setUserId(getUserDetails(IdentityUser.class).getId())
                     .setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy())
                     .setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy())
                     .setAddedDatetime(LocalDateTime.now())
                     .setAmount((double) amountF.getConvertedValue())
                     .setCron(cronF.getValue());
-            facade().scheduleTask(taskData);
-            refresh(facade().findExchangeTasks(), P_ID, SortDirection.DESCENDING);
+            scheduler.schedule(taskData);
+            refresh(exchanger.findForUser(getUserDetails(IdentityUser.class).getId()),
+                    P_ID, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();
         });
@@ -249,9 +269,9 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
 
     private void doCbValChange(Property.ValueChangeEvent event, ComboBox another) {
         if (event.getProperty().getValue() != null) {
-            if (isValid(another, amountF))
+            if (isAllValid(another, amountF))
                 cronF.setEnabled(true);
-            else if (isValid(another) && !isValid(amountF))
+            else if (isAllValid(another) && !isAllValid(amountF))
                 amountF.focus();
             else another.focus();
         }

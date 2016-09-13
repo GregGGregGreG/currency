@@ -1,6 +1,5 @@
 package org.baddev.currency.fetcher.other;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -15,45 +14,14 @@ public interface Iso4217CcyService {
     String CCY_MNR_UNTS_PARAM = "CcyMnrUnts";
     String WTHDRWL_DT_PARAM   = "WthdrwlDt";
 
-    enum Parameter {
-        CTRY_NM(CTRY_NM_PARAM, "countryName"),
-        CCY_NM(CCY_NM_PARAM, "ccyName"),
-        CCY(CCY_PARAM, "ccy"),
-        CCY_NBR(CCY_NBR_PARAM, "ccyNumber"),
-        CCY_MNR_UNTS(CCY_MNR_UNTS_PARAM, "ccyMnrUnts"),
-        WTHDRWL_DT(WTHDRWL_DT_PARAM, "withdrawDate");
-
-        Parameter(String paramName, String fieldName) {
-            this.paramName = paramName;
-            this.fieldName = fieldName;
-        }
-
-        private String paramName, fieldName;
-
-        public static Parameter find(String fieldName){
-            return Arrays.stream(values()).filter(v -> v.fieldName().equals(fieldName))
-                    .findFirst()
-                    .orElseThrow(IllegalArgumentException::new);
-        }
-
-        public String paramName() {
-            return paramName;
-        }
-
-        public String fieldName() {
-            return fieldName;
-        }
-
-    }
-
-    List<String> findCcyParamValues(Parameter target, Parameter keyParam, String keyParamVal);
+    List<String> findCcyParamValues(IsoEntityParam target, IsoEntityParam keyParam, String keyParamVal);
 
     default List<String> findCcyNamesByCode(String ccyCode){
-        return findCcyParamValues(Parameter.CCY_NM, Parameter.CCY, ccyCode);
+        return findCcyParamValues(IsoEntityParam.CCY_NM, IsoEntityParam.CCY, ccyCode);
     }
 
     default List<String> findCcyCountriesByCode(String ccyCode){
-        return findCcyParamValues(Parameter.CTRY_NM, Parameter.CCY, ccyCode);
+        return findCcyParamValues(IsoEntityParam.CTRY_NM, IsoEntityParam.CCY, ccyCode);
     }
 
 }

@@ -13,7 +13,10 @@ import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.fetcher.RateFetcherService;
+import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
+import org.baddev.currency.fetcher.other.IsoEntityParam;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.security.RoleEnum;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
@@ -40,7 +43,7 @@ import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate.*;
 public class RatesView extends AbstractCcyGridView<ExchangeRate> {
 
     public static final String NAME = "rates";
-    private static final String P_GEN_CCY_NAME = Iso4217CcyService.Parameter.CCY_NM.fieldName();
+    private static final String P_GEN_CCY_NAME = IsoEntityParam.CCY_NM.fieldName();
 
     @Value("${min_date_nbu}")
     private String minDateVal;
@@ -51,7 +54,9 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
     private TextField filter = new TextField();
 
     @Autowired
-    private Iso4217CcyService iso4217CcyService;
+    private Iso4217CcyService ccyService;
+    @NBU
+    private RateFetcherService<ExchangeRate> fetcher;
 
     private interface FetchOption {
         String ALL = "All";
@@ -72,8 +77,8 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
 
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             containerWrapper().addGeneratedProperty(P_GEN_CCY_NAME,
-                    new Iso4217PropertyValGen(Iso4217CcyService.Parameter.CCY_NM, Iso4217CcyService.Parameter.CCY,
-                            iso4217CcyService));
+                    new Iso4217PropertyValGen(IsoEntityParam.CCY_NM, IsoEntityParam.CCY,
+                            ccyService));
         });
 
         refresh(data, P_CCY);
@@ -93,7 +98,7 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
     private Collection<ExchangeRate> fetchCurrentRates() {
         Collection<ExchangeRate> data;
         try {
-            data = facade().fetchCurrentRates();
+            data = fetcher.fetchCurrent();
         } catch (NoRatesFoundException e) {
             data = new ArrayList<>();
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
@@ -141,8 +146,7 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
         fetchBtn.addClickListener(event -> {
             if (df.getValue() != null) {
                 try {
-                    Collection<ExchangeRate> rates =
-                            facade().fetchRatesByDate(new LocalDate(df.getValue()));
+                    Collection<ExchangeRate> rates = fetcher.fetchByDate(new LocalDate(df.getValue()));
                     refresh(rates, P_CCY);
                 } catch (NoRatesFoundException e) {
                     refresh(new ArrayList<>(), null, null);
@@ -162,7 +166,7 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisible(false, df, fetchBtn);
-                    refresh(facade().findAllRates(), P_EXCHANGE_DATE, SortDirection.DESCENDING);
+                    refresh(fetcher.findAll(), P_EXCHANGE_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisible(false, df, fetchBtn);

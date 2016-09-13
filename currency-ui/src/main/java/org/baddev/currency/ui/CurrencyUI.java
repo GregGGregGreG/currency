@@ -1,5 +1,6 @@
 package org.baddev.currency.ui;
 
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.vaadin.annotations.*;
 import com.vaadin.navigator.Navigator;
@@ -14,15 +15,17 @@ import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.core.event.NotificationEvent;
 import org.baddev.currency.core.listener.NotificationListener;
-import org.baddev.currency.facade.UserServicesFacade;
+import org.baddev.currency.core.notifier.Notifier;
+import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
 import org.baddev.currency.security.RoleEnum;
+import org.baddev.currency.security.SecurityService;
 import org.baddev.currency.security.SecurityUtils;
 import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.RatesView;
-import org.baddev.currency.ui.security.entity.LoginData;
-import org.baddev.currency.ui.security.entity.SignUpData;
+import org.baddev.currency.ui.security.dto.LoginData;
+import org.baddev.currency.ui.security.dto.SignUpData;
 import org.baddev.currency.ui.security.event.LoginEvent;
 import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.baddev.currency.ui.security.event.SignUpEvent;
@@ -55,22 +58,24 @@ public class CurrencyUI extends UI implements NotificationListener {
     @Autowired
     private SpringViewProvider viewProvider;
     @Autowired
-    private UserServicesFacade facade;
-
-    public UserServicesFacade servicesFacade(){
-        return facade;
-    }
+    private Notifier notifier;
+    @Autowired
+    private EventBus bus;
+    @Autowired
+    private Iso4217CcyService ccyService;
+    @Autowired
+    private SecurityService security;
 
     public static CurrencyUI currencyUI() {
         return (CurrencyUI) UI.getCurrent();
     }
 
     public void registerListener(NotificationListener l) {
-        facade.notifierSubscribe(l);
+        notifier.subscribe(l);
     }
 
     public void unregisterListener(NotificationListener l) {
-        facade.notifierUnsubscribe(l);
+        notifier.unsubscribe(l);
     }
 
     @Override
@@ -89,10 +94,10 @@ public class CurrencyUI extends UI implements NotificationListener {
             ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
             access(() -> {
                 String fromCcyNames = FormatUtils.formatCcyParamValuesList(
-                        facade.findCcyNamesByCode(operation.getFromCcy())
+                        ccyService.findCcyNamesByCode(operation.getFromCcy())
                 );
                 String toCcyNames = FormatUtils.formatCcyParamValuesList(
-                        facade.findCcyNamesByCode(operation.getToCcy())
+                        ccyService.findCcyNamesByCode(operation.getToCcy())
                 );
                 String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
                         operation.getFromAmount(),
@@ -109,7 +114,7 @@ public class CurrencyUI extends UI implements NotificationListener {
     @Subscribe
     private void login(LoginEvent event) {
         try {
-            facade.authenticate(
+            security.authenticate(
                     event.getEventData().getUsername(), event.getEventData().getPassword());
             VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
             getNavigator().navigateTo(RatesView.NAME);
@@ -139,7 +144,7 @@ public class CurrencyUI extends UI implements NotificationListener {
                 .setFirstName(data.getFirstName())
                 .setLastName(data.getLastName());
         try {
-            facade.signUp(data.getUsername(), data.getPassword(), details, RoleEnum.USER);
+            security.signUp(data.getUsername(), data.getPassword(), details, RoleEnum.USER);
             login(new LoginEvent(this, new LoginData(data.getUsername(), data.getPassword())));
             notifySuccess("Account Creation",
                     String.format("Account \"%s\" successfully created", loggedInUserName()));
@@ -152,13 +157,13 @@ public class CurrencyUI extends UI implements NotificationListener {
     @Override
     public void attach() {
         super.attach();
-        facade.busRegister(this);
+        bus.register(this);
     }
 
     @Override
     public void detach() {
         toggleUINotifications(false);
-        facade.busUnregister(this);
+        bus.unregister(this);
         super.detach();
     }
 

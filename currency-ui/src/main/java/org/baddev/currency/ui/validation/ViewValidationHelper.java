@@ -7,12 +7,12 @@ import java.util.Arrays;
 /**
  * Created by IPOTAPCHUK on 6/13/2016.
  */
-public final class ViewComponentValidation {
+public final class ViewValidationHelper {
 
-    private ViewComponentValidation() {
+    private ViewValidationHelper() {
     }
 
-    public static boolean isValid(Field... f) {
+    public static boolean isAllValid(Field... f) {
         return Arrays.stream(f).allMatch(fd -> fd.isValid() && fd.getValue() != null);
     }
 

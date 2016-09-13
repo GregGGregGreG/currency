@@ -112,8 +112,8 @@
                                 </goals>
                                 <configuration>
                                     <jdbc>
-                                        <driver>${db.mysql.driver}</driver>
-                                        <url>${db.mysql.url}</url>
+                                        <driver>${db.driver}</driver>
+                                        <url>${db.url}</url>
                                         <user>${db.user}</user>
                                         <password>${db.password}</password>
                                     </jdbc>
@@ -126,7 +126,7 @@
                                         </strategy>
                                         <database>
                                             <name>org.jooq.util.mysql.MySQLDatabase</name>
-                                            <inputSchema>exchanger</inputSchema>
+                                            <inputSchema>${db.schemaName}</inputSchema>
                                             <customTypes>
                                                 <customType>
                                                     <name>LocalDate</name>
@@ -197,25 +197,6 @@
                             </dependency>
                         </dependencies>
                     </plugin>
-                    <!--<plugin>-->
-                        <!--<artifactId>maven-antrun-plugin</artifactId>-->
-                        <!--<version>1.7</version>-->
-                        <!--<executions>-->
-                            <!--<execution>-->
-                                <!--<phase>generate-sources</phase>-->
-                                <!--<configuration>-->
-                                    <!--<target>-->
-                                        <!--<move todir="src/main/java">-->
-                                            <!--<fileset dir="target/generated-sources/jooq" includes="**/*.java"/>-->
-                                        <!--</move>-->
-                                    <!--</target>-->
-                                <!--</configuration>-->
-                                <!--<goals>-->
-                                    <!--<goal>run</goal>-->
-                                <!--</goals>-->
-                            <!--</execution>-->
-                        <!--</executions>-->
-                    <!--</plugin>-->
                 </plugins>
             </build>
         </profile>

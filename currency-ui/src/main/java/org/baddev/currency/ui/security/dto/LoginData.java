@@ -1,4 +1,4 @@
-package org.baddev.currency.ui.security.entity;
+package org.baddev.currency.ui.security.dto;
 
 /**
  * Created by IPotapchuk on 6/29/2016.

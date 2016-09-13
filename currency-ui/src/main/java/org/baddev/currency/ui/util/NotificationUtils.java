@@ -13,7 +13,7 @@ import java.util.Objects;
  */
 public class NotificationUtils {
 
-    private static final int DEFAULT_DELAY = 4000;
+    public static final int DEFAULT_DELAY = 4000;
 
     public static void notifySuccess(String caption, String message) {
         showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_CENTER,
@@ -21,7 +21,7 @@ public class NotificationUtils {
     }
 
     public static void notifyFailure(String caption, String message) {
-        showStyledNotification(caption, message, -1, null,
+        showStyledNotification(caption, message, -1, Position.TOP_CENTER,
                 ValoTheme.NOTIFICATION_FAILURE,
                 ValoTheme.NOTIFICATION_CLOSABLE);
     }
@@ -30,6 +30,13 @@ public class NotificationUtils {
         showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_RIGHT,
                 ValoTheme.NOTIFICATION_TRAY,
                 ValoTheme.NOTIFICATION_SMALL);
+    }
+
+    public static void notifyTrayWarn(String caption, String message){
+        showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_RIGHT,
+                ValoTheme.NOTIFICATION_TRAY,
+                ValoTheme.NOTIFICATION_SMALL,
+                ValoTheme.NOTIFICATION_WARNING);
     }
 
     public static void showStyledNotification(String caption, String message, int delay, Position position, String... styles) {

@@ -11,6 +11,4 @@
 
     <bean id="md5Encoder" class="org.springframework.security.authentication.encoding.Md5PasswordEncoder"/>
 
-    <import resource="classpath:jooq-daos-applicationContext.xml"/>
-
 </beans>

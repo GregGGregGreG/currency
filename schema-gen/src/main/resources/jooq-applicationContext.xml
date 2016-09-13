@@ -8,6 +8,7 @@
        http://www.springframework.org/schema/tx/spring-tx.xsd">
 
     <import resource="dataSources-applicationContext.xml"/>
+    <import resource="daos-applicationContext.xml"/>
 
     <tx:annotation-driven transaction-manager="transactionManager"/>
 

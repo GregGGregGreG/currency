@@ -18,7 +18,7 @@ public class NBUExchangeRate implements IExchangeRate {
     @XmlTransient
     public static final LocalDate HRIVNA_INTR_DATE = new LocalDate(1996, 9, 2);
     @XmlTransient
-    private static final String USSR_RUBLE_CD = "RUR";
+    public static final String USSR_RUBLE_CD = "RUR";
 
     @XmlTransient
     private Long id;

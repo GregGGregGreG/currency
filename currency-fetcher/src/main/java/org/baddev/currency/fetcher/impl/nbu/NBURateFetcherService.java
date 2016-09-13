@@ -2,18 +2,20 @@ package org.baddev.currency.fetcher.impl.nbu;
 
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.baddev.currency.core.exception.NoRatesFoundException;
-import org.baddev.currency.fetcher.ExchangeRateFetchingService;
+import org.baddev.currency.fetcher.ExtendedExchangeRateDao;
+import org.baddev.currency.fetcher.RateFetcherService;
 import org.baddev.currency.fetcher.impl.nbu.entity.NBUExchange;
-import org.baddev.currency.jooq.schema.tables.daos.ExchangeRateDao;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.ws.rs.core.MediaType;
@@ -25,10 +27,10 @@ import java.util.stream.Collectors;
  * Created by IPotapchuk on 3/14/2016.
  */
 @Service("NBU")
-@Transactional(noRollbackFor = NBUExchangeRateFetchingService.NoRatesLocallyFoundException.class)
-public class NBUExchangeRateFetchingService implements ExchangeRateFetchingService<ExchangeRate> {
+@Transactional(noRollbackFor = NBURateFetcherService.NoRatesLocallyFoundException.class)
+public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
 
-    private static final Logger log = LoggerFactory.getLogger(NBUExchangeRateFetchingService.class);
+    private static final Logger log = LoggerFactory.getLogger(NBURateFetcherService.class);
     private static final DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd");
 
     @Value("${param_date_nbu}")
@@ -39,8 +41,8 @@ public class NBUExchangeRateFetchingService implements ExchangeRateFetchingServi
     @Resource(name = "NBUClient")
     private WebClient client;
 
-    @Resource(name = "exchangeRateDao")
-    private ExchangeRateDao rateDao;
+    @Autowired
+    private ExtendedExchangeRateDao rateDao;
 
     static final class NoRatesLocallyFoundException extends RuntimeException {
         //nothing to add
@@ -49,10 +51,10 @@ public class NBUExchangeRateFetchingService implements ExchangeRateFetchingServi
     private Collection<ExchangeRate> searchLocally(LocalDate date) {
         Collection<ExchangeRate> localRates = rateDao.fetchByExchangeDate(date);
         if (!localRates.isEmpty()) {
-            log.info("{} rates found locally.", localRates.size());
+            log.debug("{} rates found locally.", localRates.size());
             return localRates;
         }
-        log.info("No rates found locally. Going to fetch by date {}", date.toString());
+        log.debug("No rates found locally. Going to fetch by date {}", date.toString());
         throw new NoRatesLocallyFoundException();
     }
 
@@ -102,6 +104,18 @@ public class NBUExchangeRateFetchingService implements ExchangeRateFetchingServi
         return rate;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Collection<ExchangeRate> findAll() {
+        return rateDao.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Collection<ExchangeRate> findLast() {
+        return rateDao.findLastRates();
+    }
+
     private ExchangeRate filter(Currency currency, Collection<ExchangeRate> rates) {
         return rates.stream()
                 .filter(rate -> rate.getCcy().equals(currency.getCurrencyCode()))
@@ -111,18 +125,14 @@ public class NBUExchangeRateFetchingService implements ExchangeRateFetchingServi
 
     private Collection<ExchangeRate> convert(NBUExchange exchange) throws NoRatesFoundException {
         if (exchange.getExchangeRates() == null) {
-            log.info("No rates found in fetched payload");
+            log.debug("No rates found in fetched payload");
             throw new NoRatesFoundException("No rates found by specified date");
         }
-        log.info("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
+        log.debug("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
         return exchange.getExchangeRates().stream()
-                .filter(r -> isNotEmpty(r.getCcy())) //ignoring records without ccy
+                .filter(r -> !StringUtils.isEmpty(r.getCcy().trim())) //ignoring records without ccy
                 .map(r -> r.into(new ExchangeRate()))
                 .collect(Collectors.toList());
-    }
-
-    private static boolean isNotEmpty(String s) {
-        return s != null && !s.trim().isEmpty();
     }
 
 }

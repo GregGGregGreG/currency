@@ -5,7 +5,7 @@ import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.ui.component.base.AbstractFormView;
-import org.baddev.currency.ui.security.entity.SignUpData;
+import org.baddev.currency.ui.security.dto.SignUpData;
 import org.baddev.currency.ui.security.event.SignUpEvent;
 
 import java.util.Arrays;
@@ -41,7 +41,7 @@ public class SignUpView extends AbstractFormView implements Button.ClickListener
 
     @Override
     public void buttonClick(Button.ClickEvent event) {
-        facade().postEvent(new SignUpEvent(this,
+        bus.post(new SignUpEvent(this,
                 new SignUpData(userName.getValue(), password.getValue(), firstName.getValue(), lastName.getValue())));
     }
 

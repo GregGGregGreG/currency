@@ -7,13 +7,13 @@ import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.Date;
 
 /**
@@ -24,12 +24,17 @@ public class ExchangeCompletionMailer implements NotificationListener {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangeCompletionMailer.class);
 
-    @Autowired
     private MailSender sender;
-    @Autowired
     private SimpleMailMessage template;
-    @Resource(name="mailerPool")
     private ThreadPoolTaskExecutor pool;
+
+    @Autowired
+    public ExchangeCompletionMailer(MailSender sender, SimpleMailMessage template,
+                                    @Qualifier("mailerPool") ThreadPoolTaskExecutor pool) {
+        this.pool = pool;
+        this.template = template;
+        this.sender = sender;
+    }
 
     @Override
     public <T extends NotificationEvent> void onNotificationEventReceived(T e) {

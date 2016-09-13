@@ -6,10 +6,10 @@ import org.baddev.currency.fetcher.other.entity.IsoCcyEntry;
 import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -25,24 +25,25 @@ public class Iso4217CcyServiceImpl implements Iso4217CcyService {
 
     private static final Logger log = LoggerFactory.getLogger(Iso4217CcyServiceImpl.class);
 
-    @Resource(name = "IsoCurCcys")
-    private List<IsoCcyEntry>     isoCurCcyEntries;
-    @Resource(name = "IsoHistCcys")
+    private List<IsoCcyEntry> isoCurCcyEntries;
     private List<IsoCcyHistEntry> isoHistCcyEntries;
 
-    @PostConstruct
-    public void init() {
+    @Autowired
+    public Iso4217CcyServiceImpl(@Qualifier("IsoCurCcys") List<IsoCcyEntry> isoCurCcyEntries,
+                                 @Qualifier("IsoHistCcys") List<IsoCcyHistEntry> isoHistCcyEntries) {
         if (isoHistCcyEntries.isEmpty() || isoHistCcyEntries.isEmpty()) {
             String msg = "Currency info service is currently unavailable. Check web client config or try again later.";
             log.error(msg + " Details: [isoCurCcyEntries:{} entries], [isoHistCcyEntries:{} entries]'",
                     isoCurCcyEntries.size(), isoHistCcyEntries.size());
             throw new ServiceException(msg);
         }
+        this.isoCurCcyEntries = isoCurCcyEntries;
+        this.isoHistCcyEntries = isoHistCcyEntries;
     }
 
     @Override
-    public List<String> findCcyParamValues(Parameter target,
-                                           Parameter keyParam,
+    public List<String> findCcyParamValues(IsoEntityParam target,
+                                           IsoEntityParam keyParam,
                                            String keyParamVal) {
         Set<String> vals = Stream.concat(
                 isoCurCcyEntries.stream(), isoHistCcyEntries.stream()
@@ -53,7 +54,7 @@ public class Iso4217CcyServiceImpl implements Iso4217CcyService {
         return new ArrayList<>(new TreeSet<>(vals));
     }
 
-    private static String getValue(Parameter param, BaseIsoCcyEntry entry) {
+    private static String getValue(IsoEntityParam param, BaseIsoCcyEntry entry) {
         String value = null;
         switch (param) {
             case CTRY_NM:

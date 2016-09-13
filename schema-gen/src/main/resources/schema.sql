@@ -6,8 +6,11 @@ CREATE TABLE exchange_operation
     from_amount DOUBLE NOT NULL,
     to_amount DOUBLE NOT NULL,
     rates_date DATE NOT NULL,
-    perform_datetime TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP' NOT NULL
+    perform_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    user_id BIGINT(20) NOT NULL,
+    CONSTRAINT exchange_operation_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
+CREATE INDEX exchange_operation_user_id_fk ON exchange_operation (user_id);
 CREATE TABLE exchange_rate
 (
     id BIGINT(20) PRIMARY KEY NOT NULL AUTO_INCREMENT,
@@ -18,20 +21,17 @@ CREATE TABLE exchange_rate
 );
 CREATE TABLE exchange_task
 (
-    id BIGINT(20) PRIMARY KEY NOT NULL,
-    added_datetime TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP' NOT NULL,
+    id BIGINT(20) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    added_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     from_ccy VARCHAR(3) NOT NULL,
     to_ccy VARCHAR(3) NOT NULL,
     amount DOUBLE NOT NULL,
     cron VARCHAR(30) NOT NULL,
-    active TINYINT(1) DEFAULT '1' NOT NULL
+    active TINYINT(1) DEFAULT '1' NOT NULL,
+    user_id BIGINT(20) NOT NULL,
+    CONSTRAINT exchange_task_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
-CREATE TABLE user_role
-(
-    id BIGINT(20) PRIMARY KEY NOT NULL,
-    role_name VARCHAR(50) NOT NULL
-);
-CREATE UNIQUE INDEX user_role_role_name_uindex ON user_role (role_name);
+CREATE INDEX exchange_task_user_id_fk ON exchange_task (user_id);
 CREATE TABLE user
 (
     id BIGINT(20) PRIMARY KEY NOT NULL AUTO_INCREMENT,
@@ -43,20 +43,25 @@ CREATE TABLE user
     enabled TINYINT(1) DEFAULT '1' NOT NULL
 );
 CREATE UNIQUE INDEX user_username_uindex ON user (username);
+CREATE TABLE user_details
+(
+    user_id BIGINT(20) PRIMARY KEY NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    CONSTRAINT user_details_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
+);
+CREATE TABLE user_role
+(
+    id BIGINT(20) PRIMARY KEY NOT NULL,
+    role_name VARCHAR(50) NOT NULL
+);
+CREATE UNIQUE INDEX user_role_role_name_uindex ON user_role (role_name);
 CREATE TABLE user_user_role
 (
     user_id BIGINT(20) NOT NULL,
     role_id BIGINT(20) NOT NULL,
-    CONSTRAINT user_user_role_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id),
-    CONSTRAINT user_user_role_user_role_id_fk FOREIGN KEY (role_id) REFERENCES user_role (id)
+    CONSTRAINT user_user_role_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
+    CONSTRAINT user_user_role_user_role_id_fk FOREIGN KEY (role_id) REFERENCES user_role (id) ON DELETE CASCADE
 );
 CREATE INDEX user_user_role_user_id_fk ON user_user_role (user_id);
 CREATE INDEX user_user_role_user_role_id_fk ON user_user_role (role_id);
-CREATE TABLE user_details
-(
-    user_id BIGINT(20) NOT NULL,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    CONSTRAINT user_details_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id)
-);
-CREATE INDEX user_details_user_id_fk ON user_details (user_id);

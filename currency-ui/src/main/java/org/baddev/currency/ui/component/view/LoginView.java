@@ -5,7 +5,7 @@ import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.ui.component.base.AbstractFormView;
-import org.baddev.currency.ui.security.entity.LoginData;
+import org.baddev.currency.ui.security.dto.LoginData;
 import org.baddev.currency.ui.security.event.LoginEvent;
 
 import java.util.Arrays;
@@ -38,7 +38,7 @@ public class LoginView extends AbstractFormView implements Button.ClickListener 
 
     @Override
     public void buttonClick(Button.ClickEvent event) {
-        facade().postEvent(new LoginEvent(this, new LoginData(userName.getValue(), password.getValue())));
+        bus.post(new LoginEvent(this, new LoginData(userName.getValue(), password.getValue())));
     }
 
     @Override
