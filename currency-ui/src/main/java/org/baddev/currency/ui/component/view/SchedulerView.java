@@ -93,8 +93,8 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
                 event -> {
                     ExchangeTask taskData = (ExchangeTask) event.getItemId();
                     if (!taskData.getActive()) {
-                        scheduler.reschedule(taskData);
-                        log.debug("Exchange task {} has been rescheduled", taskData.getId());
+                        scheduler.schedule(taskData);
+                        log.debug("Exchange task {} has been scheduled", taskData.getId());
                     } else {
                         scheduler.cancel(taskData.getId(), false);
                         log.debug("Exchange task {} has been canceled", taskData.getId());

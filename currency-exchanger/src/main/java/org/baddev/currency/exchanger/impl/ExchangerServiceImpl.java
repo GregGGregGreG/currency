@@ -37,17 +37,18 @@ public class ExchangerServiceImpl implements ExchangerService<ExchangeOperation,
     @Transactional
     public ExchangeOperation exchange(ExchangeOperation operation,
                                       Collection<ExchangeRate> rates) {
-        operation.setPerformDatetime(LocalDateTime.now());
-        if (operation.getFromCcy().equals("UAH")) {
-            double rate = filterRate(rates, operation.getToCcy());
-            operation.setToAmount(rate * operation.getFromAmount());
+        ExchangeOperation op = new ExchangeOperation(operation);
+        op.setPerformDatetime(LocalDateTime.now());
+        if (op.getFromCcy().equals("UAH")) {
+            double rate = filterRate(rates, op.getToCcy());
+            op.setToAmount(rate * op.getFromAmount());
         } else {
-            double fPairRate = filterRate(rates, operation.getFromCcy());
-            double inDefaultBase = fPairRate * operation.getFromAmount();
-            double sPairRate = filterRate(rates, operation.getToCcy());
-            operation.setToAmount(inDefaultBase / sPairRate);
+            double fPairRate = filterRate(rates, op.getFromCcy());
+            double inDefaultBase = fPairRate * op.getFromAmount();
+            double sPairRate = filterRate(rates, op.getToCcy());
+            op.setToAmount(inDefaultBase / sPairRate);
         }
-        log.info("Exchanged amount: [{}]{}, userId=[{}]", operation.getToAmount(), operation.getToCcy(), operation.getUserId());
+        log.info("Exchanged amount: [{}]{}, userId=[{}]", op.getToAmount(), op.getToCcy(), op.getUserId());
         return DSL.using(exchangeDao.configuration())
                 .insertInto(Tables.EXCHANGE_OPERATION)
                 .set(operation.into(new ExchangeOperationRecord()))

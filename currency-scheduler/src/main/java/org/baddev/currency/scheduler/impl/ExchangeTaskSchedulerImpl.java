@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 
 import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
@@ -53,28 +52,29 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
 
     private class ExchangeJob implements Runnable {
 
-        private ExchangeOperation operation;
+        private ExchangeTask taskData;
+        private boolean success = true;
 
         ExchangeJob(final ExchangeTask taskData) {
-            operation = new ExchangeOperation()
+            this.taskData = taskData;
+        }
+
+        @Override
+        public void run() {
+            ExchangeOperation exchOp = new ExchangeOperation()
                     .setUserId(taskData.getUserId())
                     .setFromCcy(taskData.getFromCcy())
                     .setToCcy(taskData.getToCcy())
                     .setFromAmount(taskData.getAmount())
                     .setRatesDate(LocalDate.now());
-        }
-
-        @Override
-        public void run() {
-            boolean success = true;
             try {
-                operation = exchanger.exchange(operation, fetcher.fetchCurrent());
+                exchOp = exchanger.exchange(exchOp, fetcher.fetchCurrent());
             } catch (Exception e) {
                 success = false;
                 log.error("Error while performing exchange", e);
             } finally {
                 if (!notifier.getSubscribers().isEmpty())
-                    notifier.doNotify(new ExchangeCompletionEvent(this, operation, success));
+                    notifier.doNotify(new ExchangeCompletionEvent(this, exchOp, success));
             }
         }
 
@@ -95,11 +95,22 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     @Override
     @Transactional
     public Long schedule(final ExchangeTask taskData) {
-        if (taskData.getActive() == null || !taskData.getActive())
-            taskData.setActive(true);
-        ExchangeTask saved = exchangeTaskService.saveReturning(taskData);
-        scheduleTask(saved);
-        return taskData.getId();
+        ExchangeTask task = new ExchangeTask(taskData).setActive(true);
+        if (exchangeTasks.contains(taskData)) {
+            ScheduledFuture aged = exchangeTasksJobsMap.get(taskData.getId());
+            if (aged != null) {
+                if (!aged.isCancelled()) {
+                    throw new IllegalArgumentException("Task " + taskData.getId() + " already exists");
+                } else {
+                    exchangeTasksJobsMap.remove(taskData.getId());
+                }
+            }
+            exchangeTaskService.update(task);
+        } else {
+            task = exchangeTaskService.saveReturning(task);
+        }
+        scheduleTask(task);
+        return task.getId();
     }
 
     private ScheduledFuture scheduleTask(final ExchangeTask op) {
@@ -107,24 +118,6 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
         exchangeTasks.add(op);
         exchangeTasksJobsMap.put(op.getId(), scheduled);
         return scheduled;
-    }
-
-    @Override
-    @Transactional
-    public void reschedule(ExchangeTask reschedulingData) {
-        if (reschedulingData.getId() == null)
-            throw new IllegalArgumentException("Id must be a non-null value");
-        if (!exchangeTasks.contains(reschedulingData))
-            throw new IllegalArgumentException("Can't reschedule unknown task");
-        if (!exchangeTasksJobsMap.containsKey(reschedulingData.getId()))
-            throw new IllegalStateException("Task data exists but linked job was not found");
-        ScheduledFuture task = exchangeTasksJobsMap.get(reschedulingData.getId());
-        if (!task.isCancelled())
-            throw new IllegalArgumentException("Can't reschedule. Given task is already scheduled");
-        if (reschedulingData.getActive() && task.isCancelled())
-            throw new IllegalStateException("Task's data state is not synchronized with pool task's state");
-        scheduleTask(reschedulingData);
-        exchangeTaskService.update(reschedulingData.setActive(true));
     }
 
     @Override
@@ -143,10 +136,12 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
         ScheduledFuture task = exchangeTasksJobsMap.get(id);
         boolean result = task.cancel(false);
         if (remove) {
-            exchangeTaskService.deleteById(id);
             result &= exchangeTasks.remove(taskData);
-            result &= exchangeTasksJobsMap.remove(id) != null;
-        } else exchangeTaskService.update(taskData);
+            exchangeTaskService.deleteById(id);
+        } else {
+            exchangeTaskService.update(taskData);
+        }
+        exchangeTasksJobsMap.remove(id);
         return result;
     }
 
@@ -155,24 +150,15 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     public void cancelAll(boolean remove) {
         exchangeTasksJobsMap.values().forEach(t -> t.cancel(false));
         exchangeTasksJobsMap.clear();
-        exchangeTasks.clear();
-        if (remove)
+        if (remove) {
+            exchangeTasks.clear();
             dsl.deleteFrom(EXCHANGE_TASK).execute();
-        else dsl.update(EXCHANGE_TASK).set(EXCHANGE_TASK.ACTIVE, false).execute();
-    }
-
-    @Override
-    public Map<Long, ScheduledFuture> getJobsMap() {
-        return Collections.unmodifiableMap(exchangeTasksJobsMap);
-    }
-
-    public Collection<ExchangeTask> getExchangeTasks() {
-        return Collections.unmodifiableSet(exchangeTasks);
+        } else dsl.update(EXCHANGE_TASK).set(EXCHANGE_TASK.ACTIVE, false).execute();
     }
 
     @Override
     public int getActiveCount() {
-        return exchangeTasksJobsMap.size() - (int) exchangeTasksJobsMap.values().stream().filter(Future::isCancelled).count();
+        return exchangeTasksJobsMap.size();
     }
 
 }
