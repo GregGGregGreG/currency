@@ -1,4 +1,4 @@
-package org.baddev.currency.security;
+package org.baddev.currency.security.user.impl;
 
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.security.user.IdentityUser;

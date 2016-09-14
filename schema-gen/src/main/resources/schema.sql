@@ -48,8 +48,10 @@ CREATE TABLE user_details
     user_id BIGINT(20) PRIMARY KEY NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(50) NOT NULL,
     CONSTRAINT user_details_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
 );
+CREATE UNIQUE INDEX user_details_email_uindex ON user_details (email);
 CREATE TABLE user_role
 (
     id BIGINT(20) PRIMARY KEY NOT NULL,

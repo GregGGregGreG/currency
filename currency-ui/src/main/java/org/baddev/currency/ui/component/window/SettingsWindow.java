@@ -10,6 +10,7 @@ import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.CurrencyUI;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -60,7 +61,9 @@ public class SettingsWindow extends Window {
         boolean checked = (boolean) e.getProperty().getValue();
         if (l instanceof CurrencyUI)
             toggleUINotifications(checked);
-        else if (l instanceof ExchangeCompletionMailer)
+        else if (l instanceof ExchangeCompletionMailer) {
+            ((ExchangeCompletionMailer) l).setEmail(SecurityUtils.getUserDetails().getEmail());
             toggleMailNotifications(checked, (ExchangeCompletionMailer) l);
+        }
     }
 }

@@ -11,13 +11,13 @@ import java.util.Set;
 /**
  * Created by IPotapchuk on 6/17/2016.
  */
-public class NotifierService implements Notifier {
+public class NotifierImpl implements Notifier {
 
     private Set<NotificationListener> listeners = new HashSet<>();
 
     @Override
-    public <T extends NotificationEvent> void doNotify(T event) {
-        listeners.forEach(l -> l.onNotificationEventReceived(event));
+    public void doNotify(NotificationEvent event) {
+        listeners.forEach(l -> l.notificationReceived(event));
     }
 
     @Override

@@ -26,17 +26,16 @@ public class NotificationUtils {
                 ValoTheme.NOTIFICATION_CLOSABLE);
     }
 
+    public static void notifyWarn(String caption, String message){
+        showStyledNotification(caption, message, -1, Position.TOP_CENTER,
+                ValoTheme.NOTIFICATION_WARNING,
+                ValoTheme.NOTIFICATION_CLOSABLE);
+    }
+
     public static void notifyTray(String caption, String message) {
         showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_RIGHT,
                 ValoTheme.NOTIFICATION_TRAY,
                 ValoTheme.NOTIFICATION_SMALL);
-    }
-
-    public static void notifyTrayWarn(String caption, String message){
-        showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_RIGHT,
-                ValoTheme.NOTIFICATION_TRAY,
-                ValoTheme.NOTIFICATION_SMALL,
-                ValoTheme.NOTIFICATION_WARNING);
     }
 
     public static void showStyledNotification(String caption, String message, int delay, Position position, String... styles) {

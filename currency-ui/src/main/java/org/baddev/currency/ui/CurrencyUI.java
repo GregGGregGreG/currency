@@ -12,20 +12,21 @@ import com.vaadin.spring.navigator.SpringViewProvider;
 import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.themes.ValoTheme;
+import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.event.NotificationEvent;
 import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.core.notifier.Notifier;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.pojos.User;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
-import org.baddev.currency.security.RoleEnum;
-import org.baddev.currency.security.SecurityService;
-import org.baddev.currency.security.SecurityUtils;
+import org.baddev.currency.security.dto.LoginDTO;
+import org.baddev.currency.security.dto.SignUpDTO;
+import org.baddev.currency.security.user.UserService;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.RatesView;
-import org.baddev.currency.ui.security.dto.LoginData;
-import org.baddev.currency.ui.security.dto.SignUpData;
+import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
 import org.baddev.currency.ui.security.event.LoginEvent;
 import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.baddev.currency.ui.security.event.SignUpEvent;
@@ -34,14 +35,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ContextLoaderListener;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.annotation.WebServlet;
 
-import static org.baddev.currency.security.SecurityUtils.isLoggedIn;
-import static org.baddev.currency.security.SecurityUtils.loggedInUserName;
+import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
+import static org.baddev.currency.security.utils.SecurityUtils.loggedInUserName;
 import static org.baddev.currency.ui.util.AppSettingsUtils.initializeSettings;
 import static org.baddev.currency.ui.util.AppSettingsUtils.toggleUINotifications;
 import static org.baddev.currency.ui.util.NotificationUtils.*;
@@ -51,7 +53,7 @@ import static org.baddev.currency.ui.util.NotificationUtils.*;
 @PreserveOnRefresh
 @SpringUI
 @Push(transport = Transport.WEBSOCKET_XHR)
-public class CurrencyUI extends UI implements NotificationListener {
+public class CurrencyUI extends UI implements NotificationListener<ExchangeCompletionEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(CurrencyUI.class);
 
@@ -64,7 +66,7 @@ public class CurrencyUI extends UI implements NotificationListener {
     @Autowired
     private Iso4217CcyService ccyService;
     @Autowired
-    private SecurityService security;
+    private UserService<User, UserDetails> userService;
 
     public static CurrencyUI currencyUI() {
         return (CurrencyUI) UI.getCurrent();
@@ -89,33 +91,30 @@ public class CurrencyUI extends UI implements NotificationListener {
     }
 
     @Override
-    public <T extends NotificationEvent> void onNotificationEventReceived(T e) {
-        if (e instanceof ExchangeCompletionEvent) {
-            ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
-            access(() -> {
-                String fromCcyNames = FormatUtils.formatCcyParamValuesList(
-                        ccyService.findCcyNamesByCode(operation.getFromCcy())
-                );
-                String toCcyNames = FormatUtils.formatCcyParamValuesList(
-                        ccyService.findCcyNamesByCode(operation.getToCcy())
-                );
-                String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
-                        operation.getFromAmount(),
-                        fromCcyNames,
-                        operation.getFromCcy(),
-                        operation.getToAmount(),
-                        toCcyNames,
-                        operation.getToCcy());
-                notifyTray("Exchange task completion", exchInfo);
-            });
-        }
+    public void notificationReceived(ExchangeCompletionEvent e) {
+        ExchangeOperation operation = e.getEventData();
+        access(() -> {
+            String fromCcyNames = FormatUtils.formatCcyParamValuesList(
+                    ccyService.findCcyNamesByCode(operation.getFromCcy())
+            );
+            String toCcyNames = FormatUtils.formatCcyParamValuesList(
+                    ccyService.findCcyNamesByCode(operation.getToCcy())
+            );
+            String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
+                    operation.getFromAmount(),
+                    fromCcyNames,
+                    operation.getFromCcy(),
+                    operation.getToAmount(),
+                    toCcyNames,
+                    operation.getToCcy());
+            notifyTray("Exchange task completion", exchInfo);
+        });
     }
 
     @Subscribe
     private void login(LoginEvent event) {
         try {
-            security.authenticate(
-                    event.getEventData().getUsername(), event.getEventData().getPassword());
+            userService.authenticate(event.getEventData());
             VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
             getNavigator().navigateTo(RatesView.NAME);
         } catch (AuthenticationException e) {
@@ -139,13 +138,10 @@ public class CurrencyUI extends UI implements NotificationListener {
 
     @Subscribe
     private void signUp(SignUpEvent event) {
-        SignUpData data = event.getEventData();
-        UserDetails details = new UserDetails()
-                .setFirstName(data.getFirstName())
-                .setLastName(data.getLastName());
+        SignUpDTO data = event.getEventData();
         try {
-            security.signUp(data.getUsername(), data.getPassword(), details, RoleEnum.USER);
-            login(new LoginEvent(this, new LoginData(data.getUsername(), data.getPassword())));
+            userService.signUp(event.getEventData(), RoleEnum.USER);
+            login(new LoginEvent(this, new LoginDTO(data.getUsername(), data.getPassword())));
             notifySuccess("Account Creation",
                     String.format("Account \"%s\" successfully created", loggedInUserName()));
         } catch (Exception e) {
@@ -180,6 +176,7 @@ public class CurrencyUI extends UI implements NotificationListener {
         @Override
         protected void servletInitialized() throws ServletException {
             super.servletInitialized();
+            SecurityContextHolder.setStrategyName(VaadinSessionSecurityContextHolderStrategy.class.getName());
             getService().setSystemMessagesProvider(systemMessagesInfo -> {
                 CustomizedSystemMessages systemMessages = new CustomizedSystemMessages();
                 systemMessages.setSessionExpiredNotificationEnabled(false);

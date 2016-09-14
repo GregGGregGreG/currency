@@ -8,7 +8,7 @@ import com.vaadin.ui.AbstractOrderedLayout;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.VerticalLayout;
-import org.baddev.currency.security.SecurityUtils;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.slf4j.Logger;
@@ -27,12 +27,12 @@ import static org.baddev.currency.ui.CurrencyUI.currencyUI;
  */
 public abstract class AbstractCcyView extends VerticalLayout implements View {
 
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
     @Autowired
     private SettingsWindow settingsWindow;
     @Autowired
     protected EventBus bus;
-
-    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     @PostConstruct
     public void init() {
@@ -48,7 +48,7 @@ public abstract class AbstractCcyView extends VerticalLayout implements View {
         return content;
     }
 
-    protected MenuBar menuBar() {
+    private MenuBar menuBar() {
         MenuBar menuBar = new MenuBar();
         menuBar.setWidth(100.0f, Unit.PERCENTAGE);
         menuBar.addStyleName("small");

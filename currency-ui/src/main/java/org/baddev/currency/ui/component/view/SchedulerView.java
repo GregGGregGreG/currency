@@ -14,6 +14,7 @@ import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import net.redhogs.cronparser.CronExpressionDescriptor;
 import net.redhogs.cronparser.Options;
+import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.exception.NoRatesFoundException;
 import org.baddev.currency.fetcher.RateFetcherService;
 import org.baddev.currency.fetcher.impl.nbu.NBU;
@@ -22,8 +23,8 @@ import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.scheduler.ExchangeTaskScheduler;
 import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
-import org.baddev.currency.security.RoleEnum;
 import org.baddev.currency.security.user.IdentityUser;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.FormatUtils;
@@ -37,7 +38,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask.*;
-import static org.baddev.currency.security.SecurityUtils.getUserDetails;
 import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
 
 /**
@@ -47,18 +47,17 @@ import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
 public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
 
-    public static final String NAME = "scheduler";
-
+    public  static final String NAME           = "scheduler";
     private static final String P_GEN_EXEC_BTN = "execution";
-    private static final String P_GEN_MNG_BTN = "managing";
-    private static final String P_GEN_RMV_BTN = "removal";
+    private static final String P_GEN_MNG_BTN  = "managing";
+    private static final String P_GEN_RMV_BTN  = "removal";
 
-    private TextField amountF = new TextField("Amount:");
-    private ComboBox fromCcyChoiseF = new ComboBox("From:");
-    private ComboBox toCcyChoiseF = new ComboBox("To:");
-    private TextField cronF = new TextField("Cron Expression:");
-    private Button scheduleBtn = new Button("Schedule");
-    private Button resetBtn = new Button("Reset");
+    private TextField amountF        = new TextField("Amount:");
+    private ComboBox  fromCcyChoiseF = new ComboBox("From:");
+    private ComboBox  toCcyChoiseF   = new ComboBox("To:");
+    private TextField cronF          = new TextField("Cron Expression:");
+    private Button    scheduleBtn    = new Button("Schedule");
+    private Button    resetBtn       = new Button("Reset");
 
     private Grid.FooterRow footer = grid.prependFooterRow();
 
@@ -76,7 +75,7 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
         super.init();
 
         setup(ExchangeTask.class,
-                exchanger.findForUser(getUserDetails(IdentityUser.class).getId()),
+                exchanger.findForUser(SecurityUtils.getPrincipal(IdentityUser.class).getId()),
                 P_ID, P_USER_ID);
 
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
@@ -99,7 +98,7 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
                         scheduler.cancel(taskData.getId(), false);
                         log.debug("Exchange task {} has been canceled", taskData.getId());
                     }
-                    refresh(exchanger.findForUser(getUserDetails(IdentityUser.class).getId()),
+                    refresh(exchanger.findForUser(SecurityUtils.getPrincipal(IdentityUser.class).getId()),
                             P_ID, SortDirection.DESCENDING);
                 }
         );
@@ -233,14 +232,14 @@ public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
         scheduleBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         scheduleBtn.addClickListener((Button.ClickListener) event -> {
             ExchangeTask taskData = new ExchangeTask()
-                    .setUserId(getUserDetails(IdentityUser.class).getId())
+                    .setUserId(SecurityUtils.getPrincipal(IdentityUser.class).getId())
                     .setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy())
                     .setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy())
                     .setAddedDatetime(LocalDateTime.now())
                     .setAmount((double) amountF.getConvertedValue())
                     .setCron(cronF.getValue());
             scheduler.schedule(taskData);
-            refresh(exchanger.findForUser(getUserDetails(IdentityUser.class).getId()),
+            refresh(exchanger.findForUser(SecurityUtils.getPrincipal(IdentityUser.class).getId()),
                     P_ID, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();

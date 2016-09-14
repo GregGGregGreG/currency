@@ -1,5 +1,6 @@
 package org.baddev.currency.scheduler.impl;
 
+import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.core.notifier.Notifier;
 import org.baddev.currency.exchanger.ExchangerService;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,7 +85,7 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     @PostConstruct
     @Transactional(readOnly = true)
     public void init() {
-        Collection<ExchangeTask> tasks = exchangeTaskService.findAll();
+        Collection<ExchangeTask> tasks = dsl.selectFrom(EXCHANGE_TASK).fetchInto(ExchangeTask.class);
         tasks.forEach(t -> {
             ScheduledFuture task = scheduleTask(t);
             if (!t.getActive())
@@ -94,6 +96,7 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
 
     @Override
     @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public Long schedule(final ExchangeTask taskData) {
         ExchangeTask task = new ExchangeTask(taskData).setActive(true);
         if (exchangeTasks.contains(taskData)) {
@@ -121,32 +124,33 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     }
 
     @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public void execute(ExchangeTask taskData) {
         pool.execute(new ExchangeJob(taskData));
     }
 
     @Override
     @Transactional
-    public boolean cancel(Long id, boolean remove) {
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public void cancel(Long id, boolean remove) {
         ExchangeTask taskData = exchangeTasks.stream()
                 .filter(t -> t.getId().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Task with id " + id + " not found"));
+                .get();
+        if (taskData == null) return;
         taskData.setActive(false);
-        ScheduledFuture task = exchangeTasksJobsMap.get(id);
-        boolean result = task.cancel(false);
+        ScheduledFuture task = exchangeTasksJobsMap.remove(id);
+        if (task != null) task.cancel(false);
         if (remove) {
-            result &= exchangeTasks.remove(taskData);
-            exchangeTaskService.deleteById(id);
-        } else {
-            exchangeTaskService.update(taskData);
-        }
-        exchangeTasksJobsMap.remove(id);
-        return result;
+            exchangeTasks.remove(taskData);
+            exchangeTaskService.deleteById(taskData.getId());
+        } else exchangeTaskService.update(taskData);
     }
 
     @Override
     @Transactional
+    @Secured({RoleEnum.ADMIN})
     public void cancelAll(boolean remove) {
         exchangeTasksJobsMap.values().forEach(t -> t.cancel(false));
         exchangeTasksJobsMap.clear();

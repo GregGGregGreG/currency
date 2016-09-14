@@ -1,4 +1,4 @@
-package org.baddev.currency.security;
+package org.baddev.currency.security.exception;
 
 /**
  * Created by IPotapchuk on 7/4/2016.

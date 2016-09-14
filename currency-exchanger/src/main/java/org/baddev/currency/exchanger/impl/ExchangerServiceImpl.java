@@ -1,5 +1,6 @@
 package org.baddev.currency.exchanger.impl;
 
+import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.exception.ServiceException;
 import org.baddev.currency.exchanger.ExchangerService;
 import org.baddev.currency.jooq.schema.Tables;
@@ -13,6 +14,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +53,7 @@ public class ExchangerServiceImpl implements ExchangerService<ExchangeOperation,
         log.info("Exchanged amount: [{}]{}, userId=[{}]", op.getToAmount(), op.getToCcy(), op.getUserId());
         return DSL.using(exchangeDao.configuration())
                 .insertInto(Tables.EXCHANGE_OPERATION)
-                .set(operation.into(new ExchangeOperationRecord()))
+                .set(op.into(new ExchangeOperationRecord()))
                 .returning()
                 .fetchOne()
                 .into(ExchangeOperation.class);
@@ -59,18 +61,21 @@ public class ExchangerServiceImpl implements ExchangerService<ExchangeOperation,
 
     @Override
     @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN})
     public Collection<ExchangeOperation> findAll() {
         return exchangeDao.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public Collection<ExchangeOperation> findForUser(Long key) {
         return exchangeDao.fetchByUserId(key);
     }
 
     @Override
     @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public void deleteById(Long... ids) {
         exchangeDao.deleteById(ids);
     }

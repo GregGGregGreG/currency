@@ -84,6 +84,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
             <groupId>net.redhogs.cronparser</groupId>
             <artifactId>cron-parser-spring</artifactId>
         </dependency>

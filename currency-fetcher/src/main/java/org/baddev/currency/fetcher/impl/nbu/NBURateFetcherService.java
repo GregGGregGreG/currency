@@ -1,6 +1,7 @@
 package org.baddev.currency.fetcher.impl.nbu;
 
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.exception.NoRatesFoundException;
 import org.baddev.currency.fetcher.ExtendedExchangeRateDao;
 import org.baddev.currency.fetcher.RateFetcherService;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -106,12 +108,14 @@ public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
 
     @Override
     @Transactional(readOnly = true)
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public Collection<ExchangeRate> findAll() {
         return rateDao.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public Collection<ExchangeRate> findLast() {
         return rateDao.findLastRates();
     }

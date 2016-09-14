@@ -20,9 +20,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.baddev</groupId>
-            <artifactId>currency-security</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

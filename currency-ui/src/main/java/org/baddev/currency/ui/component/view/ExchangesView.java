@@ -14,6 +14,7 @@ import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.DateRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
+import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.exception.NoRatesFoundException;
 import org.baddev.currency.exchanger.ExchangerService;
 import org.baddev.currency.fetcher.RateFetcherService;
@@ -21,8 +22,8 @@ import org.baddev.currency.fetcher.impl.nbu.NBU;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
-import org.baddev.currency.security.RoleEnum;
 import org.baddev.currency.security.user.IdentityUser;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DateToLocalDateTimeConverter;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
@@ -40,7 +41,6 @@ import java.util.Collection;
 import java.util.Date;
 
 import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation.*;
-import static org.baddev.currency.security.SecurityUtils.getUserDetails;
 import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
 
 /**
@@ -52,12 +52,12 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
 
     public static final String NAME = "exchanges";
 
-    private TextField amountF = new TextField("Amount:");
-    private ComboBox fromCcyChoiseF = new ComboBox("From:");
-    private ComboBox toCcyChoiseF = new ComboBox("To:");
-    private PopupDateField exchDateF = new PopupDateField("Rate's date:");
-    private Button exchBtn = new Button("Exchange");
-    private Button resetBtn = new Button("Reset");
+    private TextField      amountF        = new TextField("Amount:");
+    private ComboBox       fromCcyChoiseF = new ComboBox("From:");
+    private ComboBox       toCcyChoiseF   = new ComboBox("To:");
+    private PopupDateField exchDateF      = new PopupDateField("Rate's date:");
+    private Button         exchBtn        = new Button("Exchange");
+    private Button         resetBtn       = new Button("Reset");
 
     @Value("${min_date_nbu}")
     private String minDateVal;
@@ -73,7 +73,7 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
     public void init() {
         super.init();
         setup(ExchangeOperation.class,
-                exchangerService.findForUser(getUserDetails(IdentityUser.class).getId()),
+                exchangerService.findForUser(SecurityUtils.getPrincipal(IdentityUser.class).getId()),
                 P_ID, P_USER_ID);
 
         grid.setCellDescriptionGenerator(cell -> {
@@ -189,13 +189,13 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
         exchBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         exchBtn.addClickListener((Button.ClickListener) event -> {
             ExchangeOperation exc = new ExchangeOperation()
-                    .setUserId(getUserDetails(IdentityUser.class).getId())
+                    .setUserId(SecurityUtils.getPrincipal(IdentityUser.class).getId())
                     .setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy())
                     .setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy())
                     .setRatesDate(LocalDate.fromDateFields(exchDateF.getValue()))
                     .setFromAmount((double) amountF.getConvertedValue());
             exchangerService.exchange(exc, (Collection<ExchangeRate>) fromCcyChoiseF.getItemIds());
-            refresh(exchangerService.findForUser(getUserDetails(IdentityUser.class).getId()),
+            refresh(exchangerService.findForUser(SecurityUtils.getPrincipal(IdentityUser.class).getId()),
                     P_PERFORM_DATETIME, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();

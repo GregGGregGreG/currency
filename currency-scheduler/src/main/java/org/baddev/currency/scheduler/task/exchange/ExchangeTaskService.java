@@ -1,7 +1,7 @@
 package org.baddev.currency.scheduler.task.exchange;
 
+import org.baddev.currency.core.UserRestrictedLookup;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
-import org.baddev.currency.security.user.impl.UserRestrictedLookup;
 
 import java.util.Collection;
 

@@ -1,4 +1,4 @@
-package org.baddev.currency.security;
+package org.baddev.currency.core;
 
 /**
  * Created by IPotapchuk on 6/30/2016.

@@ -1,20 +1,19 @@
-package org.baddev.currency.ui.config;
+package org.baddev.currency.security;
 
-import org.baddev.currency.security.UserDetailsServiceImpl;
-import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
+import org.baddev.currency.security.user.impl.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
+import org.springframework.security.authentication.encoding.MessageDigestPasswordEncoder;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 @Configuration
-@ImportResource("classpath:security-applicationContext.xml")
+@ComponentScan(value = "org.baddev.currency.security")
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends GlobalMethodSecurityConfiguration {
 
@@ -22,7 +21,12 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth
                 .userDetailsService(userDetailsService())
-                .passwordEncoder(new Md5PasswordEncoder());
+                .passwordEncoder(encoder());
+    }
+
+    @Bean(name = "md5")
+    MessageDigestPasswordEncoder encoder(){
+        return new Md5PasswordEncoder();
     }
 
     @Bean
@@ -35,7 +39,4 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
         return authenticationManager();
     }
 
-    static {
-        SecurityContextHolder.setStrategyName(VaadinSessionSecurityContextHolderStrategy.class.getName());
-    }
 }

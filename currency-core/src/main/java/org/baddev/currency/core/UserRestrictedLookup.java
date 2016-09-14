@@ -1,4 +1,4 @@
-package org.baddev.currency.security.user.impl;
+package org.baddev.currency.core;
 
 import java.util.Collection;
 
