@@ -1,7 +1,6 @@
 package org.baddev.currency.mail;
 
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.event.NotificationEvent;
 import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.slf4j.Logger;
@@ -20,7 +19,7 @@ import java.util.Date;
  * Created by IPotapchuk on 6/22/2016.
  */
 @Component
-public class ExchangeCompletionMailer implements NotificationListener {
+public class ExchangeCompletionMailer implements NotificationListener<ExchangeCompletionEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangeCompletionMailer.class);
 
@@ -37,28 +36,26 @@ public class ExchangeCompletionMailer implements NotificationListener {
     }
 
     @Override
-    public <T extends NotificationEvent> void onNotificationEventReceived(T e) {
-        if (e instanceof ExchangeCompletionEvent) {
-            pool.execute(() -> {
-                ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
-                String exchInfo = String.format("Exchange task %d completed. %.2f %s <> %.2f %s.",
-                        operation.getId(),
-                        operation.getFromAmount(),
-                        operation.getFromCcy(),
-                        operation.getToAmount(),
-                        operation.getToCcy());
-                SimpleMailMessage msg = new SimpleMailMessage(template);
-                msg.setTo("ilya_potapchuk@mail.ru");
-                msg.setSentDate(new Date());
-                msg.setSubject("Currency Exchange Task Completion");
-                msg.setText(exchInfo);
-                try {
-                    sender.send(msg);
-                } catch (MailException ex) {
-                    log.error("Failed to send email", ex);
-                    throw ex;
-                }
-            });
-        }
+    public void notificationReceived(ExchangeCompletionEvent e) {
+        pool.execute(() -> {
+            ExchangeOperation operation = e.getEventData();
+            String exchInfo = String.format("Exchange task %d completed. %.2f %s <> %.2f %s.",
+                    operation.getId(),
+                    operation.getFromAmount(),
+                    operation.getFromCcy(),
+                    operation.getToAmount(),
+                    operation.getToCcy());
+            SimpleMailMessage msg = new SimpleMailMessage(template);
+            msg.setTo("ilya_potapchuk@mail.ru");
+            msg.setSentDate(new Date());
+            msg.setSubject("Currency Exchange Task Completion");
+            msg.setText(exchInfo);
+            try {
+                sender.send(msg);
+            } catch (MailException ex) {
+                log.error("Failed to send email", ex);
+                throw ex;
+            }
+        });
     }
 }

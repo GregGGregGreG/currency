@@ -15,6 +15,6 @@
         <property name="waitForTasksToCompleteOnShutdown" value="${scheduler.pool.waitForTasksToCompleteOnShutdown}"/>
     </bean>
 
-    <bean id="notifier" class="org.baddev.currency.core.notifier.NotifierService"/>
+    <bean id="notifier" class="org.baddev.currency.core.notifier.NotifierImpl"/>
 
 </beans>

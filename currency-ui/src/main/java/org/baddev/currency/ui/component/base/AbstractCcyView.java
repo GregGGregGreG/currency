@@ -27,12 +27,12 @@ import static org.baddev.currency.ui.CurrencyUI.currencyUI;
  */
 public abstract class AbstractCcyView extends VerticalLayout implements View {
 
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
     @Autowired
     private SettingsWindow settingsWindow;
     @Autowired
     protected EventBus bus;
-
-    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     @PostConstruct
     public void init() {

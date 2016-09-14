@@ -42,16 +42,16 @@ import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate.*;
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
 public class RatesView extends AbstractCcyGridView<ExchangeRate> {
 
-    public static final String NAME = "rates";
+    public  static final String NAME           = "rates";
     private static final String P_GEN_CCY_NAME = IsoEntityParam.CCY_NM.fieldName();
 
     @Value("${min_date_nbu}")
     private String minDateVal;
 
-    private ComboBox fetchOptCb = new ComboBox("Fetch:");
-    private PopupDateField df = new PopupDateField("Select Date:");
-    private Button fetchBtn = new Button("Fetch");
-    private TextField filter = new TextField();
+    private ComboBox       fetchOptCb = new ComboBox("Fetch:");
+    private PopupDateField df         = new PopupDateField("Select Date:");
+    private Button         fetchBtn   = new Button("Fetch");
+    private TextField      filter     = new TextField();
 
     @Autowired
     private Iso4217CcyService ccyService;

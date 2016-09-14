@@ -1,12 +1,19 @@
 package org.baddev.currency.ui.security.dto;
 
+import org.hibernate.validator.constraints.NotEmpty;
+
 /**
  * Created by IPotapchuk on 6/29/2016.
  */
 public class LoginData {
 
-    private String username;
-    private String password;
+    @NotEmpty(message = "must be filled")
+    private String username = "";
+    @NotEmpty(message = "must be filled")
+    private String password = "";
+
+    public LoginData() {
+    }
 
     public LoginData(String username, String password) {
         this.username = username;
@@ -17,7 +24,15 @@ public class LoginData {
         return username;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public String getPassword() {
         return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

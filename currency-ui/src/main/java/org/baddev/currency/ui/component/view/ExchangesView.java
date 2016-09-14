@@ -52,12 +52,12 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
 
     public static final String NAME = "exchanges";
 
-    private TextField amountF = new TextField("Amount:");
-    private ComboBox fromCcyChoiseF = new ComboBox("From:");
-    private ComboBox toCcyChoiseF = new ComboBox("To:");
-    private PopupDateField exchDateF = new PopupDateField("Rate's date:");
-    private Button exchBtn = new Button("Exchange");
-    private Button resetBtn = new Button("Reset");
+    private TextField      amountF        = new TextField("Amount:");
+    private ComboBox       fromCcyChoiseF = new ComboBox("From:");
+    private ComboBox       toCcyChoiseF   = new ComboBox("To:");
+    private PopupDateField exchDateF      = new PopupDateField("Rate's date:");
+    private Button         exchBtn        = new Button("Exchange");
+    private Button         resetBtn       = new Button("Reset");
 
     @Value("${min_date_nbu}")
     private String minDateVal;

@@ -47,18 +47,17 @@ import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
 public class SchedulerView extends AbstractCcyGridView<ExchangeTask> {
 
-    public static final String NAME = "scheduler";
-
+    public  static final String NAME           = "scheduler";
     private static final String P_GEN_EXEC_BTN = "execution";
-    private static final String P_GEN_MNG_BTN = "managing";
-    private static final String P_GEN_RMV_BTN = "removal";
+    private static final String P_GEN_MNG_BTN  = "managing";
+    private static final String P_GEN_RMV_BTN  = "removal";
 
-    private TextField amountF = new TextField("Amount:");
-    private ComboBox fromCcyChoiseF = new ComboBox("From:");
-    private ComboBox toCcyChoiseF = new ComboBox("To:");
-    private TextField cronF = new TextField("Cron Expression:");
-    private Button scheduleBtn = new Button("Schedule");
-    private Button resetBtn = new Button("Reset");
+    private TextField amountF        = new TextField("Amount:");
+    private ComboBox  fromCcyChoiseF = new ComboBox("From:");
+    private ComboBox  toCcyChoiseF   = new ComboBox("To:");
+    private TextField cronF          = new TextField("Cron Expression:");
+    private Button    scheduleBtn    = new Button("Schedule");
+    private Button    resetBtn       = new Button("Reset");
 
     private Grid.FooterRow footer = grid.prependFooterRow();
 

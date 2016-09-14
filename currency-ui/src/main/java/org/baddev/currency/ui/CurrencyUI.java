@@ -13,7 +13,6 @@ import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.event.NotificationEvent;
 import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.core.notifier.Notifier;
 import org.baddev.currency.fetcher.other.Iso4217CcyService;
@@ -51,7 +50,7 @@ import static org.baddev.currency.ui.util.NotificationUtils.*;
 @PreserveOnRefresh
 @SpringUI
 @Push(transport = Transport.WEBSOCKET_XHR)
-public class CurrencyUI extends UI implements NotificationListener {
+public class CurrencyUI extends UI implements NotificationListener<ExchangeCompletionEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(CurrencyUI.class);
 
@@ -89,26 +88,24 @@ public class CurrencyUI extends UI implements NotificationListener {
     }
 
     @Override
-    public <T extends NotificationEvent> void onNotificationEventReceived(T e) {
-        if (e instanceof ExchangeCompletionEvent) {
-            ExchangeOperation operation = ((ExchangeCompletionEvent) e).getEventData();
-            access(() -> {
-                String fromCcyNames = FormatUtils.formatCcyParamValuesList(
-                        ccyService.findCcyNamesByCode(operation.getFromCcy())
-                );
-                String toCcyNames = FormatUtils.formatCcyParamValuesList(
-                        ccyService.findCcyNamesByCode(operation.getToCcy())
-                );
-                String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
-                        operation.getFromAmount(),
-                        fromCcyNames,
-                        operation.getFromCcy(),
-                        operation.getToAmount(),
-                        toCcyNames,
-                        operation.getToCcy());
-                notifyTray("Exchange task completion", exchInfo);
-            });
-        }
+    public void notificationReceived(ExchangeCompletionEvent e) {
+        ExchangeOperation operation = e.getEventData();
+        access(() -> {
+            String fromCcyNames = FormatUtils.formatCcyParamValuesList(
+                    ccyService.findCcyNamesByCode(operation.getFromCcy())
+            );
+            String toCcyNames = FormatUtils.formatCcyParamValuesList(
+                    ccyService.findCcyNamesByCode(operation.getToCcy())
+            );
+            String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
+                    operation.getFromAmount(),
+                    fromCcyNames,
+                    operation.getFromCcy(),
+                    operation.getToAmount(),
+                    toCcyNames,
+                    operation.getToCcy());
+            notifyTray("Exchange task completion", exchInfo);
+        });
     }
 
     @Subscribe

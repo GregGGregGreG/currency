@@ -3,7 +3,7 @@ package org.baddev.currency.core.exception;
 /**
  * Created by IPotapchuk on 3/15/2016.
  */
-public class CurrencyNotFoundException extends Exception {
+public class CurrencyNotFoundException extends RuntimeException {
 
     public CurrencyNotFoundException() {
         super();
