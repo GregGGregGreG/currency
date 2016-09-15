@@ -33,6 +33,7 @@
         <dumbster.version>1.6</dumbster.version>
         <junit.version>4.12</junit.version>
         <codegen.pojo.ext.version>0.0.1</codegen.pojo.ext.version>
+        <hibernate.validator.version>5.2.4.Final</hibernate.validator.version>
     </properties>
 
     <dependencyManagement>
@@ -197,6 +198,11 @@
                 <artifactId>dumbster</artifactId>
                 <version>${dumbster.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate.validator.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
