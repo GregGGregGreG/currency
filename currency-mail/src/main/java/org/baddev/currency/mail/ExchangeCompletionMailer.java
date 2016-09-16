@@ -2,7 +2,7 @@ package org.baddev.currency.mail;
 
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.core.listener.NotificationListener;
-import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
@@ -18,13 +18,13 @@ import java.util.Date;
 public class ExchangeCompletionMailer implements NotificationListener<ExchangeCompletionEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangeCompletionMailer.class);
-
     private MailSender sender;
     private SimpleMailMessage template;
     private ThreadPoolTaskExecutor pool;
     private String email;
 
-    public ExchangeCompletionMailer(MailSender sender, SimpleMailMessage template,
+    public ExchangeCompletionMailer(MailSender sender,
+                                    SimpleMailMessage template,
                                     ThreadPoolTaskExecutor pool) {
         this.pool = pool;
         this.template = template;
@@ -37,9 +37,8 @@ public class ExchangeCompletionMailer implements NotificationListener<ExchangeCo
 
     @Override
     public void notificationReceived(ExchangeCompletionEvent e) {
-        if (!e.isSuccess()) return;
         pool.execute(() -> {
-            ExchangeOperation operation = e.getEventData();
+            IExchangeOperation operation = e.getEventData();
             String exchInfo = String.format("Exchange task %d completed. %.2f %s <> %.2f %s.",
                     operation.getId(),
                     operation.getFromAmount(),
@@ -59,4 +58,5 @@ public class ExchangeCompletionMailer implements NotificationListener<ExchangeCo
             }
         });
     }
+
 }

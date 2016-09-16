@@ -1,4 +1,4 @@
-package org.baddev.currency.fetcher.impl.nbu;
+package org.baddev.currency.fetcher.nbu;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

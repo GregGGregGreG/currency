@@ -1,13 +1,14 @@
 package org.baddev.currency.fetcher;
 
 import org.apache.cxf.interceptor.LoggingInInterceptor;
+import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
-import org.baddev.currency.fetcher.other.entity.IsoCcyEntries;
-import org.baddev.currency.fetcher.other.entity.IsoCcyEntry;
-import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntries;
-import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntry;
+import org.baddev.currency.fetcher.iso4217.entity.IsoCcyEntries;
+import org.baddev.currency.fetcher.iso4217.entity.IsoCcyEntry;
+import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntries;
+import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,12 +32,17 @@ public class FetcherConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FetcherConfig.class);
 
-    @Value("${source_nbu}")      String nbuSourceURI;
-    @Value("${enabled}")         String proxyEnabled;
-    @Value("${server}")          String proxyHost;
-    @Value("${port}")            String proxyPort;
-    @Value("${source_iso_cur}")  String isoCurSourceURI;
-    @Value("${source_iso_hist}") String isoHistSourceURI;
+    @Value("${source_nbu}")               String nbuSourceURI;
+    @Value("${enabled}")                  String proxyEnabled;
+    @Value("${server}")                   String proxyHost;
+    @Value("${port}")                     String proxyPort;
+    @Value("${source_iso_cur}")           String isoCurSourceURI;
+    @Value("${source_iso_hist}")          String isoHistSourceURI;
+    @Value("${policy.receiveTimeout}")    String receiveTimeount;
+    @Value("${policy.connectionTimeout}") String connectionTimeout;
+    @Value("${policy.chunking}")          String chunking;
+    @Value("${policy.logging.in}")        String loggingIn;
+    @Value("${policy.logging.out}")       String loggingOut;
 
     @Bean(name = "NBUClient")
     public WebClient nbuClient() {
@@ -50,7 +56,7 @@ public class FetcherConfig {
         WebClient client = WebClient.create(isoCurSourceURI);
         configureClient(client);
         IsoCcyEntries entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
-        return (entries!=null && entries.getEntries()!=null)? entries.getEntries() : new ArrayList<>();
+        return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
     }
 
     @Bean(name = "IsoHistCcys")
@@ -58,22 +64,30 @@ public class FetcherConfig {
         WebClient client = WebClient.create(isoHistSourceURI);
         configureClient(client);
         IsoCcyHistEntries entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
-        return (entries!=null && entries.getEntries()!=null)? entries.getEntries() : new ArrayList<>();
+        return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
     }
 
     private void configureClient(WebClient client) {
         HTTPConduit conduit = (HTTPConduit) WebClient.getConfig(client).getConduit();
 
         HTTPClientPolicy policy = conduit.getClient();
-        policy.setReceiveTimeout(8000);
-        policy.setAllowChunking(false);
-        policy.setConnectionTimeout(5000);
+        policy.setReceiveTimeout(Integer.parseInt(receiveTimeount));
+        policy.setAllowChunking(Boolean.valueOf(chunking));
+        policy.setConnectionTimeout(Integer.parseInt(connectionTimeout));
 
-        WebClient.getConfig(client).setInInterceptors(
-                Collections.singletonList(new LoggingInInterceptor())
-        );
+        if(Boolean.TRUE.equals(Boolean.valueOf(loggingIn))) {
+            WebClient.getConfig(client).setInInterceptors(
+                    Collections.singletonList(new LoggingInInterceptor())
+            );
+        }
 
-        if (proxyEnabled.equals("true")) {
+        if(Boolean.TRUE.equals(Boolean.valueOf(loggingOut))){
+            WebClient.getConfig(client).setOutInterceptors(
+                    Collections.singletonList(new LoggingOutInterceptor())
+            );
+        }
+
+        if (Boolean.TRUE.equals(Boolean.valueOf(proxyEnabled))) {
             policy.setProxyServer(proxyHost);
             policy.setProxyServerPort(Integer.parseInt(proxyPort));
             log.info("Using proxy mode: {}:{}", proxyHost, proxyPort);

@@ -23,7 +23,7 @@ public class WebClientAspect {
         this.client = client;
     }
 
-    @After("execution(* org.baddev.currency.fetcher.RateFetcherService.*(..))")
+    @After("execution(* org.baddev.currency.fetcher.ExchangeRateFetcher.*(..))")
     public void reset(){
         log.debug("Going to reset client");
         client.reset();

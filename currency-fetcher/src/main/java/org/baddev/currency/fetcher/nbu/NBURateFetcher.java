@@ -1,11 +1,11 @@
-package org.baddev.currency.fetcher.impl.nbu;
+package org.baddev.currency.fetcher.nbu;
 
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.fetcher.ExtendedExchangeRateDao;
-import org.baddev.currency.fetcher.RateFetcherService;
-import org.baddev.currency.fetcher.impl.nbu.entity.NBUExchange;
+import org.baddev.currency.fetcher.nbu.entity.NBUExchange;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,16 +22,17 @@ import javax.annotation.Resource;
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Currency;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * Created by IPotapchuk on 3/14/2016.
  */
-@Service("NBU")
-@Transactional(noRollbackFor = NBURateFetcherService.NoRatesLocallyFoundException.class)
-public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
+@Service("NBUFetcher")
+@Transactional(noRollbackFor = NBURateFetcher.NoRatesLocallyFoundException.class)
+public class NBURateFetcher implements ExchangeRateFetcher {
 
-    private static final Logger log = LoggerFactory.getLogger(NBURateFetcherService.class);
+    private static final Logger log = LoggerFactory.getLogger(NBURateFetcher.class);
     private static final DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd");
 
     @Value("${param_date_nbu}")
@@ -50,8 +50,8 @@ public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
         //nothing to add
     }
 
-    private Collection<ExchangeRate> searchLocally(LocalDate date) {
-        Collection<ExchangeRate> localRates = rateDao.fetchByExchangeDate(date);
+    private List<ExchangeRate> searchLocally(LocalDate date) {
+        List<ExchangeRate> localRates = rateDao.fetchByExchangeDate(date);
         if (!localRates.isEmpty()) {
             log.debug("{} rates found locally.", localRates.size());
             return localRates;
@@ -61,7 +61,7 @@ public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
     }
 
     @Override
-    public Collection<ExchangeRate> fetchCurrent() throws NoRatesFoundException {
+    public Collection<? extends IExchangeRate> fetchCurrent() {
         Collection<ExchangeRate> rates;
         try {
             rates = searchLocally(new LocalDate());
@@ -75,7 +75,7 @@ public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
     }
 
     @Override
-    public Collection<ExchangeRate> fetchByDate(LocalDate date) throws NoRatesFoundException {
+    public Collection<? extends IExchangeRate> fetchByDate(LocalDate date) {
         Collection<ExchangeRate> rates;
         try {
             rates = searchLocally(date);
@@ -90,7 +90,7 @@ public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
     }
 
     @Override
-    public ExchangeRate fetchByCurrencyAndDate(Currency currency, LocalDate date) throws NoRatesFoundException {
+    public IExchangeRate fetchByCurrencyAndDate(Currency currency, LocalDate date) {
         ExchangeRate rate;
         try {
             rate = filter(currency, searchLocally(date));
@@ -104,20 +104,6 @@ public class NBURateFetcherService implements RateFetcherService<ExchangeRate> {
             rateDao.insert(rate);
         }
         return rate;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<ExchangeRate> findAll() {
-        return rateDao.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<ExchangeRate> findLast() {
-        return rateDao.findLastRates();
     }
 
     private ExchangeRate filter(Currency currency, Collection<ExchangeRate> rates) {

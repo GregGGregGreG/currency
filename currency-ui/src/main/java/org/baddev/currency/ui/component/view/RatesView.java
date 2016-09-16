@@ -1,5 +1,6 @@
 package org.baddev.currency.ui.component.view;
 
+import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Container;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.data.util.filter.Or;
@@ -14,12 +15,12 @@ import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.exception.NoRatesFoundException;
-import org.baddev.currency.fetcher.RateFetcherService;
-import org.baddev.currency.fetcher.impl.nbu.NBU;
-import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.fetcher.other.IsoEntityParam;
-import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
+import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
+import org.baddev.currency.fetcher.iso4217.IsoEntityParam;
+import org.baddev.currency.fetcher.service.ExchangeRateService;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.Iso4217PropertyValGen;
 import org.joda.time.LocalDate;
@@ -40,9 +41,9 @@ import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate.*;
  */
 @SpringView(name = RatesView.NAME)
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
-public class RatesView extends AbstractCcyGridView<ExchangeRate> {
+public class RatesView extends AbstractCcyGridView<IExchangeRate> {
 
-    public  static final String NAME           = "rates";
+    public static final String NAME = "rates";
     private static final String P_GEN_CCY_NAME = IsoEntityParam.CCY_NM.fieldName();
 
     @Value("${min_date_nbu}")
@@ -55,8 +56,8 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
 
     @Autowired
     private Iso4217CcyService ccyService;
-    @NBU
-    private RateFetcherService<ExchangeRate> fetcher;
+    @Autowired
+    private ExchangeRateService rateService;
 
     private interface FetchOption {
         String ALL = "All";
@@ -69,11 +70,15 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
         };
     }
 
+    @Autowired
+    public RatesView(SettingsWindow settingsWindow, EventBus bus) {
+        super(settingsWindow, bus);
+    }
+
     @Override
-    public void init() {
-        super.init();
-        Collection<ExchangeRate> data = fetchCurrentRates();
-        setup(ExchangeRate.class, data, P_ID);
+    protected void init() {
+        Collection<? extends IExchangeRate> data = fetchCurrentRates();
+        setup(IExchangeRate.class, data, P_ID);
 
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             containerWrapper().addGeneratedProperty(P_GEN_CCY_NAME,
@@ -83,27 +88,25 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
 
         refresh(data, P_CCY);
 
+        grid.setCellDescriptionGenerator(cell -> P_GEN_CCY_NAME.equals(cell.getPropertyId())? String.valueOf(cell.getValue()) : "");
+
         grid.getColumn(P_BASE_CCY).setHeaderCaption("Base Currency Code");
         grid.getColumn(P_CCY).setHeaderCaption("Currency Code");
         grid.getColumn(P_GEN_CCY_NAME).setHeaderCaption("Currency Name");
         grid.getColumn(P_RATE).setConverter(new DoubleAmountToStringConverter());
-        grid.getColumns().forEach(c -> {
-            if (!c.getPropertyId().equals(P_EXCHANGE_DATE))
-                c.setRenderer(new HtmlRenderer());
-        });
-
+        grid.getColumns().stream()
+                .filter(c -> !c.getPropertyId().equals(P_EXCHANGE_DATE))
+                .forEach(c -> c.setRenderer(new HtmlRenderer()));
         grid.setColumnOrder(P_EXCHANGE_DATE, P_BASE_CCY, P_CCY, P_GEN_CCY_NAME, P_RATE);
     }
 
-    private Collection<ExchangeRate> fetchCurrentRates() {
-        Collection<ExchangeRate> data;
+    private Collection<? extends IExchangeRate> fetchCurrentRates() {
         try {
-            data = fetcher.fetchCurrent();
+            return rateService.fetchCurrent();
         } catch (NoRatesFoundException e) {
-            data = new ArrayList<>();
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
         }
-        return data;
+        return new ArrayList<>();
     }
 
     @Override
@@ -146,8 +149,7 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
         fetchBtn.addClickListener(event -> {
             if (df.getValue() != null) {
                 try {
-                    Collection<ExchangeRate> rates = fetcher.fetchByDate(new LocalDate(df.getValue()));
-                    refresh(rates, P_CCY);
+                    refresh(rateService.fetchByDate(new LocalDate(df.getValue())), P_CCY);
                 } catch (NoRatesFoundException e) {
                     refresh(new ArrayList<>(), null, null);
                     Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
@@ -166,7 +168,7 @@ public class RatesView extends AbstractCcyGridView<ExchangeRate> {
             switch (option) {
                 case FetchOption.ALL:
                     toggleVisible(false, df, fetchBtn);
-                    refresh(fetcher.findAll(), P_EXCHANGE_DATE, SortDirection.DESCENDING);
+                    refresh(rateService.findAll(), P_EXCHANGE_DATE, SortDirection.DESCENDING);
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisible(false, df, fetchBtn);

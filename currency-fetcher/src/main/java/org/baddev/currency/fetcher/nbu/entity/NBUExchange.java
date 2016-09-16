@@ -1,6 +1,9 @@
-package org.baddev.currency.fetcher.impl.nbu.entity;
+package org.baddev.currency.fetcher.nbu.entity;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 /**

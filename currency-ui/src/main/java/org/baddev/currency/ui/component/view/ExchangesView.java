@@ -1,6 +1,6 @@
 package org.baddev.currency.ui.component.view;
 
-import com.vaadin.data.Container;
+import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Property;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.data.util.converter.StringToDoubleConverter;
@@ -17,14 +17,16 @@ import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.exception.NoRatesFoundException;
 import org.baddev.currency.exchanger.ExchangerService;
-import org.baddev.currency.fetcher.RateFetcherService;
-import org.baddev.currency.fetcher.impl.nbu.NBU;
-import org.baddev.currency.fetcher.other.Iso4217CcyService;
+import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
+import org.baddev.currency.fetcher.service.ExchangeRateService;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.security.user.IdentityUser;
-import org.baddev.currency.security.utils.SecurityUtils;
+import org.baddev.currency.security.utils.SecurityCtxHelper;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.converter.DateToLocalDateTimeConverter;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.FormatUtils;
@@ -48,7 +50,7 @@ import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
  */
 @SpringView(name = ExchangesView.NAME)
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
-public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
+public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
 
     public static final String NAME = "exchanges";
 
@@ -63,17 +65,21 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
     private String minDateVal;
 
     @Autowired
-    private ExchangerService<ExchangeOperation, ExchangeRate> exchangerService;
+    private ExchangerService exchangerService;
     @Autowired
     private Iso4217CcyService iso4217CcyService;
-    @NBU
-    private RateFetcherService<ExchangeRate> rateFetcherService;
+    @Autowired
+    private ExchangeRateService rateService;
+
+    @Autowired
+    public ExchangesView(SettingsWindow settingsWindow, EventBus bus) {
+        super(settingsWindow, bus);
+    }
 
     @Override
-    public void init() {
-        super.init();
-        setup(ExchangeOperation.class,
-                exchangerService.findForUser(SecurityUtils.getPrincipal(IdentityUser.class).getId()),
+    protected void init() {
+        setup(IExchangeOperation.class,
+                exchangerService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
                 P_ID, P_USER_ID);
 
         grid.setCellDescriptionGenerator(cell -> {
@@ -140,14 +146,14 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
             });
         });
 
-        exchDateF.addValueChangeListener((Property.ValueChangeListener) event -> {
-            Collection<ExchangeRate> rates = new ArrayList<>();
+        exchDateF.addValueChangeListener(event -> {
+            Collection<? extends IExchangeRate> rates = new ArrayList<>();
             try {
-                rates = rateFetcherService.fetchByDate(LocalDate.fromDateFields(exchDateF.getValue()));
+                rates = rateService.fetchByDate(LocalDate.fromDateFields(exchDateF.getValue()));
             } catch (NoRatesFoundException e) {
                 Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
             }
-            Container c = new BeanItemContainer<>(ExchangeRate.class, rates);
+            BeanItemContainer<IExchangeRate> c = new BeanItemContainer<>(IExchangeRate.class, rates);
             fromCcyChoiseF.setContainerDataSource(c);
             toCcyChoiseF.setContainerDataSource(c);
             toggleEnabled(false, fromCcyChoiseF, toCcyChoiseF);
@@ -180,22 +186,22 @@ public class ExchangesView extends AbstractCcyGridView<ExchangeOperation> {
         resetBtn.setStyleName(ValoTheme.BUTTON_DANGER);
         resetBtn.setEnabled(false);
         resetBtn.setImmediate(true);
-        resetBtn.addClickListener((Button.ClickListener) event -> {
+        resetBtn.addClickListener(event -> {
             resetInputs();
             amountF.focus();
         });
 
         exchBtn.setEnabled(false);
         exchBtn.setIcon(FontAwesome.PLUS_CIRCLE);
-        exchBtn.addClickListener((Button.ClickListener) event -> {
+        exchBtn.addClickListener(event -> {
             ExchangeOperation exc = new ExchangeOperation()
-                    .setUserId(SecurityUtils.getPrincipal(IdentityUser.class).getId())
+                    .setUserId(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId())
                     .setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy())
                     .setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy())
                     .setRatesDate(LocalDate.fromDateFields(exchDateF.getValue()))
                     .setFromAmount((double) amountF.getConvertedValue());
-            exchangerService.exchange(exc, (Collection<ExchangeRate>) fromCcyChoiseF.getItemIds());
-            refresh(exchangerService.findForUser(SecurityUtils.getPrincipal(IdentityUser.class).getId()),
+            exchangerService.exchange(exc, (Collection<? extends IExchangeRate>) fromCcyChoiseF.getItemIds());
+            refresh(exchangerService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
                     P_PERFORM_DATETIME, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();

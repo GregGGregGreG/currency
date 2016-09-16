@@ -10,7 +10,7 @@ import javax.validation.constraints.Size;
  */
 public class SignUpDTO {
 
-    @Size(min = 6, max = 50)
+    @Size(min = 5, max = 50)
     @Pattern(regexp = "^[a-zA-Z0-9_-]*$",
             message = "letters, numbers, special symbols \"_-\" ")
     private String username = "";

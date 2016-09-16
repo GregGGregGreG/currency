@@ -4,6 +4,8 @@ import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDetailsDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserRoleDao;
+import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
+import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.UserRole;
@@ -42,7 +44,7 @@ import static org.baddev.currency.jooq.schema.tables.UserUserRole.USER_USER_ROLE
  * Created by IPotapchuk on 9/12/2016.
  */
 @Service("userService")
-public class UserServiceImpl implements UserService<User, UserDetails> {
+public class UserServiceImpl implements UserService {
 
     private final MessageDigestPasswordEncoder encoder;
     private final AuthenticationManager manager;
@@ -131,7 +133,7 @@ public class UserServiceImpl implements UserService<User, UserDetails> {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public UserDetails findUserDetailsByUsername(String userName) {
+    public IUserDetails findUserDetailsByUsername(String userName) {
         UserDetails details = dsl.select(USER_DETAILS.fields())
                 .from(USER)
                 .leftOuterJoin(USER_DETAILS).on(USER.ID.eq(USER_DETAILS.USER_ID))
@@ -143,33 +145,62 @@ public class UserServiceImpl implements UserService<User, UserDetails> {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<User> findByUsername(String... userNames) {
+    public Collection<? extends IUser> findByUsername(String... userNames) {
         return userDao.fetchByUsername(userNames);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public User findOneByUserName(String userName) {
+    public IUser findOneByUserName(String userName) {
         return userDao.fetchOneByUsername(userName);
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void update(User user, UserDetails details) {
+    public void update(IUser user, IUserDetails details) {
         if (user != null && details != null) {
             dsl.batchUpdate(user.into(new UserRecord()), details.into(new UserDetailsRecord()));
         } else if (details != null) {
-            detailsDao.update(details);
+            detailsDao.update(details.into(new UserDetails()));
         } else if (user != null) {
-            userDao.update(user);
+            userDao.update(user.into(new User()));
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN})
-    public Collection<User> findAllUsers() {
+    public Collection<? extends IUser> findAll() {
         return userDao.findAll();
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public void update(IUser entity) {
+        userDao.update(entity.into(new User()));
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.ADMIN})
+    public void delete(String... strings) {
+        dsl.deleteFrom(USER).where(USER.USERNAME.in(strings)).execute();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN, RoleEnum.USER})
+    public Collection<? extends IUser> find(Long... ids) {
+        return userDao.fetchById(ids);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN, RoleEnum.USER})
+    public IUser findOne(Long aLong) {
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 package org.baddev.currency.ui.component.view;
 
+import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Validator;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup;
@@ -9,8 +10,10 @@ import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.baddev.currency.ui.component.base.AbstractFormView;
+import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.security.event.SignUpEvent;
 import org.baddev.currency.ui.util.NotificationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -23,12 +26,13 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
 
     public static final String NAME = "signup";
 
-    public SignUpView() {
-        super(SignUpDTO.class, new SignUpDTO());
+    @Autowired
+    public SignUpView(SettingsWindow settingsWindow, EventBus bus) {
+        super(settingsWindow, bus, new SignUpDTO(), SignUpDTO.class);
     }
 
     @Override
-    protected void customizeForm(FormLayout formLayout, BeanFieldGroup<SignUpDTO> binder) {
+    protected void customizeForm(final FormLayout formLayout, final BeanFieldGroup<SignUpDTO> binder, final Button submitBtn) {
         TextField userName = binder.buildAndBind("Username", "username", TextField.class);
         TextField email = binder.buildAndBind("Email", "email", TextField.class);
         TextField firstName = binder.buildAndBind("First Name", "firstName", TextField.class);
@@ -65,7 +69,8 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
             }
         });
 
-        Button signupBtn = new Button("Sign Up", event -> {
+        submitBtn.setCaption("Sign Up");
+        submitBtn.addClickListener(event -> {
             try {
                 binder.commit();
             } catch (FieldGroup.CommitException e) {
@@ -73,10 +78,11 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
                         "Some fields contain errors. Check them and try again");
             }
         });
+
         formLayout.setSpacing(true);
         formLayout.setMargin(new MarginInfo(true, true, true, false));
         formLayout.setSizeUndefined();
-        formLayout.addComponents(userName, email, firstName, lastName, password, passwordCheck, signupBtn);
+        formLayout.addComponents(userName, email, firstName, lastName, password, passwordCheck, submitBtn);
     }
 
     @Override

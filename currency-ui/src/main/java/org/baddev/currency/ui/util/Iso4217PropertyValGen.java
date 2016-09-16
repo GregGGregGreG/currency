@@ -6,8 +6,8 @@ import com.vaadin.data.util.PropertyValueGenerator;
 import com.vaadin.data.util.filter.Or;
 import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.util.filter.UnsupportedFilterException;
-import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.fetcher.other.IsoEntityParam;
+import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
+import org.baddev.currency.fetcher.iso4217.IsoEntityParam;
 
 import java.util.List;
 

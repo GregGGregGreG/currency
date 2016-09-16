@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.security.DeclareRoles;
 
-import static org.baddev.currency.security.utils.SecurityUtils.hasAnyRole;
-import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
+import static org.baddev.currency.security.utils.SecurityCtxHelper.hasAnyRole;
+import static org.baddev.currency.security.utils.SecurityCtxHelper.isLoggedIn;
 
 /**
  * Created by IPotapchuk on 7/1/2016.

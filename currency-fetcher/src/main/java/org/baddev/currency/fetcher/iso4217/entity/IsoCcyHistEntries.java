@@ -1,4 +1,4 @@
-package org.baddev.currency.fetcher.other.entity;
+package org.baddev.currency.fetcher.iso4217.entity;
 
 import javax.xml.bind.annotation.*;
 import java.util.List;

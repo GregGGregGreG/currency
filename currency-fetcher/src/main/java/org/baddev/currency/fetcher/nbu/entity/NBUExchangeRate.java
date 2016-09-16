@@ -1,4 +1,4 @@
-package org.baddev.currency.fetcher.impl.nbu.entity;
+package org.baddev.currency.fetcher.nbu.entity;
 
 import org.baddev.currency.core.adapter.LocalDateAdapter;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;

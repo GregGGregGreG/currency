@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 /**
  * Created by IPotapchuk on 7/1/2016.
  */
-public final class SecurityUtils {
+public final class SecurityCtxHelper {
 
-    private SecurityUtils() {
+    private SecurityCtxHelper() {
     }
 
     private static Optional<Authentication> safeAuth() {

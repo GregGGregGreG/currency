@@ -1,22 +1,20 @@
 package org.baddev.currency.security.user;
 
+import org.baddev.currency.core.operation.DeleteOperation;
+import org.baddev.currency.core.operation.FindOperation;
+import org.baddev.currency.core.operation.UpdateOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
-import org.baddev.currency.security.dto.LoginDTO;
-import org.baddev.currency.security.dto.SignUpDTO;
-import org.springframework.security.core.AuthenticationException;
 
 import java.util.Collection;
 
 /**
  * Created by IPotapchuk on 9/12/2016.
  */
-public interface UserService<T extends IUser, E extends IUserDetails> {
-    void authenticate(LoginDTO loginDTO) throws AuthenticationException;
-    void signUp(SignUpDTO signUpDTO, String... roleNames);
-    E findUserDetailsByUsername(String userName);
-    Collection<T> findByUsername(String... userNames);
-    T findOneByUserName(String userName);
-    void update(T user, E userDetails);
-    Collection<T> findAllUsers();
+public interface UserService extends FindOperation<IUser, Long>, UpdateOperation<IUser>, DeleteOperation<String>,
+        UserOperation {
+    IUserDetails findUserDetailsByUsername(String userName);
+    Collection<? extends IUser> findByUsername(String... userNames);
+    IUser findOneByUserName(String userName);
+    void update(IUser user, IUserDetails userDetails);
 }

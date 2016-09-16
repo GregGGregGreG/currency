@@ -5,9 +5,9 @@ import org.baddev.currency.core.exception.ServiceException;
 import org.baddev.currency.exchanger.ExchangerService;
 import org.baddev.currency.jooq.schema.Tables;
 import org.baddev.currency.jooq.schema.tables.daos.ExchangeOperationDao;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
-import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
 import org.joda.time.LocalDateTime;
 import org.jooq.impl.DSL;
@@ -24,7 +24,7 @@ import java.util.Collection;
  * Created by IPotapchuk on 3/14/2016.
  */
 @Service("exchanger")
-public class ExchangerServiceImpl implements ExchangerService<ExchangeOperation, ExchangeRate> {
+public class ExchangerServiceImpl implements ExchangerService {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangerServiceImpl.class);
 
@@ -37,9 +37,9 @@ public class ExchangerServiceImpl implements ExchangerService<ExchangeOperation,
 
     @Override
     @Transactional
-    public ExchangeOperation exchange(ExchangeOperation operation,
-                                      Collection<ExchangeRate> rates) {
-        ExchangeOperation op = new ExchangeOperation(operation);
+    public ExchangeOperation exchange(IExchangeOperation operation,
+                                      Collection<? extends IExchangeRate> rates) {
+        ExchangeOperation op = operation.into(new ExchangeOperation());
         op.setPerformDatetime(LocalDateTime.now());
         if (op.getFromCcy().equals("UAH")) {
             double rate = filterRate(rates, op.getToCcy());
@@ -62,21 +62,35 @@ public class ExchangerServiceImpl implements ExchangerService<ExchangeOperation,
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN})
-    public Collection<ExchangeOperation> findAll() {
+    public Collection<? extends IExchangeOperation> findAll() {
         return exchangeDao.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<ExchangeOperation> findForUser(Long key) {
+    public Collection<? extends IExchangeOperation> findForUser(Long key) {
         return exchangeDao.fetchByUserId(key);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN})
+    public Collection<? extends IExchangeOperation> find(Long... ids) {
+        return exchangeDao.fetchById(ids);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN})
+    public IExchangeOperation findOne(Long id) {
+        return exchangeDao.fetchOneById(id);
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void deleteById(Long... ids) {
+    public void delete(Long... ids) {
         exchangeDao.deleteById(ids);
     }
 

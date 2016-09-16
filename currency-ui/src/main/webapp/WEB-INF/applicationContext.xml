@@ -10,8 +10,12 @@
     <context:component-scan base-package="org.baddev.currency.ui"/>
 
     <context:property-placeholder
-            location="classpath:db.properties, classpath:scheduler.pool.properties,
-            classpath:api_sources.properties, classpath:proxy.properties, classpath:mail.properties,
-            classpath:mail.pool.properties" ignore-unresolvable="true" />
+            location="classpath:db.properties,
+            classpath:scheduler.pool.properties,
+            classpath:api_sources.properties,
+            classpath:proxy.properties,
+            classpath:fetcher_policy.properties,
+            classpath:mail.properties,
+            classpath:mail.pool.properties" ignore-unresolvable="true"/>
 
 </beans>

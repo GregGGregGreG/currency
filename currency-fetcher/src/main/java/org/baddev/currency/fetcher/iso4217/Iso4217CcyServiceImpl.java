@@ -1,9 +1,9 @@
-package org.baddev.currency.fetcher.other;
+package org.baddev.currency.fetcher.iso4217;
 
 import org.baddev.currency.core.exception.ServiceException;
-import org.baddev.currency.fetcher.other.entity.BaseIsoCcyEntry;
-import org.baddev.currency.fetcher.other.entity.IsoCcyEntry;
-import org.baddev.currency.fetcher.other.entity.IsoCcyHistEntry;
+import org.baddev.currency.fetcher.iso4217.entity.BaseIsoCcyEntry;
+import org.baddev.currency.fetcher.iso4217.entity.IsoCcyEntry;
+import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

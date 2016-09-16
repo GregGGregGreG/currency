@@ -1,8 +1,8 @@
-package org.baddev.currency.fetcher.other;
+package org.baddev.currency.fetcher.iso4217;
 
 import java.util.Arrays;
 
-import static org.baddev.currency.fetcher.other.Iso4217CcyService.*;
+import static org.baddev.currency.fetcher.iso4217.Iso4217CcyService.*;
 
 public enum IsoEntityParam {
 

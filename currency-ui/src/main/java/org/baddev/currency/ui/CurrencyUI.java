@@ -16,14 +16,12 @@ import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.core.notifier.Notifier;
-import org.baddev.currency.fetcher.other.Iso4217CcyService;
-import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
-import org.baddev.currency.jooq.schema.tables.pojos.User;
-import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
+import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.security.dto.LoginDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.baddev.currency.security.user.UserService;
-import org.baddev.currency.security.utils.SecurityUtils;
+import org.baddev.currency.security.utils.SecurityCtxHelper;
 import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.RatesView;
 import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
@@ -42,8 +40,8 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.annotation.WebServlet;
 
-import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
-import static org.baddev.currency.security.utils.SecurityUtils.loggedInUserName;
+import static org.baddev.currency.security.utils.SecurityCtxHelper.isLoggedIn;
+import static org.baddev.currency.security.utils.SecurityCtxHelper.loggedInUserName;
 import static org.baddev.currency.ui.util.AppSettingsUtils.initializeSettings;
 import static org.baddev.currency.ui.util.AppSettingsUtils.toggleUINotifications;
 import static org.baddev.currency.ui.util.NotificationUtils.*;
@@ -66,7 +64,7 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
     @Autowired
     private Iso4217CcyService ccyService;
     @Autowired
-    private UserService<User, UserDetails> userService;
+    private UserService userService;
 
     public static CurrencyUI currencyUI() {
         return (CurrencyUI) UI.getCurrent();
@@ -92,7 +90,7 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
 
     @Override
     public void notificationReceived(ExchangeCompletionEvent e) {
-        ExchangeOperation operation = e.getEventData();
+        IExchangeOperation operation = e.getEventData();
         access(() -> {
             String fromCcyNames = FormatUtils.formatCcyParamValuesList(
                     ccyService.findCcyNamesByCode(operation.getFromCcy())
@@ -125,7 +123,7 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
 
     @Subscribe
     private void logout(LogoutEvent event) {
-        String userName = SecurityUtils.loggedInUserName();
+        String userName = SecurityCtxHelper.loggedInUserName();
         getSession().close();
         VaadinService.getCurrentRequest().getWrappedSession().invalidate();
         getPage().reload();

@@ -1,4 +1,4 @@
-package org.baddev.currency.fetcher.other;
+package org.baddev.currency.fetcher.iso4217;
 
 import java.util.List;
 

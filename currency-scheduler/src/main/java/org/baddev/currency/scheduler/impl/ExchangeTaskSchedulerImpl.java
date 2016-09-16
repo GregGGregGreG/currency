@@ -1,15 +1,14 @@
 package org.baddev.currency.scheduler.impl;
 
-import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.core.notifier.Notifier;
 import org.baddev.currency.exchanger.ExchangerService;
-import org.baddev.currency.fetcher.RateFetcherService;
-import org.baddev.currency.fetcher.impl.nbu.NBU;
+import org.baddev.currency.fetcher.service.ExchangeRateService;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
-import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
-import org.baddev.currency.scheduler.ExchangeTaskScheduler;
+import org.baddev.currency.scheduler.task.exchange.ExchangeTaskScheduler;
 import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
 import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
@@ -18,9 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
@@ -37,9 +34,9 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     private static final Logger log = LoggerFactory.getLogger(ExchangeTaskSchedulerImpl.class);
 
     @Autowired
-    private ExchangerService<ExchangeOperation, ExchangeRate> exchanger;
-    @NBU
-    private RateFetcherService<ExchangeRate> fetcher;
+    private ExchangerService exchangerService;
+    @Autowired
+    private ExchangeRateService rateService;
     @Autowired
     private DSLContext dsl;
     @Autowired
@@ -47,30 +44,30 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     @Autowired
     private Notifier notifier;
     @Autowired
-    private ExchangeTaskService<ExchangeTask> exchangeTaskService;
+    private ExchangeTaskService exchangeTaskService;
 
-    private Set<ExchangeTask> exchangeTasks = new HashSet<>();
+    private Set<IExchangeTask> exchangeTasks = new HashSet<>();
     private Map<Long, ScheduledFuture> exchangeTasksJobsMap = new HashMap<>();
 
     private class ExchangeJob implements Runnable {
 
-        private ExchangeTask taskData;
+        private IExchangeTask taskData;
         private boolean success = true;
 
-        ExchangeJob(final ExchangeTask taskData) {
+        ExchangeJob(final IExchangeTask taskData) {
             this.taskData = taskData;
         }
 
         @Override
         public void run() {
-            ExchangeOperation exchOp = new ExchangeOperation()
+            IExchangeOperation exchOp = new ExchangeOperation()
                     .setUserId(taskData.getUserId())
                     .setFromCcy(taskData.getFromCcy())
                     .setToCcy(taskData.getToCcy())
                     .setFromAmount(taskData.getAmount())
                     .setRatesDate(LocalDate.now());
             try {
-                exchOp = exchanger.exchange(exchOp, fetcher.fetchCurrent());
+                exchOp = exchangerService.exchange(exchOp, rateService.fetchCurrent());
             } catch (Exception e) {
                 success = false;
                 log.error("Error while performing exchange", e);
@@ -83,7 +80,6 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     }
 
     @PostConstruct
-    @Transactional(readOnly = true)
     public void init() {
         Collection<ExchangeTask> tasks = dsl.selectFrom(EXCHANGE_TASK).fetchInto(ExchangeTask.class);
         tasks.forEach(t -> {
@@ -95,10 +91,8 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     }
 
     @Override
-    @Transactional
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Long schedule(final ExchangeTask taskData) {
-        ExchangeTask task = new ExchangeTask(taskData).setActive(true);
+    public Long schedule(final IExchangeTask taskData) {
+        IExchangeTask task = taskData.into(new ExchangeTask()).setActive(true);
         if (exchangeTasks.contains(taskData)) {
             ScheduledFuture aged = exchangeTasksJobsMap.get(taskData.getId());
             if (aged != null) {
@@ -116,7 +110,7 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
         return task.getId();
     }
 
-    private ScheduledFuture scheduleTask(final ExchangeTask op) {
+    private ScheduledFuture scheduleTask(final IExchangeTask op) {
         ScheduledFuture scheduled = pool.schedule(new ExchangeJob(op), new CronTrigger(op.getCron()));
         exchangeTasks.add(op);
         exchangeTasksJobsMap.put(op.getId(), scheduled);
@@ -124,17 +118,13 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     }
 
     @Override
-    @Transactional
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void execute(ExchangeTask taskData) {
+    public void execute(IExchangeTask taskData) {
         pool.execute(new ExchangeJob(taskData));
     }
 
     @Override
-    @Transactional
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public void cancel(Long id, boolean remove) {
-        ExchangeTask taskData = exchangeTasks.stream()
+        IExchangeTask taskData = exchangeTasks.stream()
                 .filter(t -> t.getId().equals(id))
                 .findFirst()
                 .get();
@@ -144,13 +134,11 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
         if (task != null) task.cancel(false);
         if (remove) {
             exchangeTasks.remove(taskData);
-            exchangeTaskService.deleteById(taskData.getId());
-        } else exchangeTaskService.update(taskData);
+            exchangeTaskService.delete(taskData.getId());
+        } else exchangeTaskService.update(taskData.into(new ExchangeTask()));
     }
 
     @Override
-    @Transactional
-    @Secured({RoleEnum.ADMIN})
     public void cancelAll(boolean remove) {
         exchangeTasksJobsMap.values().forEach(t -> t.cancel(false));
         exchangeTasksJobsMap.clear();

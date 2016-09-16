@@ -1,5 +1,6 @@
 package org.baddev.currency.ui.component.base;
 
+import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
 import com.vaadin.data.util.BeanItemContainer;
@@ -14,6 +15,7 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.renderers.ClickableRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
+import org.baddev.currency.ui.component.window.SettingsWindow;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,8 +29,12 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
 
     protected Grid grid = new Grid();
 
-    protected void setup(Class<T> type, Collection<T> items, Object... excludeProps) {
-        setup(type, excludeProps);
+    public AbstractCcyGridView(SettingsWindow settingsWindow, EventBus bus) {
+        super(settingsWindow, bus);
+    }
+
+    protected void setup(Class<T> type, Collection<? extends T> items, Object... excludePropIds) {
+        setup(type, excludePropIds);
         refresh(items, null, null);
     }
 
@@ -95,7 +101,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
      * @param sortPropId if null then there is no sort applied
      * @param direction  if null and {@code sortPropId} not null, then asc
      */
-    protected void refresh(Collection<T> data, Object sortPropId, SortDirection direction) {
+    protected void refresh(Collection<? extends T> data, Object sortPropId, SortDirection direction) {
         container().removeAllItems();
         container().addAll(data);
         grid.clearSortOrder();
@@ -107,7 +113,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         }
     }
 
-    protected void refresh(Collection<T> data, Object sortPropId) {
+    protected void refresh(Collection<? extends T> data, Object sortPropId) {
         refresh(data, sortPropId, SortDirection.ASCENDING);
     }
 

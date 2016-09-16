@@ -1,5 +1,6 @@
 package org.baddev.currency.ui.component.view;
 
+import com.google.common.eventbus.EventBus;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.server.FontAwesome;
@@ -8,8 +9,10 @@ import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.security.dto.LoginDTO;
 import org.baddev.currency.ui.component.base.AbstractFormView;
+import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.security.event.LoginEvent;
 import org.baddev.currency.ui.util.NotificationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 
@@ -21,12 +24,13 @@ public class LoginView extends AbstractFormView<LoginDTO> {
 
     public static final String NAME = "login";
 
-    public LoginView() {
-        super(LoginDTO.class, new LoginDTO());
+    @Autowired
+    public LoginView(SettingsWindow settingsWindow, EventBus bus) {
+        super(settingsWindow, bus, new LoginDTO(), LoginDTO.class);
     }
 
     @Override
-    protected void customizeForm(FormLayout formLayout, BeanFieldGroup<LoginDTO> binder) {
+    protected void customizeForm(final FormLayout formLayout, final BeanFieldGroup<LoginDTO> binder, final Button submitBtn) {
         TextField userName = binder.buildAndBind("Username", "username", TextField.class);
         PasswordField password = binder.buildAndBind("Password", "password", PasswordField.class);
 
@@ -48,7 +52,8 @@ public class LoginView extends AbstractFormView<LoginDTO> {
             }
         });
 
-        Button loginBtn = new Button("Login", event -> {
+        submitBtn.setCaption("Login");
+        submitBtn.addClickListener(event -> {
             try {
                 binder.commit();
             } catch (FieldGroup.CommitException e) {
@@ -60,7 +65,7 @@ public class LoginView extends AbstractFormView<LoginDTO> {
         formLayout.setSpacing(true);
         formLayout.setMargin(new MarginInfo(true, true, true, false));
         formLayout.setSizeUndefined();
-        formLayout.addComponents(userName, password, loginBtn);
+        formLayout.addComponents(userName, password, submitBtn);
     }
 
     @Override

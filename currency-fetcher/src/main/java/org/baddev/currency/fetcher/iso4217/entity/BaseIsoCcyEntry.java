@@ -1,7 +1,7 @@
-package org.baddev.currency.fetcher.other.entity;
+package org.baddev.currency.fetcher.iso4217.entity;
 
 import org.baddev.currency.core.MutableIdentity;
-import org.baddev.currency.fetcher.other.Iso4217CcyService;
+import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

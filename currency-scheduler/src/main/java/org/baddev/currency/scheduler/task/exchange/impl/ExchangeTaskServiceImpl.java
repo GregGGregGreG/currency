@@ -2,8 +2,10 @@ package org.baddev.currency.scheduler.task.exchange.impl;
 
 import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.ExchangeTaskDao;
+import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeTaskRecord;
+import org.baddev.currency.scheduler.task.exchange.ExchangeTaskScheduler;
 import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
 import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,32 +21,15 @@ import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
  * Created by IPotapchuk on 9/12/2016.
  */
 @Service
-public class ExchangeTaskServiceImpl implements ExchangeTaskService<ExchangeTask> {
+public class ExchangeTaskServiceImpl implements ExchangeTaskService {
 
-    private ExchangeTaskDao taskDao;
+    private final ExchangeTaskScheduler scheduler;
+    private final ExchangeTaskDao taskDao;
 
     @Autowired
-    public ExchangeTaskServiceImpl(ExchangeTaskDao taskDao) {
+    public ExchangeTaskServiceImpl(ExchangeTaskDao taskDao, ExchangeTaskScheduler scheduler) {
         this.taskDao = taskDao;
-    }
-
-    @Override
-    @Transactional
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void save(ExchangeTask exchangeTask) {
-        taskDao.insert(exchangeTask);
-    }
-
-    @Override
-    @Transactional
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public ExchangeTask saveReturning(ExchangeTask exchangeTask) {
-        return DSL.using(taskDao.configuration())
-                .insertInto(EXCHANGE_TASK)
-                .set(exchangeTask.into(new ExchangeTaskRecord()))
-                .returning()
-                .fetchOne()
-                .into(ExchangeTask.class);
+        this.scheduler = scheduler;
     }
 
     @Override
@@ -62,16 +47,82 @@ public class ExchangeTaskServiceImpl implements ExchangeTaskService<ExchangeTask
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void update(ExchangeTask exchangeTask) {
-        taskDao.update(exchangeTask);
+    public Collection<ExchangeTask> find(Long... ids) {
+        return taskDao.fetchById(ids);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public ExchangeTask findOne(Long id) {
+        return taskDao.fetchOneById(id);
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void deleteById(Long... ids) {
+    public void save(IExchangeTask exchangeTask) {
+        taskDao.insert(exchangeTask.into(new ExchangeTask()));
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public IExchangeTask saveReturning(IExchangeTask exchangeTask) {
+        return DSL.using(taskDao.configuration())
+                .insertInto(EXCHANGE_TASK)
+                .set(exchangeTask.into(new ExchangeTaskRecord()))
+                .returning()
+                .fetchOne()
+                .into(ExchangeTask.class);
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public void update(IExchangeTask exchangeTask) {
+        taskDao.update(exchangeTask.into(new ExchangeTask()));
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public void delete(Long... ids) {
         taskDao.deleteById(ids);
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public Long schedule(IExchangeTask taskData) {
+        return scheduler.schedule(taskData);
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public void execute(IExchangeTask taskData) {
+        scheduler.execute(taskData);
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
+    public void cancel(Long id, boolean remove) {
+        scheduler.cancel(id, remove);
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.ADMIN})
+    public void cancelAll(boolean remove) {
+        scheduler.cancelAll(remove);
+    }
+
+    @Override
+    public int getActiveCount() {
+        return scheduler.getActiveCount();
     }
 }
