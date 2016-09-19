@@ -8,11 +8,16 @@ import com.vaadin.ui.AbstractOrderedLayout;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.VerticalLayout;
+import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.security.utils.SecurityCtxHelper;
+import org.baddev.currency.ui.component.view.UsersView;
 import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
@@ -24,16 +29,22 @@ import static org.baddev.currency.ui.CurrencyUI.currencyUI;
 /**
  * Created by IPotapchuk on 5/16/2016.
  */
-public abstract class AbstractCcyView extends VerticalLayout implements View, InitializingBean, DisposableBean {
+public abstract class AbstractCcyView extends VerticalLayout implements View, InitializingBean, DisposableBean, BeanFactoryAware {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private SettingsWindow settingsWindow;
     protected EventBus bus;
+    protected BeanFactory beanFactory;
 
     public AbstractCcyView(SettingsWindow settingsWindow, EventBus bus) {
         this.settingsWindow = settingsWindow;
         this.bus = bus;
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
     }
 
     @Override
@@ -44,8 +55,8 @@ public abstract class AbstractCcyView extends VerticalLayout implements View, In
         log.debug("View created {}, {}", getClass().getName(), hashCode());
     }
 
-    protected void init(){
-    };
+    protected void init() {
+    }
 
     protected VerticalLayout contentRoot() {
         VerticalLayout content = new VerticalLayout();
@@ -61,6 +72,9 @@ public abstract class AbstractCcyView extends VerticalLayout implements View, In
         String loggedIn = SecurityCtxHelper.loggedInUserName();
         if (!StringUtils.isEmpty(loggedIn.trim())) {
             MenuBar.MenuItem parent = menuBar.addItem(loggedIn, FontAwesome.USER, null);
+            if (SecurityCtxHelper.hasAnyRole(RoleEnum.ADMIN)) {
+                parent.addItem("Users", FontAwesome.USERS, item -> navigateTo(UsersView.NAME));
+            }
             parent.addItem("Settings", FontAwesome.GEAR, selectedItem -> currencyUI().addWindow(settingsWindow));
             parent.addItem("Logout", FontAwesome.SIGN_OUT, selectedItem -> bus.post(new LogoutEvent(this)));
         }

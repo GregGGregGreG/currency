@@ -17,4 +17,6 @@ public interface UserService extends FindOperation<IUser, Long>, UpdateOperation
     Collection<? extends IUser> findByUsername(String... userNames);
     IUser findOneByUserName(String userName);
     void update(IUser user, IUserDetails userDetails);
+    void assignToRoles(Long userId, Long... roleIds);
+    void unassignFromRoles(Long userId, Long... roleIds);
 }

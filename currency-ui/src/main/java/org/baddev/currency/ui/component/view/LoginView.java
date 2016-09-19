@@ -4,7 +4,6 @@ import com.google.common.eventbus.EventBus;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.server.FontAwesome;
-import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.security.dto.LoginDTO;
@@ -62,9 +61,6 @@ public class LoginView extends AbstractFormView<LoginDTO> {
             }
         });
 
-        formLayout.setSpacing(true);
-        formLayout.setMargin(new MarginInfo(true, true, true, false));
-        formLayout.setSizeUndefined();
         formLayout.addComponents(userName, password, submitBtn);
     }
 

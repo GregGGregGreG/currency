@@ -29,7 +29,7 @@ public class SettingsWindow extends Window {
     private ExchangeCompletionMailer mailListener;
 
     @PostConstruct
-    public void init() {
+    private void init() {
         setCaption("Settings");
         setWidth(600.0f, Unit.PIXELS);
         setModal(true);

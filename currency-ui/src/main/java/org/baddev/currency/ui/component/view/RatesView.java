@@ -88,7 +88,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
 
         refresh(data, P_CCY);
 
-        grid.setCellDescriptionGenerator(cell -> P_GEN_CCY_NAME.equals(cell.getPropertyId())? String.valueOf(cell.getValue()) : "");
+        grid.setCellDescriptionGenerator(cell -> P_GEN_CCY_NAME.equals(cell.getPropertyId()) ? String.valueOf(cell.getValue()) : "");
 
         grid.getColumn(P_BASE_CCY).setHeaderCaption("Base Currency Code");
         grid.getColumn(P_CCY).setHeaderCaption("Currency Code");
@@ -201,8 +201,8 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
 
     @Override
     protected void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
-                (MenuBar.Command) selectedItem -> navigateTo(ExchangesView.NAME));
+        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> navigateTo(ExchangesView.NAME));
+        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> navigateTo(SchedulerView.NAME));
     }
 
 }

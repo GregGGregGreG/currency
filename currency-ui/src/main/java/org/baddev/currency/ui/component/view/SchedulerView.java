@@ -234,13 +234,13 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
 
         scheduleBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         scheduleBtn.addClickListener((Button.ClickListener) event -> {
-            ExchangeTask taskData = new ExchangeTask()
-                    .setUserId(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId())
-                    .setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy())
-                    .setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy())
-                    .setAddedDatetime(LocalDateTime.now())
-                    .setAmount((double) amountF.getConvertedValue())
-                    .setCron(cronF.getValue());
+            ExchangeTask taskData = new ExchangeTask();
+            taskData.setUserId(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId());
+            taskData.setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy());
+            taskData.setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy());
+            taskData.setAddedDatetime(LocalDateTime.now());
+            taskData.setAmount((double) amountF.getConvertedValue());
+            taskData.setCron(cronF.getValue());
             taskService.schedule(taskData);
             refresh(taskService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
                     P_ID, SortDirection.DESCENDING);

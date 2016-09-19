@@ -40,9 +40,8 @@ public class NBUExchangeRate implements IExchangeRate {
     }
 
     @Override
-    public IExchangeRate setId(Long value) {
+    public void setId(Long value) {
         this.id = value;
-        return this;
     }
 
     @Override
@@ -51,9 +50,8 @@ public class NBUExchangeRate implements IExchangeRate {
     }
 
     @Override
-    public IExchangeRate setBaseCcy(String value) {
+    public void setBaseCcy(String value) {
         this.baseLiterCode = value;
-        return this;
     }
 
     @Override
@@ -62,9 +60,8 @@ public class NBUExchangeRate implements IExchangeRate {
     }
 
     @Override
-    public IExchangeRate setCcy(String value) {
+    public void setCcy(String value) {
         this.literCode = value;
-        return this;
     }
 
     @Override
@@ -73,9 +70,8 @@ public class NBUExchangeRate implements IExchangeRate {
     }
 
     @Override
-    public IExchangeRate setExchangeDate(LocalDate value) {
+    public void setExchangeDate(LocalDate value) {
         this.exchangeDate = value;
-        return this;
     }
 
     @Override
@@ -84,9 +80,8 @@ public class NBUExchangeRate implements IExchangeRate {
     }
 
     @Override
-    public IExchangeRate setRate(Double value) {
+    public void setRate(Double value) {
         this.rate = value;
-        return this;
     }
 
     @Override

@@ -5,7 +5,6 @@ import com.vaadin.data.Validator;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.server.FontAwesome;
-import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.security.dto.SignUpDTO;
@@ -79,9 +78,6 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
             }
         });
 
-        formLayout.setSpacing(true);
-        formLayout.setMargin(new MarginInfo(true, true, true, false));
-        formLayout.setSizeUndefined();
         formLayout.addComponents(userName, email, firstName, lastName, password, passwordCheck, submitBtn);
     }
 

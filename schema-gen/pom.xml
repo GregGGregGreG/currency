@@ -60,9 +60,7 @@
 
     <profiles>
         <profile>
-
             <id>schema-gen</id>
-
             <pluginRepositories>
                 <pluginRepository>
                     <id>jitpack.io</id>
@@ -169,7 +167,6 @@
                                             <daos>true</daos>
                                             <pojos>true</pojos>
                                             <springAnnotations>true</springAnnotations>
-                                            <fluentSetters>true</fluentSetters>
                                             <pojosToString>true</pojosToString>
                                             <pojosEqualsAndHashCode>true</pojosEqualsAndHashCode>
                                             <jpaAnnotations>true</jpaAnnotations>

@@ -14,8 +14,10 @@ import org.baddev.currency.jooq.schema.tables.records.UserRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserUserRoleRecord;
 import org.baddev.currency.security.dto.LoginDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
+import org.baddev.currency.security.exception.RoleAlreadyAssignedException;
+import org.baddev.currency.security.exception.RoleNotFoundException;
 import org.baddev.currency.security.exception.SuchUserExistsException;
-import org.baddev.currency.security.exception.UserRoleNotFoundException;
+import org.baddev.currency.security.exception.UserNotFoundException;
 import org.baddev.currency.security.user.UserService;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -94,18 +97,14 @@ public class UserServiceImpl implements UserService {
                 .returning(USER.ID)
                 .fetchOne();
 
-        detailsDao.insert(new UserDetails()
-                .setFirstName(signUpDTO.getFirstName())
-                .setLastName(signUpDTO.getLastName())
-                .setEmail(signUpDTO.getEmail())
-                .setUserId(created.getId())
-        );
+        detailsDao.insert(new UserDetails(created.getId(),
+                signUpDTO.getFirstName(), signUpDTO.getLastName(), signUpDTO.getEmail()));
 
         if (roleNames != null && roleNames.length > 0) {
             if (roleNames.length == 1) {
                 UserRole role = roleDao.fetchOneByRoleName(roleNames[0]);
                 if (role == null)
-                    throw new UserRoleNotFoundException(roleNames[0]);
+                    throw new RoleNotFoundException(roleNames[0]);
                 dsl.insertInto(USER_USER_ROLE)
                         .set(USER_USER_ROLE.USER_ID, created.getId())
                         .set(USER_USER_ROLE.ROLE_ID, role.getId())
@@ -115,15 +114,74 @@ public class UserServiceImpl implements UserService {
                 if (roleIds.isEmpty()) {
                     StringBuilder sb = new StringBuilder();
                     Arrays.asList(roleNames).forEach(rn -> sb.append(rn).append(" "));
-                    throw new UserRoleNotFoundException(sb.toString());
+                    throw new RoleNotFoundException(sb.toString());
                 }
                 dsl.batchInsert(roleIds.stream()
                         .map(roleId -> new UserUserRoleRecord(created.getId(), roleId))
                         .collect(Collectors.toList()))
                         .execute();
             }
-        } else throw new UserRoleNotFoundException();
+        } else throw new RoleNotFoundException();
 
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.ADMIN})
+    public void assignToRoles(Long userId, Long... roleIds) {
+        validateRoles(userId, roleIds);
+        List<Number> assigned = dsl.selectFrom(USER_USER_ROLE)
+                .where(USER_USER_ROLE.USER_ID.eq(userId))
+                .fetchInto(UserUserRoleRecord.class)
+                .stream()
+                .map(UserUserRoleRecord::getRoleId)
+                .filter(Arrays.asList(roleIds)::contains)
+                .collect(Collectors.toList());
+        if (!assigned.isEmpty())
+            throw new RoleAlreadyAssignedException(assigned);
+        else {
+            List<UserUserRoleRecord> records = new ArrayList<>();
+            for (Long roleId : roleIds) {
+                UserUserRoleRecord rec = dsl.newRecord(USER_USER_ROLE);
+                rec.setUserId(userId);
+                rec.setRoleId(roleId);
+                records.add(rec);
+            }
+            dsl.batchInsert(records).execute();
+        }
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.ADMIN})
+    public void unassignFromRoles(Long userId, Long... roleIds) {
+        validateRoles(userId, roleIds);
+        List<Number> assigned = dsl.selectFrom(USER_USER_ROLE)
+                .where(USER_USER_ROLE.USER_ID.eq(userId))
+                .fetchInto(UserUserRoleRecord.class)
+                .stream()
+                .map(UserUserRoleRecord::getRoleId)
+                .filter(Arrays.asList(roleIds)::contains)
+                .collect(Collectors.toList());
+        if (assigned.isEmpty() || !assigned.containsAll(Arrays.asList(roleIds)))
+            throw new RoleNotFoundException(roleIds);
+        else {
+            dsl.deleteFrom(USER_USER_ROLE)
+                    .where(USER_USER_ROLE.USER_ID.eq(userId).and(USER_USER_ROLE.ROLE_ID.in(roleIds)))
+                    .execute();
+        }
+    }
+
+    private void validateRoles(Long userId, Long... roleIds) {
+        if (roleIds.length == 0) throw new IllegalArgumentException();
+        if (!userDao.existsById(userId)) {
+            throw new UserNotFoundException(userId);
+        }
+        for (Long roleId : roleIds) {
+            if (!roleDao.existsById(roleId)) {
+                throw new RoleNotFoundException(roleId);
+            }
+        }
     }
 
     private List<Long> findRoleIds(String... roleNames) {

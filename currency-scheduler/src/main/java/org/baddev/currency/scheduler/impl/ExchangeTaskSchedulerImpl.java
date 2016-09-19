@@ -60,12 +60,12 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
 
         @Override
         public void run() {
-            IExchangeOperation exchOp = new ExchangeOperation()
-                    .setUserId(taskData.getUserId())
-                    .setFromCcy(taskData.getFromCcy())
-                    .setToCcy(taskData.getToCcy())
-                    .setFromAmount(taskData.getAmount())
-                    .setRatesDate(LocalDate.now());
+            IExchangeOperation exchOp = new ExchangeOperation();
+            exchOp.setUserId(taskData.getUserId());
+            exchOp.setFromCcy(taskData.getFromCcy());
+            exchOp.setToCcy(taskData.getToCcy());
+            exchOp.setFromAmount(taskData.getAmount());
+            exchOp.setRatesDate(LocalDate.now());
             try {
                 exchOp = exchangerService.exchange(exchOp, rateService.fetchCurrent());
             } catch (Exception e) {
@@ -92,7 +92,8 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
 
     @Override
     public Long schedule(final IExchangeTask taskData) {
-        IExchangeTask task = taskData.into(new ExchangeTask()).setActive(true);
+        IExchangeTask task = taskData.into(new ExchangeTask());
+        task.setActive(true);
         if (exchangeTasks.contains(taskData)) {
             ScheduledFuture aged = exchangeTasksJobsMap.get(taskData.getId());
             if (aged != null) {

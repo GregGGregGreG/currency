@@ -3,6 +3,7 @@ package org.baddev.currency.ui.component.base;
 import com.google.common.eventbus.EventBus;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.event.ShortcutAction;
+import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.FormLayout;
@@ -18,7 +19,7 @@ public abstract class AbstractFormView<T> extends AbstractCcyView {
     private Class<T> beanClass;
     private Button submitBtn;
 
-    public AbstractFormView(SettingsWindow settingsWindow, EventBus bus, T formBean, Class<T> beanClass) {
+    protected AbstractFormView(SettingsWindow settingsWindow, EventBus bus, T formBean, Class<T> beanClass) {
         super(settingsWindow, bus);
         this.formBean = formBean;
         this.beanClass = beanClass;
@@ -28,6 +29,9 @@ public abstract class AbstractFormView<T> extends AbstractCcyView {
     protected VerticalLayout contentRoot() {
         VerticalLayout root = super.contentRoot();
         FormLayout form = new FormLayout();
+        form.setSpacing(true);
+        form.setMargin(new MarginInfo(true, true, true, false));
+        form.setSizeUndefined();
         BeanFieldGroup<T> binder = new BeanFieldGroup<>(beanClass);
         binder.setBuffered(true);
         binder.setItemDataSource(formBean);

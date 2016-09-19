@@ -194,12 +194,12 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
         exchBtn.setEnabled(false);
         exchBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         exchBtn.addClickListener(event -> {
-            ExchangeOperation exc = new ExchangeOperation()
-                    .setUserId(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId())
-                    .setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy())
-                    .setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy())
-                    .setRatesDate(LocalDate.fromDateFields(exchDateF.getValue()))
-                    .setFromAmount((double) amountF.getConvertedValue());
+            ExchangeOperation exc = new ExchangeOperation();
+            exc.setUserId(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId());
+            exc.setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy());
+            exc.setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy());
+            exc.setRatesDate(LocalDate.fromDateFields(exchDateF.getValue()));
+            exc.setFromAmount((double) amountF.getConvertedValue());
             exchangerService.exchange(exc, (Collection<? extends IExchangeRate>) fromCcyChoiseF.getItemIds());
             refresh(exchangerService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
                     P_PERFORM_DATETIME, SortDirection.DESCENDING);
