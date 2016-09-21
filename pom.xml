@@ -32,6 +32,7 @@
         <servlet.version>3.1.0</servlet.version>
         <dumbster.version>1.6</dumbster.version>
         <junit.version>4.12</junit.version>
+        <mail.version>1.5.5</mail.version>
         <codegen.pojo.ext.version>0.0.1</codegen.pojo.ext.version>
         <hibernate.validator.version>5.2.4.Final</hibernate.validator.version>
     </properties>
@@ -80,6 +81,21 @@
                 <version>${spring.version}</version>
             </dependency>
             <dependency>
+                <groupId>javax.mail</groupId>
+                <artifactId>javax.mail-api</artifactId>
+                <version>${mail.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${mail.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>imap</artifactId>
+                <version>${mail.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-jdbc</artifactId>
                 <version>${spring.version}</version>
@@ -115,11 +131,6 @@
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.sun.mail</groupId>
-                <artifactId>javax.mail</artifactId>
-                <version>1.5.5</version>
             </dependency>
             <dependency>
                 <groupId>org.aspectj</groupId>

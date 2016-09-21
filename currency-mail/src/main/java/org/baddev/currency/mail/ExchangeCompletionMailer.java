@@ -5,6 +5,7 @@ import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
@@ -32,6 +33,7 @@ public class ExchangeCompletionMailer implements NotificationListener<ExchangeCo
         this.sender = sender;
     }
 
+    @Required
     public void setEmail(String email) {
         this.email = email;
     }

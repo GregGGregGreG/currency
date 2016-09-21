@@ -79,11 +79,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.baddev</groupId>
-            <artifactId>currency-user</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
         </dependency>
