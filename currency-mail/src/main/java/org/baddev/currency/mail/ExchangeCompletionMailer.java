@@ -18,10 +18,11 @@ import java.util.Date;
 public class ExchangeCompletionMailer implements NotificationListener<ExchangeCompletionEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangeCompletionMailer.class);
-    private MailSender sender;
-    private SimpleMailMessage template;
+
+    private MailSender             sender;
+    private SimpleMailMessage      template;
     private ThreadPoolTaskExecutor pool;
-    private String email;
+    private String                 email;
 
     public ExchangeCompletionMailer(MailSender sender,
                                     SimpleMailMessage template,

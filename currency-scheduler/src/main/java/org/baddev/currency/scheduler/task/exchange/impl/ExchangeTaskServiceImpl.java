@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
 
@@ -122,7 +123,16 @@ public class ExchangeTaskServiceImpl implements ExchangeTaskService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN})
     public int getActiveCount() {
         return scheduler.getActiveCount();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN, RoleEnum.USER})
+    public int getActiveCountByUser(Long key) {
+        return taskDao.fetchByUserId(key).stream().filter(ExchangeTask::getActive).collect(Collectors.toList()).size();
     }
 }

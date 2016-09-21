@@ -4,6 +4,8 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.vaadin.annotations.*;
 import com.vaadin.navigator.Navigator;
+import com.vaadin.navigator.View;
+import com.vaadin.navigator.ViewProvider;
 import com.vaadin.server.*;
 import com.vaadin.shared.Position;
 import com.vaadin.shared.ui.ui.Transport;
@@ -21,7 +23,9 @@ import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.security.dto.LoginDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.baddev.currency.security.user.UserService;
-import org.baddev.currency.security.utils.SecurityCtxHelper;
+import org.baddev.currency.security.utils.SecurityUtils;
+import org.baddev.currency.ui.component.view.AccessDeniedView;
+import org.baddev.currency.ui.component.view.ErrorView;
 import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.RatesView;
 import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
@@ -32,6 +36,7 @@ import org.baddev.currency.ui.util.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ContextLoaderListener;
@@ -40,8 +45,8 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.annotation.WebServlet;
 
-import static org.baddev.currency.security.utils.SecurityCtxHelper.isLoggedIn;
-import static org.baddev.currency.security.utils.SecurityCtxHelper.loggedInUserName;
+import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
+import static org.baddev.currency.security.utils.SecurityUtils.loggedInUserName;
 import static org.baddev.currency.ui.util.AppSettingsUtils.initializeSettings;
 import static org.baddev.currency.ui.util.AppSettingsUtils.toggleUINotifications;
 import static org.baddev.currency.ui.util.NotificationUtils.*;
@@ -65,6 +70,8 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
     private Iso4217CcyService ccyService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ApplicationContext ctx;
 
     public static CurrencyUI currencyUI() {
         return (CurrencyUI) UI.getCurrent();
@@ -80,7 +87,19 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {
+        viewProvider.setAccessDeniedViewClass(AccessDeniedView.class);
         Navigator navigator = new Navigator(this, this);
+        navigator.setErrorProvider(new ViewProvider() {
+            @Override
+            public String getViewName(String viewAndParameters) {
+                return navigator.getState();
+            }
+
+            @Override
+            public View getView(String viewName) {
+                return ctx.getBean(ErrorView.class);
+            }
+        });
         navigator.addProvider(viewProvider);
         setNavigator(navigator);
         if (isLoggedIn())
@@ -116,6 +135,7 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
             VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
             getNavigator().navigateTo(RatesView.NAME);
         } catch (AuthenticationException e) {
+            event.getBinder().clear();
             log.debug("Authentication error", e);
             notifyFailure("Authentication Error", e.getMessage());
         }
@@ -123,7 +143,7 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
 
     @Subscribe
     private void logout(LogoutEvent event) {
-        String userName = SecurityCtxHelper.loggedInUserName();
+        String userName = SecurityUtils.loggedInUserName();
         getSession().close();
         VaadinService.getCurrentRequest().getWrappedSession().invalidate();
         getPage().reload();

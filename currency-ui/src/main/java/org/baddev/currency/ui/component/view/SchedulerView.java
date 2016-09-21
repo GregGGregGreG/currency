@@ -24,8 +24,7 @@ import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
-import org.baddev.currency.security.user.IdentityUser;
-import org.baddev.currency.security.utils.SecurityCtxHelper;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
@@ -40,7 +39,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask.*;
-import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
+import static org.baddev.currency.ui.util.UIUtils.isAllValid;
+import static org.baddev.currency.ui.util.UIUtils.toggleEnabled;
 
 /**
  * Created by IPOTAPCHUK on 6/9/2016.
@@ -76,14 +76,15 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
     }
 
     @Override
-    protected void init() {
+    protected void postInit(VerticalLayout rootLayout) {
         setup(IExchangeTask.class,
-                taskService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
+                taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                 P_ID, P_USER_ID);
 
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             footer.getCell(P_GEN_RMV_BTN).setHtml("<b>Total: " + grid.getContainerDataSource().size() + "</b>");
-            footer.getCell(P_ACTIVE).setHtml("<b>Active: " + taskService.getActiveCount() + "</b>");
+            footer.getCell(P_ACTIVE).setHtml("<b>Active: " +
+                    taskService.getActiveCountByUser(SecurityUtils.getIdentityUserPrincipal().getId()) + "</b>");
         });
 
         addGeneratedButton(P_GEN_EXEC_BTN, "Execute", e -> {
@@ -101,7 +102,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
                         taskService.cancel(taskData.getId(), false);
                         log.debug("Exchange task {} has been canceled", taskData.getId());
                     }
-                    refresh(taskService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
+                    refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                             P_ID, SortDirection.DESCENDING);
                 }
         );
@@ -235,14 +236,14 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         scheduleBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         scheduleBtn.addClickListener((Button.ClickListener) event -> {
             ExchangeTask taskData = new ExchangeTask();
-            taskData.setUserId(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId());
+            taskData.setUserId(SecurityUtils.getIdentityUserPrincipal().getId());
             taskData.setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy());
             taskData.setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy());
             taskData.setAddedDatetime(LocalDateTime.now());
             taskData.setAmount((double) amountF.getConvertedValue());
             taskData.setCron(cronF.getValue());
             taskService.schedule(taskData);
-            refresh(taskService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
+            refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                     P_ID, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();

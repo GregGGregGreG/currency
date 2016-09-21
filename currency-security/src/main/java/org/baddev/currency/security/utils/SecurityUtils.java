@@ -1,6 +1,7 @@
 package org.baddev.currency.security.utils;
 
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
+import org.baddev.currency.security.user.IdentityUser;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,9 +19,9 @@ import java.util.stream.Collectors;
 /**
  * Created by IPotapchuk on 7/1/2016.
  */
-public final class SecurityCtxHelper {
+public final class SecurityUtils {
 
-    private SecurityCtxHelper() {
+    private SecurityUtils() {
     }
 
     private static Optional<Authentication> safeAuth() {
@@ -47,12 +48,16 @@ public final class SecurityCtxHelper {
                 .orElseThrow(notAuthorized());
     }
 
+    public static IdentityUser getIdentityUserPrincipal() {
+        return getPrincipal(IdentityUser.class);
+    }
+
     public static UserDetails getPrincipal() {
         return getPrincipal(UserDetails.class);
     }
 
-    public static <T extends IUserDetails> T getUserDetails(){
-        return safeAuth().flatMap(auth -> Optional.of((T)auth.getDetails())).orElseThrow(notAuthorized());
+    public static <T extends IUserDetails> T getUserDetails() {
+        return safeAuth().flatMap(auth -> Optional.of((T) auth.getDetails())).orElseThrow(notAuthorized());
     }
 
     public static String loggedInUserName() {

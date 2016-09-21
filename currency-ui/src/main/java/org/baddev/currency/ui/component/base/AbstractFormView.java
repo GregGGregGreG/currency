@@ -26,8 +26,7 @@ public abstract class AbstractFormView<T> extends AbstractCcyView {
     }
 
     @Override
-    protected VerticalLayout contentRoot() {
-        VerticalLayout root = super.contentRoot();
+    protected final void init(VerticalLayout rootLayout) {
         FormLayout form = new FormLayout();
         form.setSpacing(true);
         form.setMargin(new MarginInfo(true, true, true, false));
@@ -38,10 +37,9 @@ public abstract class AbstractFormView<T> extends AbstractCcyView {
         submitBtn = new Button();
         submitBtn.setClickShortcut(ShortcutAction.KeyCode.ENTER);
         customizeForm(form, binder, submitBtn);
-        root.addComponent(form);
-        root.setExpandRatio(form, 1.0f);
-        root.setComponentAlignment(form, Alignment.MIDDLE_CENTER);
-        return root;
+        rootLayout.addComponent(form);
+//        rootLayout.setExpandRatio(form, 1.0f);
+        rootLayout.setComponentAlignment(form, Alignment.MIDDLE_CENTER);
     }
 
     protected abstract void customizeForm(final FormLayout formLayout, final BeanFieldGroup<T> binder, final Button submitBtn);

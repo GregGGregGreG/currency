@@ -47,7 +47,7 @@ public class LoginView extends AbstractFormView<LoginDTO> {
 
             @Override
             public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                bus.post(new LoginEvent(this, formBean));
+                bus.post(new LoginEvent(this, formBean, binder));
             }
         });
 
@@ -56,6 +56,7 @@ public class LoginView extends AbstractFormView<LoginDTO> {
             try {
                 binder.commit();
             } catch (FieldGroup.CommitException e) {
+                binder.clear();
                 NotificationUtils.notifyWarn("Login Submit Error",
                         "Some fields contain errors. Check them and try again");
             }

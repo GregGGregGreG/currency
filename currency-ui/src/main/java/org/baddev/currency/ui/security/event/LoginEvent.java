@@ -1,5 +1,6 @@
 package org.baddev.currency.ui.security.event;
 
+import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import org.baddev.currency.core.event.BaseNotificationEvent;
 import org.baddev.currency.security.dto.LoginDTO;
 
@@ -8,7 +9,18 @@ import org.baddev.currency.security.dto.LoginDTO;
  */
 public class LoginEvent extends BaseNotificationEvent<LoginDTO> {
 
+    private BeanFieldGroup binder;
+
     public LoginEvent(Object source, LoginDTO eventData) {
         super(source, eventData);
+    }
+
+    public LoginEvent(Object source, LoginDTO eventData, BeanFieldGroup binder) {
+        super(source, eventData);
+        this.binder = binder;
+    }
+
+    public BeanFieldGroup getBinder() {
+        return binder;
     }
 }

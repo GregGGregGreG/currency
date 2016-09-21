@@ -33,6 +33,13 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         super(settingsWindow, bus);
     }
 
+    @Override
+    protected final void init(VerticalLayout rootLayout) {
+        VerticalLayout gridWithBar = gridWithBar();
+        rootLayout.addComponent(gridWithBar);
+        rootLayout.setExpandRatio(gridWithBar, 1.0f);
+    }
+
     protected void setup(Class<T> type, Collection<? extends T> items, Object... excludePropIds) {
         setup(type, excludePropIds);
         refresh(items, null, null);
@@ -67,15 +74,6 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         gridWithBar.setSizeFull();
         gridWithBar.setExpandRatio(grid, 1.0f);
         return gridWithBar;
-    }
-
-    @Override
-    protected VerticalLayout contentRoot() {
-        VerticalLayout content = super.contentRoot();
-        VerticalLayout gridWithBar = gridWithBar();
-        content.addComponent(gridWithBar);
-        content.setExpandRatio(gridWithBar, 1.0f);
-        return content;
     }
 
     protected Object getSelectedRow() {

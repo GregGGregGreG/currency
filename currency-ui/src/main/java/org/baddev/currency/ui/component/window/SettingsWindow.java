@@ -2,7 +2,7 @@ package org.baddev.currency.ui.component.window;
 
 import com.vaadin.data.Property;
 import com.vaadin.spring.annotation.SpringComponent;
-import com.vaadin.spring.annotation.ViewScope;
+import com.vaadin.spring.annotation.VaadinSessionScope;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.TabSheet;
@@ -10,7 +10,7 @@ import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
-import org.baddev.currency.security.utils.SecurityCtxHelper;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.CurrencyUI;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -22,7 +22,7 @@ import static org.baddev.currency.ui.util.AppSettingsUtils.*;
  * Created by IPotapchuk on 6/22/2016.
  */
 @SpringComponent
-@ViewScope
+@VaadinSessionScope
 public class SettingsWindow extends Window {
 
     @Autowired
@@ -62,7 +62,7 @@ public class SettingsWindow extends Window {
         if (l instanceof CurrencyUI)
             toggleUINotifications(checked);
         else if (l instanceof ExchangeCompletionMailer) {
-            ((ExchangeCompletionMailer) l).setEmail(SecurityCtxHelper.getUserDetails().getEmail());
+            ((ExchangeCompletionMailer) l).setEmail(SecurityUtils.getUserDetails().getEmail());
             toggleMailNotifications(checked, (ExchangeCompletionMailer) l);
         }
     }

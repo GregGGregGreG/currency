@@ -44,7 +44,7 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     @Autowired
     private Notifier notifier;
     @Autowired
-    private ExchangeTaskService exchangeTaskService;
+    private ExchangeTaskService taskService;
 
     private Set<IExchangeTask> exchangeTasks = new HashSet<>();
     private Map<Long, ScheduledFuture> exchangeTasksJobsMap = new HashMap<>();
@@ -103,9 +103,9 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
                     exchangeTasksJobsMap.remove(taskData.getId());
                 }
             }
-            exchangeTaskService.update(task);
+            taskService.update(task);
         } else {
-            task = exchangeTaskService.saveReturning(task);
+            task = taskService.saveReturning(task);
         }
         scheduleTask(task);
         return task.getId();
@@ -135,8 +135,8 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
         if (task != null) task.cancel(false);
         if (remove) {
             exchangeTasks.remove(taskData);
-            exchangeTaskService.delete(taskData.getId());
-        } else exchangeTaskService.update(taskData.into(new ExchangeTask()));
+            taskService.delete(taskData.getId());
+        } else taskService.update(taskData.into(new ExchangeTask()));
     }
 
     @Override
@@ -151,7 +151,7 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
 
     @Override
     public int getActiveCount() {
-        return exchangeTasksJobsMap.size();
+        return dsl.fetchCount(dsl.selectFrom(EXCHANGE_TASK).where(EXCHANGE_TASK.ACTIVE.eq(true)));
     }
 
 }

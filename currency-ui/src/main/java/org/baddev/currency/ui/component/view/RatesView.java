@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate.*;
+import static org.baddev.currency.ui.util.UIUtils.toggleVisible;
 
 /**
  * Created by IPotapchuk on 4/8/2016.
@@ -76,7 +77,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     }
 
     @Override
-    protected void init() {
+    protected void postInit(VerticalLayout rootLayout) {
         Collection<? extends IExchangeRate> data = fetchCurrentRates();
         setup(IExchangeRate.class, data, P_ID);
 

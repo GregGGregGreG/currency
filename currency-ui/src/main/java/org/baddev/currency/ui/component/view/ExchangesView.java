@@ -23,8 +23,7 @@ import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
-import org.baddev.currency.security.user.IdentityUser;
-import org.baddev.currency.security.utils.SecurityCtxHelper;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.converter.DateToLocalDateTimeConverter;
@@ -43,7 +42,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation.*;
-import static org.baddev.currency.ui.validation.ViewValidationHelper.isAllValid;
+import static org.baddev.currency.ui.util.UIUtils.*;
 
 /**
  * Created by IPotapchuk on 4/8/2016.
@@ -77,9 +76,9 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
     }
 
     @Override
-    protected void init() {
+    protected void postInit(VerticalLayout rootLayout) {
         setup(IExchangeOperation.class,
-                exchangerService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
+                exchangerService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                 P_ID, P_USER_ID);
 
         grid.setCellDescriptionGenerator(cell -> {
@@ -195,13 +194,13 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
         exchBtn.setIcon(FontAwesome.PLUS_CIRCLE);
         exchBtn.addClickListener(event -> {
             ExchangeOperation exc = new ExchangeOperation();
-            exc.setUserId(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId());
+            exc.setUserId(SecurityUtils.getIdentityUserPrincipal().getId());
             exc.setFromCcy(((ExchangeRate) fromCcyChoiseF.getValue()).getCcy());
             exc.setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy());
             exc.setRatesDate(LocalDate.fromDateFields(exchDateF.getValue()));
             exc.setFromAmount((double) amountF.getConvertedValue());
             exchangerService.exchange(exc, (Collection<? extends IExchangeRate>) fromCcyChoiseF.getItemIds());
-            refresh(exchangerService.findForUser(SecurityCtxHelper.getPrincipal(IdentityUser.class).getId()),
+            refresh(exchangerService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                     P_PERFORM_DATETIME, SortDirection.DESCENDING);
             resetInputs();
             amountF.focus();

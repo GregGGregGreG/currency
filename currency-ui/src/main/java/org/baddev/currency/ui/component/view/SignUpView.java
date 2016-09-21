@@ -73,6 +73,8 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
             try {
                 binder.commit();
             } catch (FieldGroup.CommitException e) {
+                password.clear();
+                passwordCheck.clear();
                 NotificationUtils.notifyWarn("Sign Up Submit Error",
                         "Some fields contain errors. Check them and try again");
             }

@@ -4,8 +4,10 @@ import com.google.common.eventbus.EventBus;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.spring.annotation.SpringView;
+import com.vaadin.ui.Button;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.MenuBar;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
@@ -23,7 +25,7 @@ import javax.annotation.security.DeclareRoles;
  */
 @SpringView(name = UsersView.NAME)
 @DeclareRoles({RoleEnum.ADMIN})
-public class UsersView extends AbstractCcyGridView<IUser> {
+public final class UsersView extends AbstractCcyGridView<IUser> {
 
     public static final String NAME = "admin";
     public static final String P_GEN_DETAILS_BTN = "gen_details";
@@ -37,7 +39,7 @@ public class UsersView extends AbstractCcyGridView<IUser> {
     }
 
     @Override
-    protected void init() {
+    protected void postInit(VerticalLayout rootLayout) {
         setup(IUser.class, userService.findAll(), User.P_PASSWORD);
         grid.getColumn(User.P_ACC_NON_EXPIRED).setHeaderCaption("Not Expired");
         grid.getColumn(User.P_ENABLED).setRenderer(new ButtonRenderer(event -> {
@@ -45,13 +47,15 @@ public class UsersView extends AbstractCcyGridView<IUser> {
             user.setEnabled(!user.getEnabled());
             userService.update(user);
             refresh(userService.findAll(), User.P_ID, SortDirection.ASCENDING);
-        })).setHeaderCaption("Not Locked");
+        })).setHeaderCaption("Enabled");
         grid.getColumn(User.P_CRED_NON_EXPIRED).setHeaderCaption("Credentials Not Expired");
 
         addGeneratedButton(P_GEN_DETAILS_BTN, "Details", event -> {
             UserDetailsWindow window = beanFactory.getBean(UserDetailsWindow.class);
-            window.show(() -> userService.findUserDetailsByUsername(((IUser) event.getItemId()).getUsername()));
+            String selectedUname = ((IUser) event.getItemId()).getUsername();
+            window.show(userService.findUserDetailsByUsername(selectedUname), selectedUname);
         });
+        grid.getColumn(P_GEN_DETAILS_BTN).setHeaderCaption("Details");
 
         grid.setColumnOrder(
                 User.P_ID,
@@ -74,6 +78,6 @@ public class UsersView extends AbstractCcyGridView<IUser> {
 
     @Override
     protected void customizeTopBar(HorizontalLayout topBar) {
-
+        topBar.addComponent(new Button("Blabla"));
     }
 }

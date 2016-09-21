@@ -13,7 +13,7 @@ import java.util.Objects;
  */
 public class NotificationUtils {
 
-    public static final int DEFAULT_DELAY = 4000;
+    public static final int DEFAULT_DELAY = 3500;
 
     public static void notifySuccess(String caption, String message) {
         showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_CENTER,
