@@ -43,6 +43,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
     protected void setup(Class<T> type, Collection<? extends T> items, Object... excludePropIds) {
         setup(type, excludePropIds);
         refresh(items, null, null);
+        grid.getColumns().forEach(c -> c.setHidable(true));
     }
 
     private void setup(Class<T> type, Object... excludeProps) {
@@ -92,6 +93,10 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
 
     protected abstract void customizeTopBar(HorizontalLayout topBar);
 
+    protected void refresh(Collection<? extends T> data, Object sortPropId) {
+        refresh(data, sortPropId, SortDirection.ASCENDING);
+    }
+
     /**
      * Refreshes and sorts an underlying datasource container
      *
@@ -109,10 +114,6 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
             else
                 grid.sort(sortPropId, SortDirection.ASCENDING);
         }
-    }
-
-    protected void refresh(Collection<? extends T> data, Object sortPropId) {
-        refresh(data, sortPropId, SortDirection.ASCENDING);
     }
 
     protected void filter(String text) {

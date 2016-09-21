@@ -1,5 +1,6 @@
 package org.baddev.currency.ui.component.view;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.shared.data.sort.SortDirection;
@@ -11,11 +12,13 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
+import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
+import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
 import org.baddev.currency.security.user.UserService;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.window.FormWindow;
 import org.baddev.currency.ui.component.window.SettingsWindow;
-import org.baddev.currency.ui.component.window.UserDetailsWindow;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.security.DeclareRoles;
@@ -51,9 +54,13 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
         grid.getColumn(User.P_CRED_NON_EXPIRED).setHeaderCaption("Credentials Not Expired");
 
         addGeneratedButton(P_GEN_DETAILS_BTN, "Details", event -> {
-            UserDetailsWindow window = beanFactory.getBean(UserDetailsWindow.class);
-            String selectedUname = ((IUser) event.getItemId()).getUsername();
-            window.show(userService.findUserDetailsByUsername(selectedUname), selectedUname);
+            String uname = ((IUser) event.getItemId()).getUsername();
+            new FormWindow<>(IUserDetails.class, userService.findUserDetailsByUsername(uname),
+                    ImmutableMap.of("First Name", UserDetails.P_FIRST_NAME,
+                            "Last Name", UserDetails.P_LAST_NAME,
+                            "Email", UserDetails.P_EMAIL))
+                    .withSubmitActionProvider(b -> userService.update(null, b.getItemDataSource().getBean()))
+                    .showEdit("User Details - <b>" + uname + "</b>");
         });
         grid.getColumn(P_GEN_DETAILS_BTN).setHeaderCaption("Details");
 

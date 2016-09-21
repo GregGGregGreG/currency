@@ -53,17 +53,27 @@ public class FetcherConfig {
 
     @Bean(name = "IsoCurCcys")
     public List<IsoCcyEntry> isoCurCcyEntryList() {
-        WebClient client = WebClient.create(isoCurSourceURI);
-        configureClient(client);
-        IsoCcyEntries entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
+        IsoCcyEntries entries = null;
+        try {
+            WebClient client = WebClient.create(isoCurSourceURI);
+            configureClient(client);
+            entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
     }
 
     @Bean(name = "IsoHistCcys")
     public List<IsoCcyHistEntry> isoCcyHistEntryList() {
-        WebClient client = WebClient.create(isoHistSourceURI);
-        configureClient(client);
-        IsoCcyHistEntries entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
+        IsoCcyHistEntries entries = null;
+        try {
+            WebClient client = WebClient.create(isoHistSourceURI);
+            configureClient(client);
+            entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
     }
 
