@@ -114,7 +114,6 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     protected void filter(String text) {
         super.filter(text);
         if (!text.isEmpty()) {
-            //let wrapper modify our gen property filter
             containerWrapper().addContainerFilter(new SimpleStringFilter(P_GEN_CCY_NAME, text, true, false));
             Or mergedOrs = new Or(container().getContainerFilters().stream().toArray(Container.Filter[]::new));
             container().removeAllContainerFilters();

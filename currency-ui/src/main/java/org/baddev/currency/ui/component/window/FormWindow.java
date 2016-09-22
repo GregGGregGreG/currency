@@ -82,12 +82,12 @@ public class FormWindow<T> extends Window {
             binder.addCommitHandler(new FieldGroup.CommitHandler() {
                 @Override
                 public void preCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                    close();
                 }
 
                 @Override
                 public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
                     onCommitSuccess.accept(binder);
+                    close();
                     NotificationUtils.notifySuccess("Changes Submit", "Changes successfully saved");
                 }
             });
