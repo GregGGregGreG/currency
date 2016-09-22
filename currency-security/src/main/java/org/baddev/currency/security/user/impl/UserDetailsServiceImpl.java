@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.baddev.currency.jooq.schema.Tables.ROLE;
 import static org.baddev.currency.jooq.schema.tables.UserRole.USER_ROLE;
-import static org.baddev.currency.jooq.schema.tables.UserUserRole.USER_USER_ROLE;
 
 /**
  * Created by IPotapchuk on 7/1/2016.
@@ -35,9 +35,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("User with username " + username + " was not found");
 
         List<GrantedAuthority> permissions = dsl.selectFrom(
-                USER_USER_ROLE.join(USER_ROLE).on(USER_USER_ROLE.ROLE_ID.eq(USER_ROLE.ID)))
-                .where(USER_USER_ROLE.USER_ID.eq(user.getId()))
-                .fetch(USER_ROLE.ROLE_NAME)
+                ROLE.join(USER_ROLE).on(ROLE.ID.eq(USER_ROLE.ROLE_ID)))
+                .where(USER_ROLE.USER_ID.eq(user.getId()))
+                .fetch(ROLE.ROLE_NAME)
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());

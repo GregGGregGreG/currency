@@ -1,17 +1,17 @@
 package org.baddev.currency.security.user.impl;
 
 import org.baddev.currency.core.RoleEnum;
+import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDetailsDao;
-import org.baddev.currency.jooq.schema.tables.daos.UserRoleDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
+import org.baddev.currency.jooq.schema.tables.pojos.Role;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
-import org.baddev.currency.jooq.schema.tables.pojos.UserRole;
 import org.baddev.currency.jooq.schema.tables.records.UserDetailsRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRecord;
-import org.baddev.currency.jooq.schema.tables.records.UserUserRoleRecord;
+import org.baddev.currency.jooq.schema.tables.records.UserRoleRecord;
 import org.baddev.currency.security.dto.LoginDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.baddev.currency.security.exception.RoleAlreadyAssignedException;
@@ -33,15 +33,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.baddev.currency.jooq.schema.Tables.USER;
-import static org.baddev.currency.jooq.schema.Tables.USER_DETAILS;
-import static org.baddev.currency.jooq.schema.tables.UserUserRole.USER_USER_ROLE;
+import static org.baddev.currency.jooq.schema.Tables.*;
 
 /**
  * Created by IPotapchuk on 9/12/2016.
@@ -54,7 +51,7 @@ public class UserServiceImpl implements UserService {
     private final DSLContext dsl;
     private final UserDetailsDao detailsDao;
     private final UserDao userDao;
-    private final UserRoleDao roleDao;
+    private final RoleDao roleDao;
 
     @Autowired
     public UserServiceImpl(AuthenticationManager manager,
@@ -62,7 +59,7 @@ public class UserServiceImpl implements UserService {
                            DSLContext dsl,
                            UserDao userDao,
                            UserDetailsDao detailsDao,
-                           UserRoleDao roleDao) {
+                           RoleDao roleDao) {
         this.manager = manager;
         this.encoder = encoder;
         this.dsl = dsl;
@@ -102,12 +99,12 @@ public class UserServiceImpl implements UserService {
 
         if (roleNames != null && roleNames.length > 0) {
             if (roleNames.length == 1) {
-                UserRole role = roleDao.fetchOneByRoleName(roleNames[0]);
+                Role role = roleDao.fetchOneByRoleName(roleNames[0]);
                 if (role == null)
                     throw new RoleNotFoundException(roleNames[0]);
-                dsl.insertInto(USER_USER_ROLE)
-                        .set(USER_USER_ROLE.USER_ID, created.getId())
-                        .set(USER_USER_ROLE.ROLE_ID, role.getId())
+                dsl.insertInto(USER_ROLE)
+                        .set(USER_ROLE.USER_ID, created.getId())
+                        .set(USER_ROLE.ROLE_ID, role.getId())
                         .execute();
             } else if (roleNames.length > 1) {
                 List<Long> roleIds = findRoleIds(roleNames);
@@ -117,7 +114,7 @@ public class UserServiceImpl implements UserService {
                     throw new RoleNotFoundException(sb.toString());
                 }
                 dsl.batchInsert(roleIds.stream()
-                        .map(roleId -> new UserUserRoleRecord(created.getId(), roleId))
+                        .map(roleId -> new UserRoleRecord(created.getId(), roleId))
                         .collect(Collectors.toList()))
                         .execute();
             }
@@ -130,24 +127,24 @@ public class UserServiceImpl implements UserService {
     @Secured({RoleEnum.ADMIN})
     public void assignToRoles(Long userId, Long... roleIds) {
         validateRoles(userId, roleIds);
-        List<Number> assigned = dsl.selectFrom(USER_USER_ROLE)
-                .where(USER_USER_ROLE.USER_ID.eq(userId))
-                .fetchInto(UserUserRoleRecord.class)
+        List<Number> assigned = dsl.selectFrom(USER_ROLE)
+                .where(USER_ROLE.USER_ID.eq(userId))
+                .fetchInto(UserRoleRecord.class)
                 .stream()
-                .map(UserUserRoleRecord::getRoleId)
+                .map(UserRoleRecord::getRoleId)
                 .filter(Arrays.asList(roleIds)::contains)
                 .collect(Collectors.toList());
         if (!assigned.isEmpty())
             throw new RoleAlreadyAssignedException(assigned);
         else {
-            List<UserUserRoleRecord> records = new ArrayList<>();
-            for (Long roleId : roleIds) {
-                UserUserRoleRecord rec = dsl.newRecord(USER_USER_ROLE);
-                rec.setUserId(userId);
-                rec.setRoleId(roleId);
-                records.add(rec);
-            }
-            dsl.batchInsert(records).execute();
+            dsl.batchInsert(Arrays.stream(roleIds)
+                    .map(rid -> {
+                        UserRoleRecord rec = dsl.newRecord(USER_ROLE);
+                        rec.setUserId(userId);
+                        rec.setRoleId(rid);
+                        return rec;
+                    }).collect(Collectors.toList()))
+                    .execute();
         }
     }
 
@@ -156,18 +153,18 @@ public class UserServiceImpl implements UserService {
     @Secured({RoleEnum.ADMIN})
     public void unassignFromRoles(Long userId, Long... roleIds) {
         validateRoles(userId, roleIds);
-        List<Number> assigned = dsl.selectFrom(USER_USER_ROLE)
-                .where(USER_USER_ROLE.USER_ID.eq(userId))
-                .fetchInto(UserUserRoleRecord.class)
+        List<Number> assigned = dsl.selectFrom(USER_ROLE)
+                .where(USER_ROLE.USER_ID.eq(userId))
+                .fetchInto(UserRoleRecord.class)
                 .stream()
-                .map(UserUserRoleRecord::getRoleId)
+                .map(UserRoleRecord::getRoleId)
                 .filter(Arrays.asList(roleIds)::contains)
                 .collect(Collectors.toList());
         if (assigned.isEmpty() || !assigned.containsAll(Arrays.asList(roleIds)))
             throw new RoleNotFoundException(roleIds);
         else {
-            dsl.deleteFrom(USER_USER_ROLE)
-                    .where(USER_USER_ROLE.USER_ID.eq(userId).and(USER_USER_ROLE.ROLE_ID.in(roleIds)))
+            dsl.deleteFrom(USER_ROLE)
+                    .where(USER_ROLE.USER_ID.eq(userId).and(USER_ROLE.ROLE_ID.in(roleIds)))
                     .execute();
         }
     }
@@ -185,7 +182,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private List<Long> findRoleIds(String... roleNames) {
-        return roleDao.fetchByRoleName(roleNames).stream().map(UserRole::getId).collect(Collectors.toList());
+        return roleDao.fetchByRoleName(roleNames).stream().map(Role::getId).collect(Collectors.toList());
     }
 
     @Override
