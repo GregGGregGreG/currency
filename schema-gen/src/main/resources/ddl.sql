@@ -1,3 +1,11 @@
+use currency_app;
+CREATE TABLE role
+(
+  id        BIGINT(20) PRIMARY KEY NOT NULL,
+  role_name VARCHAR(50)            NOT NULL
+);
+CREATE UNIQUE INDEX role_role_name_uindex
+  ON role (role_name);
 CREATE TABLE user
 (
   id               BIGINT(20) PRIMARY KEY NOT NULL AUTO_INCREMENT,
@@ -21,26 +29,18 @@ CREATE TABLE user_details
 );
 CREATE UNIQUE INDEX user_details_email_uindex
   ON user_details (email);
-CREATE TABLE role
-(
-  id        BIGINT(20) PRIMARY KEY NOT NULL,
-  role_name VARCHAR(50)            NOT NULL
-);
-CREATE UNIQUE INDEX user_role_role_name_uindex
-  ON role (role_name);
 CREATE TABLE user_role
 (
   user_id BIGINT(20) NOT NULL,
   role_id BIGINT(20) NOT NULL,
-  CONSTRAINT user_user_role_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id)
+  CONSTRAINT user_role_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id)
     ON DELETE CASCADE,
-  CONSTRAINT user_user_role_user_role_id_fk FOREIGN KEY (role_id) REFERENCES role (id)
-    ON DELETE CASCADE
+  CONSTRAINT user_role_role_id_fk FOREIGN KEY (role_id) REFERENCES role (id)
 );
-CREATE INDEX user_user_role_user_id_fk
-  ON user_role (user_id);
-CREATE INDEX user_user_role_user_role_id_fk
+CREATE INDEX user_role_role_id_fk
   ON user_role (role_id);
+CREATE INDEX user_role_user_id_fk
+  ON user_role (user_id);
 CREATE TABLE exchange_operation
 (
   id               BIGINT(20) PRIMARY KEY              NOT NULL AUTO_INCREMENT,
