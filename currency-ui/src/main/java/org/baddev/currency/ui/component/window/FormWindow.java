@@ -67,16 +67,16 @@ public class FormWindow<T> extends Window {
         return this;
     }
 
-    public void configure(BeanFieldGroup<T> binder, Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
-        configureBinder(binder, onCommitSuccess);
+    public void configure(Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
+        configureBinder(onCommitSuccess);
         submitBtn = new Button();
-        configureSubmitBtn(submitBtn, binder, onCommitError);
+        configureSubmitBtn(submitBtn, onCommitError);
         form = new FormLayout();
         form.setSpacing(true);
         form.setSizeUndefined();
     }
 
-    private void configureBinder(BeanFieldGroup<T> binder, Consumer<BeanFieldGroup<T>> onCommitSuccess) {
+    private void configureBinder(Consumer<BeanFieldGroup<T>> onCommitSuccess) {
         if (mode == WindowMode.READONLY) binder.setReadOnly(true);
         else
             binder.addCommitHandler(new FieldGroup.CommitHandler() {
@@ -93,7 +93,7 @@ public class FormWindow<T> extends Window {
             });
     }
 
-    private void configureSubmitBtn(Button submitBtn, BeanFieldGroup<T> binder, Consumer<FieldGroup.CommitException> onCommitError) {
+    private void configureSubmitBtn(Button submitBtn, Consumer<FieldGroup.CommitException> onCommitError) {
         if (mode == WindowMode.NEW) {
             submitBtn.setStyleName(ValoTheme.BUTTON_FRIENDLY);
             submitBtn.setCaption("Add");
@@ -116,10 +116,10 @@ public class FormWindow<T> extends Window {
         }
     }
 
-    private void show(WindowMode mode, BeanFieldGroup<T> binder, String caption, Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
+    private void show(WindowMode mode, String caption, Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
         this.mode = mode;
         setCaption(caption);
-        configure(binder, onCommitSuccess, onCommitError);
+        configure(onCommitSuccess, onCommitError);
         binder.getFields().forEach(f -> {
             f.setWidth(300, Unit.PIXELS);
             f.setRequired(true);
@@ -139,7 +139,7 @@ public class FormWindow<T> extends Window {
     }
 
     public void showEdit(String caption, Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
-        show(WindowMode.EDIT, binder, caption, onCommitSuccess, onCommitError);
+        show(WindowMode.EDIT, caption, onCommitSuccess, onCommitError);
     }
 
     public void showEdit(String caption, Consumer<BeanFieldGroup<T>> onCommitSuccess) {
@@ -152,7 +152,7 @@ public class FormWindow<T> extends Window {
 
     public void showNew(String caption, Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
         binder.setItemDataSource((T) null);
-        show(WindowMode.NEW, binder, caption, onCommitSuccess, onCommitError);
+        show(WindowMode.NEW, caption, onCommitSuccess, onCommitError);
     }
 
     public void showNew(String caption, Consumer<BeanFieldGroup<T>> onCommitSuccess) {
@@ -164,7 +164,7 @@ public class FormWindow<T> extends Window {
     }
 
     public void showReadOnly(String caption) {
-        show(WindowMode.READONLY, binder, caption, successActionProvider, errorActionProvider);
+        show(WindowMode.READONLY, caption, successActionProvider, errorActionProvider);
     }
 
     private static <T> BeanFieldGroup<T> newBeanFieldGroup(Class<T> beanClass, T formBean, Map<String, String> captionToPropertyMap) {
