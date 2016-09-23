@@ -5,6 +5,7 @@ import org.baddev.currency.core.operation.FindOperation;
 import org.baddev.currency.core.operation.UpdateOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
+import org.baddev.currency.security.dto.UserPasswordChangeDTO;
 
 import java.util.Collection;
 
@@ -19,4 +20,5 @@ public interface UserService extends FindOperation<IUser, Long>, UpdateOperation
     void update(IUser user, IUserDetails userDetails);
     void assignToRoles(Long userId, Long... roleIds);
     void unassignFromRoles(Long userId, Long... roleIds);
+    void changeUserPassword(UserPasswordChangeDTO dto);
 }

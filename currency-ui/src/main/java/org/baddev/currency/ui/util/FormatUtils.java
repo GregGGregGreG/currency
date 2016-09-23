@@ -10,13 +10,17 @@ public final class FormatUtils {
     private FormatUtils() {
     }
 
-    public static String formatCcyParamValuesList(List<String> paramValues){
+    public static String formatCcyParamValuesList(List<String> paramValues) {
         if (paramValues.isEmpty())
             return "Unknown";
         StringBuilder sb = new StringBuilder();
         paramValues.forEach(s -> sb.append(s).append(", "));
         sb.delete(sb.toString().length() - 2, sb.toString().length() - 1);
         return sb.toString();
+    }
+
+    public static String bold(String text) {
+        return "<b>" + text + "</b>";
     }
 
 }

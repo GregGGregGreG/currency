@@ -57,6 +57,14 @@ public class FormWindow<T> extends Window {
         this(newBeanFieldGroup(beanClass, null, captionToPropertyMap));
     }
 
+    public FormWindow(Class<T> beanClass, Map<String, String> captionToPropertyMap, Map<String, Class<? extends Field>> propertyToFieldTypeMap) {
+        this(newBeanFieldGroup(beanClass, null, captionToPropertyMap, propertyToFieldTypeMap));
+    }
+
+    public FormWindow(Class<T> beanClass, T formBean, Map<String, String> captionToPropertyMap, Map<String, Class<? extends Field>> propertyToFieldTypeMap) {
+        this(newBeanFieldGroup(beanClass, formBean, captionToPropertyMap, propertyToFieldTypeMap));
+    }
+
     public FormWindow<T> withSubmitActionProvider(Consumer<BeanFieldGroup<T>> provider) {
         this.successActionProvider = provider;
         return this;
@@ -167,11 +175,21 @@ public class FormWindow<T> extends Window {
         show(WindowMode.READONLY, caption, successActionProvider, errorActionProvider);
     }
 
+    private static <T> BeanFieldGroup<T> newBeanFieldGroup(Class<T> beanClass, T formBean, Map<String, String> captionToPropertyMap, Map<String, Class<? extends Field>> propertyToFieldTypeMap) {
+        BeanFieldGroup<T> bfg = new BeanFieldGroup<>(beanClass);
+        bfg.setItemDataSource(formBean);
+        captionToPropertyMap.entrySet().forEach(en -> {
+            Class<? extends Field> fieldType = propertyToFieldTypeMap.get(en.getValue());
+            bfg.buildAndBind(en.getKey(), en.getValue(), fieldType);
+        });
+        return bfg;
+    }
+
     private static <T> BeanFieldGroup<T> newBeanFieldGroup(Class<T> beanClass, T formBean, Map<String, String> captionToPropertyMap) {
-        BeanFieldGroup<T> binder = new BeanFieldGroup<>(beanClass);
-        binder.setItemDataSource(formBean);
-        captionToPropertyMap.entrySet().forEach(en -> binder.buildAndBind(en.getKey(), en.getValue()));
-        return binder;
+        BeanFieldGroup<T> bfg = new BeanFieldGroup<>(beanClass);
+        bfg.setItemDataSource(formBean);
+        captionToPropertyMap.entrySet().forEach(en -> bfg.buildAndBind(en.getKey(), en.getValue()));
+        return bfg;
     }
 
 }

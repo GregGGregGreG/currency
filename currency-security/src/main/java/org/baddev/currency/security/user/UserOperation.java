@@ -1,6 +1,7 @@
 package org.baddev.currency.security.user;
 
 import org.baddev.currency.security.dto.LoginDTO;
+import org.baddev.currency.security.dto.PasswordChangeDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.springframework.security.core.AuthenticationException;
 
@@ -10,4 +11,5 @@ import org.springframework.security.core.AuthenticationException;
 public interface UserOperation {
     void authenticate(LoginDTO loginDTO) throws AuthenticationException;
     void signUp(SignUpDTO signUpDTO, String... roleNames);
+    void changePassword(PasswordChangeDTO passwordChangeDTO);
 }

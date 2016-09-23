@@ -13,12 +13,12 @@ import org.baddev.currency.jooq.schema.tables.records.UserDetailsRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRoleRecord;
 import org.baddev.currency.security.dto.LoginDTO;
+import org.baddev.currency.security.dto.PasswordChangeDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
-import org.baddev.currency.security.exception.RoleAlreadyAssignedException;
-import org.baddev.currency.security.exception.RoleNotFoundException;
-import org.baddev.currency.security.exception.SuchUserExistsException;
-import org.baddev.currency.security.exception.UserNotFoundException;
+import org.baddev.currency.security.dto.UserPasswordChangeDTO;
+import org.baddev.currency.security.exception.*;
 import org.baddev.currency.security.user.UserService;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.baddev.currency.jooq.schema.Tables.*;
@@ -71,11 +72,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public void authenticate(LoginDTO loginDTO) throws AuthenticationException {
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginDTO.getUsername(),
-                loginDTO.getPassword());
+        authenticate(loginDTO.getUsername(), loginDTO.getPassword());
+    }
+
+    private void authenticate(String username, String password){
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
         Authentication auth = manager.authenticate(token);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        ((AbstractAuthenticationToken) auth).setDetails(findUserDetailsByUsername(loginDTO.getUsername()));
+        ((AbstractAuthenticationToken) auth).setDetails(findUserDetailsByUsername(username));
     }
 
     @Override
@@ -120,6 +124,42 @@ public class UserServiceImpl implements UserService {
             }
         } else throw new RoleNotFoundException();
 
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.ADMIN, RoleEnum.USER})
+    public void changePassword(PasswordChangeDTO dto) {
+        String userName = SecurityUtils.loggedInUserName();
+        Long currentUserId = SecurityUtils.getIdentityUserPrincipal().getId();
+        if (!Objects.equals(dto.getNewPassword(), dto.getNewPasswordConfirm()))
+            throw new PasswordsMismatchException(currentUserId);
+        User user = userDao.fetchOneById(currentUserId);
+        String oldPwd = user.getPassword();
+        String newPwdEnc = encoder.encodePassword(dto.getNewPassword(), null);
+        user.setPassword(newPwdEnc);
+        userDao.update(user);
+        savePwdHist(currentUserId, newPwdEnc);
+        authenticate(userName, newPwdEnc);
+    }
+
+    @Override
+    @Transactional
+    @Secured({RoleEnum.ADMIN})
+    public void changeUserPassword(UserPasswordChangeDTO dto) {
+        User user = userDao.fetchOneById(dto.getUserId());
+        String oldPwd = user.getPassword();
+        String newPwdEnc = encoder.encodePassword(dto.getNewPassword(), null);
+        user.setPassword(newPwdEnc);
+        userDao.update(user);
+        savePwdHist(dto.getUserId(), newPwdEnc);
+    }
+
+    private void savePwdHist(Long userId, String pwd){
+        dsl.insertInto(USER_PASSWORD_HISTORY)
+                .set(USER_PASSWORD_HISTORY.USER_ID, userId)
+                .set(USER_PASSWORD_HISTORY.PASSWORD, pwd)
+                .execute();
     }
 
     @Override

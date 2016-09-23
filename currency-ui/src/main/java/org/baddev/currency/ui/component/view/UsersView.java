@@ -5,23 +5,24 @@ import com.google.common.eventbus.EventBus;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.spring.annotation.SpringView;
-import com.vaadin.ui.Button;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.MenuBar;
-import com.vaadin.ui.VerticalLayout;
-import com.vaadin.ui.renderers.ButtonRenderer;
+import com.vaadin.ui.*;
 import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
+import org.baddev.currency.security.dto.UserPasswordChangeDTO;
 import org.baddev.currency.security.user.UserService;
+import org.baddev.currency.ui.component.GridButtonToolbar;
 import org.baddev.currency.ui.component.base.AbstractCcyGridView;
 import org.baddev.currency.ui.component.window.FormWindow;
 import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.security.DeclareRoles;
+import java.util.Set;
+
+import static org.baddev.currency.ui.util.FormatUtils.bold;
 
 /**
  * Created by IPotapchuk on 9/19/2016.
@@ -31,9 +32,9 @@ import javax.annotation.security.DeclareRoles;
 public final class UsersView extends AbstractCcyGridView<IUser> {
 
     public static final String NAME = "admin";
-    public static final String P_GEN_DETAILS_BTN = "gen_details";
 
     private final UserService userService;
+    private final GridButtonToolbar toolbar = new GridButtonToolbar(grid);
 
     @Autowired
     public UsersView(SettingsWindow settingsWindow, EventBus bus, UserService userService) {
@@ -44,25 +45,11 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
     @Override
     protected void postInit(VerticalLayout rootLayout) {
         setup(IUser.class, userService.findAll(), User.P_PASSWORD);
-        grid.getColumn(User.P_ACC_NON_EXPIRED).setHeaderCaption("Not Expired");
-        grid.getColumn(User.P_ENABLED).setRenderer(new ButtonRenderer(event -> {
-            IUser user = (IUser) event.getItemId();
-            user.setEnabled(!user.getEnabled());
-            userService.update(user);
-            refresh(userService.findAll(), User.P_ID, SortDirection.ASCENDING);
-        })).setHeaderCaption("Enabled");
-        grid.getColumn(User.P_CRED_NON_EXPIRED).setHeaderCaption("Credentials Not Expired");
 
-        addGeneratedButton(P_GEN_DETAILS_BTN, "Details", event -> {
-            String uname = ((IUser) event.getItemId()).getUsername();
-            new FormWindow<>(IUserDetails.class, userService.findUserDetailsByUsername(uname),
-                    ImmutableMap.of("First Name", UserDetails.P_FIRST_NAME,
-                            "Last Name", UserDetails.P_LAST_NAME,
-                            "Email", UserDetails.P_EMAIL))
-                    .withSubmitActionProvider(b -> userService.update(null, b.getItemDataSource().getBean()))
-                    .showEdit("User Details - <b>" + uname + "</b>");
-        });
-        grid.getColumn(P_GEN_DETAILS_BTN).setHeaderCaption("Details");
+        grid.getColumn(User.P_ACC_NON_LOCKED).setHeaderCaption("Not Locked");
+        grid.getColumn(User.P_ACC_NON_EXPIRED).setHeaderCaption("Not Expired");
+        grid.getColumn(User.P_ENABLED).setHeaderCaption("Enabled");
+        grid.getColumn(User.P_CRED_NON_EXPIRED).setHeaderCaption("Credentials Not Expired");
 
         grid.setColumnOrder(
                 User.P_ID,
@@ -70,8 +57,7 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
                 User.P_ENABLED,
                 User.P_ACC_NON_LOCKED,
                 User.P_ACC_NON_EXPIRED,
-                User.P_CRED_NON_EXPIRED,
-                P_GEN_DETAILS_BTN);
+                User.P_CRED_NON_EXPIRED);
 
         grid.sort(User.P_ID, SortDirection.ASCENDING);
     }
@@ -85,6 +71,27 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
 
     @Override
     protected void customizeTopBar(HorizontalLayout topBar) {
-        topBar.addComponent(new Button("Blabla"));
+        toolbar.createButton("Edit Details", o -> {
+                    String uname = ((Set<IUser>) o).iterator().next().getUsername();
+                    new FormWindow<>(IUserDetails.class, userService.findUserDetailsByUsername(uname),
+                            ImmutableMap.of("First Name", UserDetails.P_FIRST_NAME,
+                                    "Last Name", UserDetails.P_LAST_NAME,
+                                    "Email", UserDetails.P_EMAIL))
+                            .withSubmitActionProvider(b -> userService.update(null, b.getItemDataSource().getBean()))
+                            .showEdit("User Details - <b>" + uname + "</b>");
+                })
+                .createButton("Remove", o -> userService.delete(((Set<IUser>) o).iterator().next().getUsername()))
+                .createButton("Change Password", o -> {
+                    IUser user = ((Set<IUser>) o).iterator().next();
+                    new FormWindow<>(UserPasswordChangeDTO.class,
+                            new UserPasswordChangeDTO(user.getId(), ""),
+                            ImmutableMap.of("New Password", "newPassword"),
+                            ImmutableMap.of("newPassword", PasswordField.class))
+                            .withSubmitActionProvider(p -> userService.changeUserPassword(p.getItemDataSource().getBean()))
+                            .showEdit("Password Change - " + bold(user.getUsername()));
+                });
+
+        topBar.addComponent(toolbar);
+        topBar.setComponentAlignment(toolbar, Alignment.MIDDLE_RIGHT);
     }
 }
