@@ -75,6 +75,12 @@ public class FormWindow<T> extends Window {
         return this;
     }
 
+    public FormWindow<T> withReadOnlyFields(String... propIds) {
+        for (String propId : propIds)
+            binder.getField(propId).setReadOnly(true);
+        return this;
+    }
+
     public void configure(Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
         configureBinder(onCommitSuccess);
         submitBtn = new Button();
@@ -129,9 +135,9 @@ public class FormWindow<T> extends Window {
         setCaption(caption);
         configure(onCommitSuccess, onCommitError);
         binder.getFields().forEach(f -> {
-            f.setWidth(300, Unit.PIXELS);
-            f.setRequired(true);
             if (f instanceof AbstractTextField) {
+                f.setWidth(300, Unit.PIXELS);
+                f.setRequired(true);
                 ((AbstractTextField) f).setNullRepresentation("");
                 ((AbstractTextField) f).setImmediate(true);
             }

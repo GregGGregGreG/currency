@@ -1,6 +1,5 @@
-package org.baddev.currency.ui.component.base;
+package org.baddev.currency.ui.component.view.base;
 
-import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
 import com.vaadin.data.util.BeanItemContainer;
@@ -15,7 +14,6 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.renderers.ClickableRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import org.baddev.currency.ui.component.window.SettingsWindow;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,10 +26,6 @@ import java.util.function.Function;
 public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
 
     protected Grid grid = new Grid();
-
-    public AbstractCcyGridView(SettingsWindow settingsWindow, EventBus bus) {
-        super(settingsWindow, bus);
-    }
 
     @Override
     protected final void init(VerticalLayout rootLayout) {

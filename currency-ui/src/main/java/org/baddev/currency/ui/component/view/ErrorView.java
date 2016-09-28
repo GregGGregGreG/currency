@@ -1,10 +1,7 @@
 package org.baddev.currency.ui.component.view;
 
-import com.google.common.eventbus.EventBus;
 import com.vaadin.spring.annotation.SpringComponent;
-import org.baddev.currency.ui.component.base.AbstractErrorView;
-import org.baddev.currency.ui.component.window.SettingsWindow;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.baddev.currency.ui.component.view.base.AbstractErrorView;
 import org.springframework.context.annotation.Scope;
 
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
@@ -16,9 +13,8 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 @Scope(SCOPE_PROTOTYPE)
 public class ErrorView extends AbstractErrorView {
 
-    @Autowired
-    public ErrorView(SettingsWindow settingsWindow, EventBus bus) {
-        super(settingsWindow, bus, "Requested view with name <b>%s</b> was not found");
+    public ErrorView() {
+        super("Requested view with name <b>%s</b> was not found");
     }
 
 }

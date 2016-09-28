@@ -1,0 +1,7 @@
+@import "addons";
+@import "valo-facebook";
+
+.valo-facebook {
+  @include addons;
+  @include valo-facebook;
+}

@@ -6,6 +6,8 @@ import com.vaadin.ui.Field;
 
 import java.util.Arrays;
 
+import static org.baddev.currency.ui.CurrencyUI.currencyUI;
+
 /**
  * Created by IPOTAPCHUK on 6/13/2016.
  */
@@ -28,6 +30,10 @@ public final class UIUtils {
 
     public static void toggleEnabled(boolean enabled, Component... components) {
         Arrays.stream(components).forEach(c -> c.setEnabled(enabled));
+    }
+
+    public static void navigate(String viewName) {
+        currencyUI().getNavigator().navigateTo(viewName);
     }
 
 }

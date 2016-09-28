@@ -1,0 +1,7 @@
+@import "addons";
+@import "valo-default";
+
+.valo-default {
+  @include addons;
+  @include valo-default;
+}

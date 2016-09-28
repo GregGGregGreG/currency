@@ -1,4 +1,4 @@
-use currency_app;
+USE currency_app;
 CREATE TABLE role
 (
   id        BIGINT(20) PRIMARY KEY NOT NULL,
@@ -41,6 +41,27 @@ CREATE INDEX user_role_role_id_fk
   ON user_role (role_id);
 CREATE INDEX user_role_user_id_fk
   ON user_role (user_id);
+CREATE TABLE user_password_history
+(
+  user_id  BIGINT(20)                          NOT NULL,
+  password VARCHAR(100)                        NOT NULL,
+  date     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT user_password_history_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id)
+    ON DELETE CASCADE
+);
+CREATE INDEX user_password_history_user_id_fk
+  ON user_password_history (user_id);
+CREATE TABLE user_preferences
+(
+  user_id            BIGINT(20) PRIMARY KEY             NOT NULL,
+  ui_notifications   TINYINT(1) DEFAULT '0'             NOT NULL,
+  mail_notifications TINYINT(1) DEFAULT '0'             NOT NULL,
+  theme_name         VARCHAR(30) DEFAULT 'valo-default' NOT NULL,
+  CONSTRAINT user_preferences_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id)
+    ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX user_preferences_user_id_uindex
+  ON user_preferences (user_id);
 CREATE TABLE exchange_operation
 (
   id               BIGINT(20) PRIMARY KEY              NOT NULL AUTO_INCREMENT,

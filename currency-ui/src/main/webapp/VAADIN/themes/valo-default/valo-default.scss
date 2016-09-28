@@ -1,0 +1,7 @@
+@import "../valo/valo";
+@import "../common-styles";
+
+@mixin valo-default {
+  @include valo;
+  @include common-styles;
+}

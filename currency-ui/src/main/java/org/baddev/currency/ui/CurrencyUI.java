@@ -5,6 +5,7 @@ import com.google.common.eventbus.Subscribe;
 import com.vaadin.annotations.*;
 import com.vaadin.navigator.Navigator;
 import com.vaadin.navigator.View;
+import com.vaadin.navigator.ViewDisplay;
 import com.vaadin.navigator.ViewProvider;
 import com.vaadin.server.*;
 import com.vaadin.shared.Position;
@@ -20,10 +21,13 @@ import org.baddev.currency.core.listener.NotificationListener;
 import org.baddev.currency.core.notifier.Notifier;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
+import org.baddev.currency.mail.ExchangeCompletionMailer;
 import org.baddev.currency.security.dto.LoginDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.baddev.currency.security.user.UserService;
 import org.baddev.currency.security.utils.SecurityUtils;
+import org.baddev.currency.ui.component.NavigationViewWrapper;
 import org.baddev.currency.ui.component.view.AccessDeniedView;
 import org.baddev.currency.ui.component.view.ErrorView;
 import org.baddev.currency.ui.component.view.LoginView;
@@ -32,6 +36,7 @@ import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrateg
 import org.baddev.currency.ui.security.event.LoginEvent;
 import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.baddev.currency.ui.security.event.SignUpEvent;
+import org.baddev.currency.ui.service.UserPreferencesService;
 import org.baddev.currency.ui.util.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,11 +52,11 @@ import javax.servlet.annotation.WebServlet;
 
 import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
 import static org.baddev.currency.security.utils.SecurityUtils.loggedInUserName;
-import static org.baddev.currency.ui.util.AppSettingsUtils.initializeSettings;
-import static org.baddev.currency.ui.util.AppSettingsUtils.toggleUINotifications;
+import static org.baddev.currency.ui.util.AppSettingsUtils.applyUserPreferences;
 import static org.baddev.currency.ui.util.NotificationUtils.*;
+import static org.baddev.currency.ui.util.VaadinSessionUtils.*;
 
-@Theme("mytheme")
+@Theme("valo-default")
 @Widgetset("org.baddev.currency.ui.MyAppWidgetset")
 @PreserveOnRefresh
 @SpringUI
@@ -72,6 +77,12 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
     private UserService userService;
     @Autowired
     private ApplicationContext ctx;
+    @Autowired
+    private UserPreferencesService preferencesService;
+    @Autowired
+    private ExchangeCompletionMailer mailer;
+    @Autowired
+    private NavigationViewWrapper wrapper;
 
     public static CurrencyUI currencyUI() {
         return (CurrencyUI) UI.getCurrent();
@@ -88,7 +99,8 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         viewProvider.setAccessDeniedViewClass(AccessDeniedView.class);
-        Navigator navigator = new Navigator(this, this);
+        setContent(wrapper);
+        Navigator navigator = new Navigator(this, (ViewDisplay) wrapper);
         navigator.setErrorProvider(new ViewProvider() {
             @Override
             public String getViewName(String viewAndParameters) {
@@ -102,19 +114,25 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
         });
         navigator.addProvider(viewProvider);
         setNavigator(navigator);
-        if (isLoggedIn())
+        if (isLoggedIn()) {
+            setTheme(getSessionAttribute(UserPreferences.class).getThemeName());
             navigator.navigateTo(RatesView.NAME);
-        else navigator.navigateTo(LoginView.NAME);
+        } else navigator.navigateTo(LoginView.NAME);
+    }
+
+    @Override
+    protected void refresh(VaadinRequest request) {
+        super.refresh(request);
     }
 
     @Override
     public void notificationReceived(ExchangeCompletionEvent e) {
         IExchangeOperation operation = e.getEventData();
         access(() -> {
-            String fromCcyNames = FormatUtils.formatCcyParamValuesList(
+            String fromCcyNames = FormatUtils.joinByComma(
                     ccyService.findCcyNamesByCode(operation.getFromCcy())
             );
-            String toCcyNames = FormatUtils.formatCcyParamValuesList(
+            String toCcyNames = FormatUtils.joinByComma(
                     ccyService.findCcyNamesByCode(operation.getToCcy())
             );
             String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
@@ -124,7 +142,7 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
                     operation.getToAmount(),
                     toCcyNames,
                     operation.getToCcy());
-            notifyTray("Exchange task completion", exchInfo);
+            notifyTray("Exchange Task Completion", exchInfo);
         });
     }
 
@@ -133,6 +151,8 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
         try {
             userService.authenticate(event.getEventData());
             VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
+            preferencesService.loadPreferencesIntoSession();
+            applyUserPreferences(mailer);
             getNavigator().navigateTo(RatesView.NAME);
         } catch (AuthenticationException e) {
             event.getBinder().clear();
@@ -172,11 +192,12 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
     public void attach() {
         super.attach();
         bus.register(this);
+        if (!isSessionAttributeExist(UserPreferences.class))
+            setSessionAttribute(UserPreferences.class, new UserPreferences());
     }
 
     @Override
     public void detach() {
-        toggleUINotifications(false);
         bus.unregister(this);
         super.detach();
     }
@@ -207,7 +228,6 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
 
         @Override
         public void sessionInit(SessionInitEvent event) throws ServiceException {
-            initializeSettings();
             log.debug("Session initialized, {}", event.getSession());
         }
 

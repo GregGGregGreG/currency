@@ -15,7 +15,7 @@ public class CronValidator extends AbstractStringValidator {
     @Override
     protected boolean isValidValue(String value) {
         try {
-            CronSequenceGenerator generator = new CronSequenceGenerator(value);
+            new CronSequenceGenerator(value);
         } catch (Exception e) {
             return false;
         }

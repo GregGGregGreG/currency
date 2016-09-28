@@ -7,8 +7,7 @@ import com.vaadin.server.FontAwesome;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import org.baddev.currency.security.dto.LoginDTO;
-import org.baddev.currency.ui.component.base.AbstractFormView;
-import org.baddev.currency.ui.component.window.SettingsWindow;
+import org.baddev.currency.ui.component.view.base.AbstractFormView;
 import org.baddev.currency.ui.security.event.LoginEvent;
 import org.baddev.currency.ui.util.NotificationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +22,12 @@ public class LoginView extends AbstractFormView<LoginDTO> {
 
     public static final String NAME = "login";
 
+    private final EventBus bus;
+
     @Autowired
-    public LoginView(SettingsWindow settingsWindow, EventBus bus) {
-        super(settingsWindow, bus, new LoginDTO(), LoginDTO.class);
+    public LoginView(EventBus bus) {
+        super(new LoginDTO(), LoginDTO.class);
+        this.bus = bus;
     }
 
     @Override
@@ -66,7 +68,7 @@ public class LoginView extends AbstractFormView<LoginDTO> {
     }
 
     @Override
-    protected void customizeMenuBar(MenuBar menuBar) {
+    public void customizeMenuBar(MenuBar menuBar) {
         menuBar.addItem("Sign Up", FontAwesome.USER_PLUS, selectedItem -> navigateTo(SignUpView.NAME));
     }
 }

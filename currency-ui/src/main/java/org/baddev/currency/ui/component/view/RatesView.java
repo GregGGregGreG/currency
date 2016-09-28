@@ -1,6 +1,5 @@
 package org.baddev.currency.ui.component.view;
 
-import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Container;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.data.util.filter.Or;
@@ -19,8 +18,7 @@ import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.iso4217.IsoEntityParam;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
-import org.baddev.currency.ui.component.base.AbstractCcyGridView;
-import org.baddev.currency.ui.component.window.SettingsWindow;
+import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.Iso4217PropertyValGen;
 import org.joda.time.LocalDate;
@@ -50,10 +48,10 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     @Value("${min_date_nbu}")
     private String minDateVal;
 
-    private ComboBox       fetchOptCb = new ComboBox("Fetch:");
-    private PopupDateField df         = new PopupDateField("Select Date:");
-    private Button         fetchBtn   = new Button("Fetch");
-    private TextField      filter     = new TextField();
+    private ComboBox fetchOptCb = new ComboBox("Fetch:");
+    private PopupDateField df = new PopupDateField("Select Date:");
+    private Button fetchBtn = new Button("Fetch");
+    private TextField filter = new TextField();
 
     @Autowired
     private Iso4217CcyService ccyService;
@@ -69,11 +67,6 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
                 CUR_DT,
                 CUST_DT
         };
-    }
-
-    @Autowired
-    public RatesView(SettingsWindow settingsWindow, EventBus bus) {
-        super(settingsWindow, bus);
     }
 
     @Override
@@ -200,7 +193,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     }
 
     @Override
-    protected void customizeMenuBar(MenuBar menuBar) {
+    public void customizeMenuBar(MenuBar menuBar) {
         menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> navigateTo(ExchangesView.NAME));
         menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> navigateTo(SchedulerView.NAME));
     }

@@ -3,6 +3,7 @@ package org.baddev.currency.ui.config;
 import com.google.common.eventbus.EventBus;
 import com.vaadin.spring.annotation.EnableVaadin;
 import com.vaadin.spring.annotation.UIScope;
+import com.vaadin.spring.annotation.VaadinSessionScope;
 import org.baddev.currency.fetcher.FetcherConfig;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
 import org.baddev.currency.security.SecurityConfig;
@@ -32,7 +33,7 @@ public class ApplicationConfig {
     }
 
     @Bean
-    @UIScope
+    @VaadinSessionScope
     ExchangeCompletionMailer mailer(MailSender sender, SimpleMailMessage template, ThreadPoolTaskExecutor mailerPool){
         return new ExchangeCompletionMailer(sender, template, mailerPool);
     }

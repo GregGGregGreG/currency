@@ -19,10 +19,35 @@ public final class VaadinSessionUtils {
         return session;
     }
 
+    public static boolean isSessionAttributeExist(Class clazz){
+        try {
+            getSessionAttribute(clazz);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static boolean isSessionAttributeExist(String name){
+        try {
+            getSessionAttribute(name);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public static Object getSessionAttribute(String name) {
         Object attr = getSession().getAttribute(name);
         if (attr == null)
-            throw new IllegalStateException("Can't find required session attribute: " + name);
+            throw new IllegalArgumentException("Can't find required session attribute: " + name);
+        return attr;
+    }
+
+    public static <T> T getSessionAttribute(Class<T> clazz) {
+        T attr = getSession().getAttribute(clazz);
+        if (attr == null)
+            throw new IllegalArgumentException("Can't find required session attribute: " + clazz.getName());
         return attr;
     }
 

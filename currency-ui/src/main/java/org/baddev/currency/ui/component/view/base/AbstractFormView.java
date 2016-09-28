@@ -1,6 +1,5 @@
-package org.baddev.currency.ui.component.base;
+package org.baddev.currency.ui.component.view.base;
 
-import com.google.common.eventbus.EventBus;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.shared.ui.MarginInfo;
@@ -8,7 +7,6 @@ import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.VerticalLayout;
-import org.baddev.currency.ui.component.window.SettingsWindow;
 
 /**
  * Created by IPotapchuk on 6/29/2016.
@@ -19,8 +17,7 @@ public abstract class AbstractFormView<T> extends AbstractCcyView {
     private Class<T> beanClass;
     private Button submitBtn;
 
-    protected AbstractFormView(SettingsWindow settingsWindow, EventBus bus, T formBean, Class<T> beanClass) {
-        super(settingsWindow, bus);
+    protected AbstractFormView(T formBean, Class<T> beanClass) {
         this.formBean = formBean;
         this.beanClass = beanClass;
     }

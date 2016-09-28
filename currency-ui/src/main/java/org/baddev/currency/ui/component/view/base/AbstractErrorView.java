@@ -1,12 +1,10 @@
-package org.baddev.currency.ui.component.base;
+package org.baddev.currency.ui.component.view.base;
 
-import com.google.common.eventbus.EventBus;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.ui.component.window.SettingsWindow;
 
 import java.util.IllegalFormatException;
 
@@ -15,8 +13,7 @@ public abstract class AbstractErrorView extends AbstractCcyView {
     private Label msgLabel;
     private String errorMsg;
 
-    protected AbstractErrorView(SettingsWindow settingsWindow, EventBus bus, String errorMsg) {
-        super(settingsWindow, bus);
+    protected AbstractErrorView(String errorMsg) {
         this.errorMsg = errorMsg;
     }
 

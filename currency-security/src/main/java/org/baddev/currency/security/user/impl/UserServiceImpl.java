@@ -4,11 +4,13 @@ import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDetailsDao;
+import org.baddev.currency.jooq.schema.tables.daos.UserPreferencesDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.Role;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
+import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
 import org.baddev.currency.jooq.schema.tables.records.UserDetailsRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRoleRecord;
@@ -53,6 +55,7 @@ public class UserServiceImpl implements UserService {
     private final UserDetailsDao detailsDao;
     private final UserDao userDao;
     private final RoleDao roleDao;
+    private final UserPreferencesDao preferencesDao;
 
     @Autowired
     public UserServiceImpl(AuthenticationManager manager,
@@ -60,13 +63,15 @@ public class UserServiceImpl implements UserService {
                            DSLContext dsl,
                            UserDao userDao,
                            UserDetailsDao detailsDao,
-                           RoleDao roleDao) {
+                           RoleDao roleDao,
+                           UserPreferencesDao preferencesDao) {
         this.manager = manager;
         this.encoder = encoder;
         this.dsl = dsl;
         this.userDao = userDao;
         this.detailsDao = detailsDao;
         this.roleDao = roleDao;
+        this.preferencesDao = preferencesDao;
     }
 
     @Override
@@ -124,6 +129,9 @@ public class UserServiceImpl implements UserService {
             }
         } else throw new RoleNotFoundException();
 
+        UserPreferences defaultPreferences = new UserPreferences();
+        defaultPreferences.setUserId(created.getId());
+        preferencesDao.insert(defaultPreferences);
     }
 
     @Override

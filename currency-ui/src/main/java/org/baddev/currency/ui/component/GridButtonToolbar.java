@@ -1,10 +1,8 @@
 package org.baddev.currency.ui.component;
 
 import com.vaadin.event.SelectionEvent;
-import com.vaadin.ui.Alignment;
-import com.vaadin.ui.Button;
-import com.vaadin.ui.Grid;
-import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.*;
+import com.vaadin.ui.themes.ValoTheme;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,9 +15,11 @@ import java.util.function.Consumer;
  */
 public class GridButtonToolbar extends HorizontalLayout implements SelectionEvent.SelectionListener {
 
+    private static final String DEF_BTN_STYLE = "small";
+
     private Map<Consumer, Button> buttonActionMap = new HashMap<>();
     private Set selected = new HashSet();
-    public static final String DEF_BTN_STYLE = "tiny";
+    private CssLayout buttonLayout = new CssLayout();
 
     public GridButtonToolbar(Grid grid) {
         init();
@@ -29,6 +29,9 @@ public class GridButtonToolbar extends HorizontalLayout implements SelectionEven
     private void init() {
         setSpacing(true);
         setImmediate(true);
+        buttonLayout.addStyleName(ValoTheme.LAYOUT_COMPONENT_GROUP);
+        addComponent(buttonLayout);
+        setComponentAlignment(buttonLayout, Alignment.MIDDLE_RIGHT);
     }
 
     @Override
@@ -37,7 +40,7 @@ public class GridButtonToolbar extends HorizontalLayout implements SelectionEven
         selected = event.getSelected();
     }
 
-    public GridButtonToolbar createButton(String caption, Consumer<Set> action) {
+    public GridButtonToolbar addButton(String caption, Consumer<Set> action) {
         Button btn = new Button(caption);
         btn.setEnabled(!selected.isEmpty());
         buttonActionMap.put(action, btn);
@@ -45,8 +48,7 @@ public class GridButtonToolbar extends HorizontalLayout implements SelectionEven
             action.accept(selected);
         });
         btn.addStyleName(DEF_BTN_STYLE);
-        addComponent(btn);
-        setComponentAlignment(btn, Alignment.MIDDLE_RIGHT);
+        buttonLayout.addComponent(btn);
         return this;
     }
 

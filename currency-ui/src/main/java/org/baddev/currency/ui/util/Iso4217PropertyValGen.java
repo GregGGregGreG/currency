@@ -26,7 +26,7 @@ public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
 
     @Override
     public String getValue(Item item, Object itemId, Object propertyId) {
-        return FormatUtils.formatCcyParamValuesList(
+        return FormatUtils.joinByComma(
                 service.findCcyParamValues(param, keyParam, item.getItemProperty(keyParam.fieldName()).getValue().toString())
         );
     }

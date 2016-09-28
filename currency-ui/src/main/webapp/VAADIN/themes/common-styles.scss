@@ -1,0 +1,31 @@
+$v-margin-size: 10px;
+$v-grid-cell-focused-border: none;
+
+@mixin common-styles {
+
+  .v-menubar {
+    border-radius: 0;
+  }
+
+  .v-margin-left {
+    padding-left: $v-margin-size;
+  }
+
+  .v-margin-right {
+    padding-right: $v-margin-size;
+  }
+
+  .v-margin-top {
+    padding-top: $v-margin-size;
+  }
+
+  .v-margin-bottom {
+    padding-bottom: $v-margin-size;
+  }
+
+  .v-menubar:focus:after {
+    border-color:transparent;
+    box-shadow:none;
+  }
+
+}

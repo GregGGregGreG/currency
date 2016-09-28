@@ -1,6 +1,5 @@
 package org.baddev.currency.ui.component.view;
 
-import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Container;
 import com.vaadin.data.Property;
 import com.vaadin.data.util.BeanItemContainer;
@@ -25,8 +24,7 @@ import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
 import org.baddev.currency.security.utils.SecurityUtils;
-import org.baddev.currency.ui.component.base.AbstractCcyGridView;
-import org.baddev.currency.ui.component.window.SettingsWindow;
+import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.FormatUtils;
 import org.baddev.currency.ui.validation.CronValidator;
@@ -69,11 +67,6 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
     private Iso4217CcyService ccyService;
     @Autowired
     private ExchangeRateService fetcher;
-
-    @Autowired
-    public SchedulerView(SettingsWindow settingsWindow, EventBus bus) {
-        super(settingsWindow, bus);
-    }
 
     @Override
     protected void postInit(VerticalLayout rootLayout) {
@@ -124,7 +117,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
                     Notification.show(msg, Notification.Type.ERROR_MESSAGE);
                 }
             else if (P_FROM_CCY.equals(propId) || (P_TO_CCY).equals(propId))
-                return FormatUtils.formatCcyParamValuesList(
+                return FormatUtils.joinByComma(
                         ccyService.findCcyNamesByCode((String) cell.getValue())
                 );
             return "";
@@ -154,7 +147,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
     }
 
     @Override
-    protected void customizeMenuBar(MenuBar menuBar) {
+    public void customizeMenuBar(MenuBar menuBar) {
         menuBar.addItem("Rates", FontAwesome.DOLLAR,
                 selectedItem -> navigateTo(RatesView.NAME));
         menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
