@@ -3,6 +3,7 @@ package org.baddev.currency.ui.component;
 import com.vaadin.event.SelectionEvent;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import org.baddev.currency.ui.util.NotificationUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +46,11 @@ public class GridButtonToolbar extends HorizontalLayout implements SelectionEven
         btn.setEnabled(!selected.isEmpty());
         buttonActionMap.put(action, btn);
         btn.addClickListener((Button.ClickListener) event -> {
-            action.accept(selected);
+            try {
+                action.accept(selected);
+            } catch (Exception e){
+                NotificationUtils.notifyFailure("Unexpected Error", e.getMessage());
+            }
         });
         btn.addStyleName(DEF_BTN_STYLE);
         buttonLayout.addComponent(btn);

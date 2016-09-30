@@ -183,7 +183,9 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
             notifySuccess("Account Creation",
                     String.format("Account \"%s\" successfully created", loggedInUserName()));
         } catch (Exception e) {
-            log.debug("Sign up error", e);
+            event.getBinder().getField("password").clear();
+            event.getBinder().getField("confirmPassword").clear();
+            log.error("Sign up error", e);
             notifyFailure("Sign Up Error", e.getMessage());
         }
     }

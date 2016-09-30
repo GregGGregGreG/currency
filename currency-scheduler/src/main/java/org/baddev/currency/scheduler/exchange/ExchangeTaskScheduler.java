@@ -1,4 +1,4 @@
-package org.baddev.currency.scheduler.task.exchange;
+package org.baddev.currency.scheduler.exchange;
 
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.scheduler.CcyScheduler;

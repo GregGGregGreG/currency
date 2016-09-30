@@ -35,10 +35,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.baddev.currency.jooq.schema.Tables.*;
@@ -80,7 +77,7 @@ public class UserServiceImpl implements UserService {
         authenticate(loginDTO.getUsername(), loginDTO.getPassword());
     }
 
-    private void authenticate(String username, String password){
+    private void authenticate(String username, String password) {
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
         Authentication auth = manager.authenticate(token);
         SecurityContextHolder.getContext().setAuthentication(auth);
@@ -129,9 +126,7 @@ public class UserServiceImpl implements UserService {
             }
         } else throw new RoleNotFoundException();
 
-        UserPreferences defaultPreferences = new UserPreferences();
-        defaultPreferences.setUserId(created.getId());
-        preferencesDao.insert(defaultPreferences);
+        preferencesDao.insert(new UserPreferences(created.getId(), true, false, null));
     }
 
     @Override
@@ -163,11 +158,23 @@ public class UserServiceImpl implements UserService {
         savePwdHist(dto.getUserId(), newPwdEnc);
     }
 
-    private void savePwdHist(Long userId, String pwd){
+    private void savePwdHist(Long userId, String pwd) {
         dsl.insertInto(USER_PASSWORD_HISTORY)
                 .set(USER_PASSWORD_HISTORY.USER_ID, userId)
                 .set(USER_PASSWORD_HISTORY.PASSWORD, pwd)
                 .execute();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Secured({RoleEnum.ADMIN})
+    public Collection<Role> findUserRoles(Long userId) {
+        return dsl.select(ROLE.fields())
+                .from(USER)
+                .leftOuterJoin(USER_ROLE).on(USER.ID.eq(USER_ROLE.USER_ID))
+                .leftOuterJoin(ROLE).on(USER_ROLE.ROLE_ID.eq(ROLE.ID))
+                .where(USER.ID.eq(userId))
+                .fetchInto(Role.class);
     }
 
     @Override
@@ -236,13 +243,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public IUserDetails findUserDetailsByUsername(String userName) {
+    public Optional<IUserDetails> findUserDetailsByUsername(String userName) {
         UserDetails details = dsl.select(USER_DETAILS.fields())
                 .from(USER)
                 .leftOuterJoin(USER_DETAILS).on(USER.ID.eq(USER_DETAILS.USER_ID))
                 .where(USER.USERNAME.eq(userName))
                 .fetchOneInto(UserDetails.class);
-        return details;
+        return Optional.ofNullable(details);
     }
 
     @Override
@@ -255,8 +262,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public IUser findOneByUserName(String userName) {
-        return userDao.fetchOneByUsername(userName);
+    public Optional<IUser> findOneByUserName(String userName) {
+        return Optional.ofNullable(userDao.fetchOneByUsername(userName));
     }
 
     @Override
@@ -296,14 +303,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN, RoleEnum.USER})
-    public Collection<? extends IUser> find(Long... ids) {
+    public Collection<? extends IUser> findById(Long... ids) {
         return userDao.fetchById(ids);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN, RoleEnum.USER})
-    public IUser findOne(Long aLong) {
-        return null;
+    public Optional<IUser> findOneById(Long id) {
+        return Optional.ofNullable(userDao.fetchOneById(id));
     }
 }

@@ -1,12 +1,12 @@
-package org.baddev.currency.scheduler.task.exchange.impl;
+package org.baddev.currency.scheduler.exchange.service.impl;
 
 import org.baddev.currency.core.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.ExchangeTaskDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeTaskRecord;
-import org.baddev.currency.scheduler.task.exchange.ExchangeTaskScheduler;
-import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
+import org.baddev.currency.scheduler.exchange.ExchangeTaskScheduler;
+import org.baddev.currency.scheduler.exchange.service.ExchangeTaskService;
 import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
@@ -50,15 +51,15 @@ public class ExchangeTaskServiceImpl implements ExchangeTaskService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<ExchangeTask> find(Long... ids) {
+    public Collection<ExchangeTask> findById(Long... ids) {
         return taskDao.fetchById(ids);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public ExchangeTask findOne(Long id) {
-        return taskDao.fetchOneById(id);
+    public Optional<IExchangeTask> findOneById(Long id) {
+        return Optional.ofNullable(taskDao.fetchOneById(id));
     }
 
     @Override

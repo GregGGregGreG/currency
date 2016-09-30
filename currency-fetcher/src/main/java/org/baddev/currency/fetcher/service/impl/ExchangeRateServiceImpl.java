@@ -14,6 +14,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Collection;
 import java.util.Currency;
+import java.util.Optional;
 
 /**
  * Created by IPotapchuk on 9/16/2016.
@@ -35,14 +36,14 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
 
     @Override
     @Transactional(readOnly = true)
-    public Collection<? extends IExchangeRate> find(Long... ids) {
+    public Collection<? extends IExchangeRate> findById(Long... ids) {
         return rateDao.fetchById(ids);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public IExchangeRate findOne(Long id) {
-        return rateDao.fetchOneById(id);
+    public Optional<IExchangeRate> findOneById(Long id) {
+        return Optional.ofNullable(rateDao.fetchOneById(id));
     }
 
     @Override
@@ -78,7 +79,7 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
 
     @Override
     @Transactional
-    public IExchangeRate fetchByCurrencyAndDate(Currency currency, LocalDate date) {
+    public Optional<IExchangeRate> fetchByCurrencyAndDate(Currency currency, LocalDate date) {
         return fetcher.fetchByCurrencyAndDate(currency, date);
     }
 }

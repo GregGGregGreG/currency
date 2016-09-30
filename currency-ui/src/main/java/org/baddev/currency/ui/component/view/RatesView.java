@@ -13,7 +13,7 @@ import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import org.baddev.currency.core.RoleEnum;
-import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.core.exception.RatesNotFoundException;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.iso4217.IsoEntityParam;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
@@ -97,7 +97,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     private Collection<? extends IExchangeRate> fetchCurrentRates() {
         try {
             return rateService.fetchCurrent();
-        } catch (NoRatesFoundException e) {
+        } catch (RatesNotFoundException e) {
             Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
         }
         return new ArrayList<>();
@@ -143,7 +143,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
             if (df.getValue() != null) {
                 try {
                     refresh(rateService.fetchByDate(new LocalDate(df.getValue())), P_CCY);
-                } catch (NoRatesFoundException e) {
+                } catch (RatesNotFoundException e) {
                     refresh(new ArrayList<>(), null, null);
                     Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
                 }

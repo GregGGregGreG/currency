@@ -40,6 +40,7 @@ public class NotificationUtils {
 
     public static void showStyledNotification(String caption, String message, int delay, Position position, String... styles) {
         Notification n = new Notification(caption, message);
+        n.setHtmlContentAllowed(true);
         if (styles != null && styles.length > 0) {
             if (styles.length == 1) {
                 n.setStyleName(styles[0]);
@@ -49,8 +50,7 @@ public class NotificationUtils {
                 n.setStyleName(sb.toString());
             }
         }
-        if (position != null)
-            n.setPosition(position);
+        if (position != null) n.setPosition(position);
         n.setDelayMsec(delay);
         Page page = Page.getCurrent();
         Objects.requireNonNull(page, "No UI was found");

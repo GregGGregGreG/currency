@@ -3,7 +3,7 @@ package org.baddev.currency.core.event;
 /**
  * Created by IPotapchuk on 6/17/2016.
  */
-public class BaseNotificationEvent<T> implements NotificationEvent<T>{
+public abstract class BaseNotificationEvent<T> implements NotificationEvent<T>{
 
     private Object source;
     private T eventData;

@@ -14,7 +14,7 @@ import com.vaadin.ui.renderers.DateRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.RoleEnum;
-import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.core.exception.RatesNotFoundException;
 import org.baddev.currency.exchanger.ExchangerService;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
@@ -142,7 +142,7 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
             Collection<? extends IExchangeRate> rates = new ArrayList<>();
             try {
                 rates = rateService.fetchByDate(LocalDate.fromDateFields(exchDateF.getValue()));
-            } catch (NoRatesFoundException e) {
+            } catch (RatesNotFoundException e) {
                 Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
             }
             BeanItemContainer<IExchangeRate> c = new BeanItemContainer<>(IExchangeRate.class, rates);

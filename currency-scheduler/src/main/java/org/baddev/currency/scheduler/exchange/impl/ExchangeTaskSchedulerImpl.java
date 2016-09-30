@@ -1,4 +1,4 @@
-package org.baddev.currency.scheduler.impl;
+package org.baddev.currency.scheduler.exchange.impl;
 
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.core.notifier.Notifier;
@@ -8,8 +8,8 @@ import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
-import org.baddev.currency.scheduler.task.exchange.ExchangeTaskScheduler;
-import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
+import org.baddev.currency.scheduler.exchange.ExchangeTaskScheduler;
+import org.baddev.currency.scheduler.exchange.service.ExchangeTaskService;
 import org.joda.time.LocalDate;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;

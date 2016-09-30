@@ -5,6 +5,7 @@ import org.joda.time.LocalDate;
 
 import java.util.Collection;
 import java.util.Currency;
+import java.util.Optional;
 
 /**
  * Created by IPotapchuk on 3/14/2016.
@@ -12,5 +13,5 @@ import java.util.Currency;
 public interface ExchangeRateFetcher {
     Collection<? extends IExchangeRate> fetchCurrent();
     Collection<? extends IExchangeRate> fetchByDate(LocalDate date);
-    IExchangeRate fetchByCurrencyAndDate(Currency currency, LocalDate date);
+    Optional<IExchangeRate> fetchByCurrencyAndDate(Currency currency, LocalDate date);
 }

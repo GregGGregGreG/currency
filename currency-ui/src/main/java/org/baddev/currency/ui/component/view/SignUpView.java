@@ -65,7 +65,7 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
 
             @Override
             public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                bus.post(new SignUpEvent(this, formBean));
+                bus.post(new SignUpEvent(this, formBean, binder));
             }
         });
 

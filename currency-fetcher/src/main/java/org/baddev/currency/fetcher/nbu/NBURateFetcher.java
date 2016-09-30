@@ -1,7 +1,7 @@
 package org.baddev.currency.fetcher.nbu;
 
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.core.exception.RatesNotFoundException;
 import org.baddev.currency.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.fetcher.ExtendedExchangeRateDao;
 import org.baddev.currency.fetcher.nbu.entity.NBUExchange;
@@ -23,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -90,7 +91,7 @@ public class NBURateFetcher implements ExchangeRateFetcher {
     }
 
     @Override
-    public IExchangeRate fetchByCurrencyAndDate(Currency currency, LocalDate date) {
+    public Optional<IExchangeRate> fetchByCurrencyAndDate(Currency currency, LocalDate date) {
         ExchangeRate rate;
         try {
             rate = filter(currency, searchLocally(date));
@@ -103,7 +104,7 @@ public class NBURateFetcher implements ExchangeRateFetcher {
                     .iterator().next();
             rateDao.insert(rate);
         }
-        return rate;
+        return Optional.ofNullable(rate);
     }
 
     private ExchangeRate filter(Currency currency, Collection<ExchangeRate> rates) {
@@ -113,10 +114,10 @@ public class NBURateFetcher implements ExchangeRateFetcher {
                 .orElseThrow(NoRatesLocallyFoundException::new);
     }
 
-    private Collection<ExchangeRate> convert(NBUExchange exchange) throws NoRatesFoundException {
+    private Collection<ExchangeRate> convert(NBUExchange exchange) throws RatesNotFoundException {
         if (exchange.getExchangeRates() == null) {
             log.debug("No rates found in fetched payload");
-            throw new NoRatesFoundException("No rates found by specified date");
+            throw new RatesNotFoundException("No rates found by specified date");
         }
         log.debug("Fetched and extracted [{}] records", exchange.getExchangeRates().size());
         return exchange.getExchangeRates().stream()

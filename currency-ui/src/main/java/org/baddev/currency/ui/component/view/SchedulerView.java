@@ -15,14 +15,14 @@ import com.vaadin.ui.themes.ValoTheme;
 import net.redhogs.cronparser.CronExpressionDescriptor;
 import net.redhogs.cronparser.Options;
 import org.baddev.currency.core.RoleEnum;
-import org.baddev.currency.core.exception.NoRatesFoundException;
+import org.baddev.currency.core.exception.RatesNotFoundException;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
-import org.baddev.currency.scheduler.task.exchange.ExchangeTaskService;
+import org.baddev.currency.scheduler.exchange.service.ExchangeTaskService;
 import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
@@ -161,7 +161,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         if (rates.isEmpty())
             try {
                 rates = fetcher.fetchCurrent();
-            } catch (NoRatesFoundException e) {
+            } catch (RatesNotFoundException e) {
                 Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
             }
 

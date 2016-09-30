@@ -8,6 +8,7 @@ import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import org.baddev.currency.core.RoleEnum;
+import org.baddev.currency.core.exception.ServiceException;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
@@ -51,13 +52,13 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
     protected void postInit(VerticalLayout rootLayout) {
         setup(IUser.class, userService.findAll(), User.P_PASSWORD);
 
-        List<Grid.Column> columnsToRender = new ArrayList<>();
-        columnsToRender.add(grid.getColumn(User.P_ACC_NON_LOCKED).setHeaderCaption("Account Lock Status"));
-        columnsToRender.add(grid.getColumn(User.P_ACC_NON_EXPIRED).setHeaderCaption("Account Expiration Status"));
-        columnsToRender.add(grid.getColumn(User.P_ENABLED).setHeaderCaption("Account Enabled"));
-        columnsToRender.add(grid.getColumn(User.P_CRED_NON_EXPIRED).setHeaderCaption("Password Expiration Status"));
+        List<Grid.Column> iconRenderedColumns = new ArrayList<>();
+        iconRenderedColumns.add(grid.getColumn(User.P_ACC_NON_LOCKED).setHeaderCaption("Account Lock Status"));
+        iconRenderedColumns.add(grid.getColumn(User.P_ACC_NON_EXPIRED).setHeaderCaption("Account Expiration Status"));
+        iconRenderedColumns.add(grid.getColumn(User.P_ENABLED).setHeaderCaption("Account Enabled"));
+        iconRenderedColumns.add(grid.getColumn(User.P_CRED_NON_EXPIRED).setHeaderCaption("Password Expiration Status"));
 
-        columnsToRender.forEach(c -> c.setRenderer(
+        iconRenderedColumns.forEach(c -> c.setRenderer(
                 new HtmlRenderer(),
                 new Converter<String, Boolean>() {
                     @Override
@@ -114,9 +115,11 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
     @Override
     protected void customizeTopBar(HorizontalLayout topBar) {
         toolbar
-                .addButton("Edit Details", o -> {
+                .addButton("Details", o -> {
                     String uname = ((Set<IUser>) o).iterator().next().getUsername();
-                    new FormWindow<>(IUserDetails.class, userService.findUserDetailsByUsername(uname),
+                    new FormWindow<>(IUserDetails.class,
+                            userService.findUserDetailsByUsername(uname)
+                                    .orElseThrow(() -> new ServiceException("User Details not found for user " + uname)),
                             ImmutableMap.of("First Name", UserDetails.P_FIRST_NAME,
                                     "Last Name", UserDetails.P_LAST_NAME,
                                     "Email", UserDetails.P_EMAIL))
@@ -133,10 +136,11 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
                             dialog -> {
                                 if (dialog.isConfirmed()) {
                                     userService.delete(uname);
+                                    refresh(userService.findAll(), User.P_ID, SortDirection.ASCENDING);
                                     NotificationUtils.notifySuccess("User Removal", "User " + boldInQuotes(uname) + " successfully removed");
                                 }
                             }).setContentMode(ConfirmDialog.ContentMode.HTML);
-                })
+                    })
                 .addButton("Change Password", o -> {
                     IUser user = ((Set<IUser>) o).iterator().next();
                     new FormWindow<>(UserPasswordChangeDTO.class,
@@ -146,7 +150,7 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
                             .withSubmitActionProvider(binder -> userService.changeUserPassword(binder.getItemDataSource().getBean()))
                             .showEdit("Password Change - " + bold(user.getUsername()));
                 })
-                .addButton("Manage Restrictions", o -> {
+                .addButton("Restrictions", o -> {
                     IUser user = ((Set<IUser>) o).iterator().next();
                     new FormWindow<>(IUser.class, user,
                             ImmutableMap.of("Account Enabled", User.P_ENABLED,
@@ -160,9 +164,9 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
                             .withSubmitActionProvider(binder -> {
                                 userService.update(binder.getItemDataSource().getBean(), null);
                                 refresh(userService.findAll(), User.P_ID, SortDirection.ASCENDING);
-                            }).showEdit("Account Restrictions - " + bold(user.getUsername()));
+                            }).withWidth(400)
+                            .showEdit("Account Restrictions - " + bold(user.getUsername()));
                 });
-
         topBar.addComponent(toolbar);
         topBar.setComponentAlignment(toolbar, Alignment.MIDDLE_RIGHT);
     }

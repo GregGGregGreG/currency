@@ -81,12 +81,23 @@ public class FormWindow<T> extends Window {
         return this;
     }
 
+    public FormWindow<T> withWidth(float width){
+        setWidth(width, Unit.PIXELS);
+        return this;
+    }
+
+    public FormWindow<T> withHeight(float height){
+        setHeight(height, Unit.PIXELS);
+        return this;
+    }
+
     public void configure(Consumer<BeanFieldGroup<T>> onCommitSuccess, Consumer<FieldGroup.CommitException> onCommitError) {
         configureBinder(onCommitSuccess);
         submitBtn = new Button();
         configureSubmitBtn(submitBtn, onCommitError);
         form = new FormLayout();
         form.setSpacing(true);
+        form.setMargin(true);
         form.setSizeUndefined();
     }
 
