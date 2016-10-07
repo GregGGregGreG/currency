@@ -14,8 +14,8 @@ import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import net.redhogs.cronparser.CronExpressionDescriptor;
 import net.redhogs.cronparser.Options;
-import org.baddev.currency.core.RoleEnum;
-import org.baddev.currency.core.exception.RatesNotFoundException;
+import org.baddev.currency.core.util.RoleEnum;
+import org.baddev.currency.fetcher.exception.RatesNotFoundException;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
@@ -23,10 +23,14 @@ import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.scheduler.exchange.service.ExchangeTaskService;
+import org.baddev.currency.scheduler.exchange.task.NotifiableExchangeTask;
 import org.baddev.currency.security.utils.SecurityUtils;
+import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
+import org.baddev.currency.ui.exception.WrappedUIException;
 import org.baddev.currency.ui.util.FormatUtils;
+import org.baddev.currency.ui.util.Navigator;
 import org.baddev.currency.ui.validation.CronValidator;
 import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,8 +72,14 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
     @Autowired
     private ExchangeRateService fetcher;
 
+    private NotifiableExchangeTask createTask(IExchangeTask taskData){
+        NotifiableExchangeTask task = beanFactory.getBean(NotifiableExchangeTask.class);
+        task.setTaskData(taskData);
+        return task;
+    }
+
     @Override
-    protected void postInit(VerticalLayout rootLayout) {
+    protected void postInit(VerticalSpacedLayout rootLayout) {
         setup(IExchangeTask.class,
                 taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                 P_ID, P_USER_ID);
@@ -81,7 +91,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         });
 
         addGeneratedButton(P_GEN_EXEC_BTN, "Execute", e -> {
-            taskService.execute((ExchangeTask) e.getItemId());
+            taskService.execute(createTask((ExchangeTask)e.getItemId()));
             log.debug("Task {} executed manually", ((ExchangeTask) e.getItemId()).getId());
         });
 
@@ -89,7 +99,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
                 event -> {
                     ExchangeTask taskData = (ExchangeTask) event.getItemId();
                     if (!taskData.getActive()) {
-                        taskService.schedule(taskData);
+                        taskService.schedule(createTask(taskData));
                         log.debug("Exchange task {} has been scheduled", taskData.getId());
                     } else {
                         taskService.cancel(taskData.getId(), false);
@@ -112,9 +122,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
                 try {
                     return CronExpressionDescriptor.getDescription((String) cell.getValue(), Options.twentyFourHour());
                 } catch (ParseException e) {
-                    String msg = "Unable to parse cron expression";
-                    log.error(msg, e);
-                    Notification.show(msg, Notification.Type.ERROR_MESSAGE);
+                    throw new WrappedUIException("Unable to parse cron expression", e);
                 }
             else if (P_FROM_CCY.equals(propId) || (P_TO_CCY).equals(propId))
                 return FormatUtils.joinByComma(
@@ -148,14 +156,12 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
 
     @Override
     public void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Rates", FontAwesome.DOLLAR,
-                selectedItem -> navigateTo(RatesView.NAME));
-        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE,
-                selectedItem -> navigateTo(ExchangesView.NAME));
+        menuBar.addItem("Rates", FontAwesome.DOLLAR, selectedItem -> Navigator.navigate(RatesView.NAME));
+        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> Navigator.navigate(ExchangesView.NAME));
     }
 
     @Override
-    protected void customizeTopBar(HorizontalLayout topBar) {
+    protected void customizeGridBar(HorizontalLayout topBar) {
         Collection<? extends IExchangeRate> rates;
         rates = fetcher.findLast();
         if (rates.isEmpty())
@@ -197,20 +203,20 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         amountF.addValueChangeListener((Property.ValueChangeListener) event -> {
             if (isAllValid(amountF)) {
                 if (!toCcyChoiseF.isEnabled() && !fromCcyChoiseF.isEnabled()) {
-                    activateCcyCbs();
+                    enableCcyCbs();
                     resetBtn.setEnabled(true);
                 } else if (cronF.isEnabled()) {
                     if (isAllValid(cronF))
-                        activateSchBtn();
+                        enableSchBtn();
                     else {
-                        deactivateSchBtn();
+                        disableSchBtn();
                         cronF.focus();
                     }
                 } else if (isAllValid(toCcyChoiseF, fromCcyChoiseF)) {
                     cronF.setEnabled(true);
                     cronF.focus();
                 }
-            } else deactivateSchBtn();
+            } else disableSchBtn();
         });
         amountF.focus();
 
@@ -220,9 +226,9 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         cronF.addValueChangeListener((Property.ValueChangeListener) event -> {
             if (isAllValid(cronF))
                 if (isAllValid(amountF))
-                    activateSchBtn();
+                    enableSchBtn();
                 else amountF.focus();
-            else deactivateSchBtn();
+            else disableSchBtn();
         });
         cronF.setIcon(FontAwesome.CALENDAR_TIMES_O);
 
@@ -235,7 +241,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
             taskData.setAddedDatetime(LocalDateTime.now());
             taskData.setAmount((double) amountF.getConvertedValue());
             taskData.setCron(cronF.getValue());
-            taskService.schedule(taskData);
+            taskService.schedule(createTask(taskData));
             refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                     P_ID, SortDirection.DESCENDING);
             resetInputs();
@@ -273,18 +279,18 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         }
     }
 
-    private void activateSchBtn() {
+    private void enableSchBtn() {
         scheduleBtn.setEnabled(true);
         scheduleBtn.addStyleName(ValoTheme.BUTTON_FRIENDLY);
         scheduleBtn.focus();
     }
 
-    private void deactivateSchBtn() {
+    private void disableSchBtn() {
         scheduleBtn.setEnabled(false);
         scheduleBtn.removeStyleName(ValoTheme.BUTTON_FRIENDLY);
     }
 
-    private void activateCcyCbs() {
+    private void enableCcyCbs() {
         toggleEnabled(true, fromCcyChoiseF, toCcyChoiseF);
         fromCcyChoiseF.focus();
     }

@@ -33,6 +33,7 @@ CREATE TABLE user_role
 (
   user_id BIGINT(20) NOT NULL,
   role_id BIGINT(20) NOT NULL,
+  CONSTRAINT `PRIMARY` PRIMARY KEY (user_id, role_id),
   CONSTRAINT user_role_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id)
     ON DELETE CASCADE,
   CONSTRAINT user_role_role_id_fk FOREIGN KEY (role_id) REFERENCES role (id)

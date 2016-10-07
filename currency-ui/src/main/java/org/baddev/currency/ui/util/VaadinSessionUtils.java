@@ -2,8 +2,6 @@ package org.baddev.currency.ui.util;
 
 import com.vaadin.server.VaadinSession;
 
-import java.util.Arrays;
-
 /**
  * Created by IPotapchuk on 7/1/2016.
  */
@@ -51,11 +49,7 @@ public final class VaadinSessionUtils {
         return attr;
     }
 
-    public static void setSessionAttributes(Object value, String... attributes) {
-        Arrays.asList(attributes).forEach(attr -> getSession().setAttribute(attr, value));
-    }
-
-    public static void setSessionAttribute(Class type, Object value){
+    public static <T> void setSessionAttribute(Class<T> type, T value){
         getSession().setAttribute(type, value);
     }
 

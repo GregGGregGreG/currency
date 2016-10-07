@@ -1,6 +1,6 @@
 package org.baddev.currency.security.user.impl;
 
-import org.baddev.currency.core.RoleEnum;
+import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDetailsDao;
@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void signUp(SignUpDTO signUpDTO, String... roleNames) {
+    public void signUp(SignUpDTO signUpDTO, String... roleNames) throws SuchUserExistsException, RoleNotFoundException {
         User user = userDao.fetchOneByUsername(signUpDTO.getUsername());
 
         if (user != null)
@@ -132,7 +132,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN, RoleEnum.USER})
-    public void changePassword(PasswordChangeDTO dto) {
+    public void changePassword(PasswordChangeDTO dto) throws AuthenticationException, PasswordsMismatchException {
         String userName = SecurityUtils.loggedInUserName();
         Long currentUserId = SecurityUtils.getIdentityUserPrincipal().getId();
         if (!Objects.equals(dto.getNewPassword(), dto.getNewPasswordConfirm()))
@@ -155,7 +155,7 @@ public class UserServiceImpl implements UserService {
         String newPwdEnc = encoder.encodePassword(dto.getNewPassword(), null);
         user.setPassword(newPwdEnc);
         userDao.update(user);
-        savePwdHist(dto.getUserId(), newPwdEnc);
+        savePwdHist(dto.getUserId(), oldPwd);
     }
 
     private void savePwdHist(Long userId, String pwd) {
@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void assignToRoles(Long userId, Long... roleIds) {
+    public void assignToRoles(Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException{
         validateRoles(userId, roleIds);
         List<Number> assigned = dsl.selectFrom(USER_ROLE)
                 .where(USER_ROLE.USER_ID.eq(userId))
@@ -206,7 +206,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void unassignFromRoles(Long userId, Long... roleIds) {
+    public void unassignFromRoles(Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException{
         validateRoles(userId, roleIds);
         List<Number> assigned = dsl.selectFrom(USER_ROLE)
                 .where(USER_ROLE.USER_ID.eq(userId))
@@ -224,8 +224,24 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private void validateRoles(Long userId, Long... roleIds) {
-        if (roleIds.length == 0) throw new IllegalArgumentException();
+    @Override
+    @Transactional
+    @Secured({RoleEnum.ADMIN})
+    public void updateUserRoles(Long userId, Collection<Long> allUserRoleIds) throws RoleNotFoundException, UserNotFoundException {
+        validateRoles(userId, allUserRoleIds);
+        dsl.deleteFrom(USER_ROLE).where(USER_ROLE.USER_ID.eq(userId)).execute();
+        dsl.batchInsert(allUserRoleIds.stream()
+                .map(rid -> {
+                    UserRoleRecord rec = dsl.newRecord(USER_ROLE);
+                    rec.setUserId(userId);
+                    rec.setRoleId(rid);
+                    return rec;
+                }).collect(Collectors.toList()))
+                .execute();
+    }
+
+    private void validateRoles(Long userId, Collection<Long> roleIds){
+        if (roleIds.size() == 0) throw new IllegalArgumentException();
         if (!userDao.existsById(userId)) {
             throw new UserNotFoundException(userId);
         }
@@ -234,6 +250,10 @@ public class UserServiceImpl implements UserService {
                 throw new RoleNotFoundException(roleId);
             }
         }
+    }
+
+    private void validateRoles(Long userId, Long... roleIds) {
+        validateRoles(userId, Arrays.asList(roleIds));
     }
 
     private List<Long> findRoleIds(String... roleNames) {
@@ -255,14 +275,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<? extends IUser> findByUsername(String... userNames) {
+    public Collection<? extends IUser> findUserByUsername(String... userNames) {
         return userDao.fetchByUsername(userNames);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Optional<IUser> findOneByUserName(String userName) {
+    public Optional<IUser> findOneUserByUserName(String userName) {
         return Optional.ofNullable(userDao.fetchOneByUsername(userName));
     }
 

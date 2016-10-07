@@ -1,4 +1,4 @@
-package org.baddev.currency.core;
+package org.baddev.currency.core.util;
 
 /**
  * Created by IPotapchuk on 6/30/2016.

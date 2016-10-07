@@ -3,8 +3,8 @@ package org.baddev.currency.ui.component.view.base;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
+import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 
 import java.util.IllegalFormatException;
 
@@ -18,8 +18,7 @@ public abstract class AbstractErrorView extends AbstractCcyView {
     }
 
     @Override
-    protected void init(VerticalLayout rootLayout) {
-        rootLayout.setMargin(true);
+    protected void init(VerticalSpacedLayout rootLayout) {
         msgLabel = new Label();
         rootLayout.addComponent(msgLabel);
         msgLabel.addStyleName(ValoTheme.LABEL_FAILURE);

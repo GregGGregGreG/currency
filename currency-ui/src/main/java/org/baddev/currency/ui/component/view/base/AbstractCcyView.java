@@ -4,6 +4,7 @@ import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.VerticalLayout;
+import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -11,8 +12,6 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-
-import static org.baddev.currency.ui.CurrencyUI.currencyUI;
 
 /**
  * Created by IPotapchuk on 5/16/2016.
@@ -31,32 +30,28 @@ public abstract class AbstractCcyView extends VerticalLayout implements View, In
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        VerticalLayout rootLayout = contentRoot();
+        VerticalSpacedLayout rootLayout = contentRoot();
         addComponent(rootLayout);
         setExpandRatio(rootLayout, 1.0f);
         postInit(rootLayout);
         setSizeFull();
-        log.debug("View created {}, {}", getClass().getName(), hashCode());
+        log.debug("View created, {}", hashCode());
     }
 
-    private VerticalLayout contentRoot() {
-        VerticalLayout root = new VerticalLayout();
+    private VerticalSpacedLayout contentRoot() {
+        VerticalSpacedLayout root = new VerticalSpacedLayout();
         init(root);
         root.setSizeFull();
         return root;
     }
 
-    protected void init(VerticalLayout rootLayout) {
+    protected void init(VerticalSpacedLayout rootLayout) {
     }
 
-    protected void postInit(VerticalLayout rootLayout) {
+    protected void postInit(VerticalSpacedLayout rootLayout) {
     }
 
     public void customizeMenuBar(MenuBar menuBar) {
-    }
-
-    protected static void navigateTo(String viewName) {
-        currencyUI().getNavigator().navigateTo(viewName);
     }
 
     @Override
@@ -65,7 +60,7 @@ public abstract class AbstractCcyView extends VerticalLayout implements View, In
 
     @Override
     public void destroy() {
-        log.debug("View destroyed {}", getClass().getName(), hashCode());
+        log.debug("View destroyed, {}", hashCode());
     }
 
 }

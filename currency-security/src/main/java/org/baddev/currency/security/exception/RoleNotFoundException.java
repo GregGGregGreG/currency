@@ -1,12 +1,14 @@
 package org.baddev.currency.security.exception;
 
+import org.baddev.currency.core.exception.ServiceException;
+
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
  * Created by IPotapchuk on 7/4/2016.
  */
-public class RoleNotFoundException extends RuntimeException {
+public class RoleNotFoundException extends ServiceException {
 
     private static final String MSG_PART = "Role(s) %s not found";
 

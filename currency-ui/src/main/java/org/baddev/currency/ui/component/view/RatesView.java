@@ -12,22 +12,22 @@ import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import org.baddev.currency.core.RoleEnum;
-import org.baddev.currency.core.exception.RatesNotFoundException;
+import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.iso4217.IsoEntityParam;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
+import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.Iso4217PropertyValGen;
+import org.baddev.currency.ui.util.Navigator;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.security.DeclareRoles;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -48,10 +48,10 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     @Value("${min_date_nbu}")
     private String minDateVal;
 
-    private ComboBox fetchOptCb = new ComboBox("Fetch:");
-    private PopupDateField df = new PopupDateField("Select Date:");
-    private Button fetchBtn = new Button("Fetch");
-    private TextField filter = new TextField();
+    private ComboBox       fetchOptCb = new ComboBox("Fetch:");
+    private PopupDateField df         = new PopupDateField("Select Date:");
+    private Button         fetchBtn   = new Button("Fetch");
+    private TextField      filter     = new TextField();
 
     @Autowired
     private Iso4217CcyService ccyService;
@@ -70,8 +70,8 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     }
 
     @Override
-    protected void postInit(VerticalLayout rootLayout) {
-        Collection<? extends IExchangeRate> data = fetchCurrentRates();
+    protected void postInit(VerticalSpacedLayout rootLayout) {
+        Collection<? extends IExchangeRate> data = rateService.fetchCurrent();;
         setup(IExchangeRate.class, data, P_ID);
 
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
@@ -94,15 +94,6 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
         grid.setColumnOrder(P_EXCHANGE_DATE, P_BASE_CCY, P_CCY, P_GEN_CCY_NAME, P_RATE);
     }
 
-    private Collection<? extends IExchangeRate> fetchCurrentRates() {
-        try {
-            return rateService.fetchCurrent();
-        } catch (RatesNotFoundException e) {
-            Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
-        }
-        return new ArrayList<>();
-    }
-
     @Override
     protected void filter(String text) {
         super.filter(text);
@@ -115,7 +106,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     }
 
     @Override
-    protected void customizeTopBar(HorizontalLayout topBar) {
+    protected void customizeGridBar(HorizontalLayout topBar) {
         df.setResolution(Resolution.DAY);
         df.setIcon(FontAwesome.CALENDAR);
         df.setTextFieldEnabled(false);
@@ -141,12 +132,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
         fetchBtn.setEnabled(false);
         fetchBtn.addClickListener(event -> {
             if (df.getValue() != null) {
-                try {
-                    refresh(rateService.fetchByDate(new LocalDate(df.getValue())), P_CCY);
-                } catch (RatesNotFoundException e) {
-                    refresh(new ArrayList<>(), null, null);
-                    Notification.show(e.getMessage(), Notification.Type.WARNING_MESSAGE);
-                }
+                refresh(rateService.fetchByDate(LocalDate.fromDateFields(df.getValue())), P_CCY);
             } else Notification.show("Select date first", Notification.Type.WARNING_MESSAGE);
         });
         fetchBtn.setImmediate(true);
@@ -165,7 +151,7 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
                     break;
                 case FetchOption.CUR_DT:
                     toggleVisible(false, df, fetchBtn);
-                    refresh(fetchCurrentRates(), P_CCY);
+                    refresh(rateService.fetchCurrent(), P_CCY);
                     break;
                 case FetchOption.CUST_DT:
                     toggleVisible(true, df, fetchBtn);
@@ -194,8 +180,8 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
 
     @Override
     public void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> navigateTo(ExchangesView.NAME));
-        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> navigateTo(SchedulerView.NAME));
+        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> Navigator.navigate(ExchangesView.NAME));
+        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> Navigator.navigate(SchedulerView.NAME));
     }
 
 }

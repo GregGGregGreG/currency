@@ -1,7 +1,5 @@
-package org.baddev.currency.core.listener;
+package org.baddev.currency.core.event;
 
-
-import org.baddev.currency.core.event.NotificationEvent;
 
 /**
  * Created by IPotapchuk on 6/17/2016.

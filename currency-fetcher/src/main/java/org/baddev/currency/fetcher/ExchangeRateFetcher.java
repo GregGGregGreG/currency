@@ -13,5 +13,5 @@ import java.util.Optional;
 public interface ExchangeRateFetcher {
     Collection<? extends IExchangeRate> fetchCurrent();
     Collection<? extends IExchangeRate> fetchByDate(LocalDate date);
-    Optional<IExchangeRate> fetchByCurrencyAndDate(Currency currency, LocalDate date);
+    Optional<? extends IExchangeRate> fetchByCurrencyAndDate(Currency currency, LocalDate date);
 }

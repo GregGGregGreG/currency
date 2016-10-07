@@ -1,9 +1,11 @@
 package org.baddev.currency.security.exception;
 
+import org.baddev.currency.core.exception.ServiceException;
+
 /**
  * Created by IPotapchuk on 6/30/2016.
  */
-public class SuchUserExistsException extends SignUpException {
+public class SuchUserExistsException extends ServiceException {
 
     private static final String MSG_PART = "User with username \"%s\" already exists";
 

@@ -31,8 +31,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         org.baddev.currency.jooq.schema.tables.pojos.User user = userDao.fetchOneByUsername(username);
-        if (user == null)
-            throw new UsernameNotFoundException("User with username " + username + " was not found");
+        if (user == null) throw new UsernameNotFoundException("User with username " + username + " was not found");
 
         List<GrantedAuthority> permissions = dsl.selectFrom(
                 ROLE.join(USER_ROLE).on(ROLE.ID.eq(USER_ROLE.ROLE_ID)))

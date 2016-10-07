@@ -1,12 +1,11 @@
-package org.baddev.currency.core.notifier;
+package org.baddev.currency.core.event;
 
-
-import org.baddev.currency.core.event.NotificationEvent;
-import org.baddev.currency.core.listener.NotificationListener;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.baddev.currency.core.util.Safe.tryCall;
 
 /**
  * Created by IPotapchuk on 6/17/2016.
@@ -17,7 +16,7 @@ public class NotifierImpl implements Notifier {
 
     @Override
     public void doNotify(NotificationEvent event) {
-        listeners.forEach(l -> l.notificationReceived(event));
+        tryCall(() -> listeners.forEach(l -> l.notificationReceived(event)));
     }
 
     @Override

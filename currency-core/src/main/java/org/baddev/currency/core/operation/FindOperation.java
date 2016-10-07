@@ -8,6 +8,6 @@ import java.util.Optional;
  */
 public interface FindOperation<T, ID> {
     Collection<? extends T> findById(ID... ids);
-    Optional<T> findOneById(ID id);
+    Optional<? extends T> findOneById(ID id);
     Collection<? extends T> findAll();
 }

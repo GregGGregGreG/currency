@@ -1,11 +1,11 @@
 package org.baddev.currency.ui.util;
 
-import org.baddev.currency.core.listener.NotificationListener;
+import org.baddev.currency.core.event.NotificationListener;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
 import org.baddev.currency.ui.CurrencyUI;
 
-import static org.baddev.currency.ui.CurrencyUI.currencyUI;
+import static org.baddev.currency.ui.CurrencyUI.get;
 import static org.baddev.currency.ui.util.VaadinSessionUtils.getSession;
 import static org.baddev.currency.ui.util.VaadinSessionUtils.getSessionAttribute;
 
@@ -29,8 +29,8 @@ public final class AppSettingsUtils {
 
     private static void toggleMailNotifications(boolean enabled, ExchangeCompletionMailer mailListener) {
         if (enabled)
-            currencyUI().registerListener(mailListener);
-        else currencyUI().unregisterListener(mailListener);
+            get().registerListener(mailListener);
+        else get().unregisterListener(mailListener);
     }
 
     public static void setupUserNotifications(ExchangeCompletionMailer mailer) {

@@ -1,8 +1,5 @@
-package org.baddev.currency.core.notifier;
+package org.baddev.currency.core.event;
 
-
-import org.baddev.currency.core.event.NotificationEvent;
-import org.baddev.currency.core.listener.NotificationListener;
 
 import java.util.Collection;
 

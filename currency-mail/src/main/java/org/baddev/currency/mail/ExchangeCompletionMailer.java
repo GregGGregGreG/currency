@@ -1,7 +1,7 @@
 package org.baddev.currency.mail;
 
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.listener.NotificationListener;
+import org.baddev.currency.core.event.NotificationListener;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

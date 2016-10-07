@@ -12,7 +12,11 @@ public final class FormatUtils {
     }
 
     public static String joinByComma(List<String> paramValues) {
-        return paramValues.isEmpty() ? "Unknown" : paramValues.stream().collect(Collectors.joining(", "));
+        return joinByCommaWithDefVal(paramValues, "Unknown");
+    }
+
+    public static String joinByCommaWithDefVal(List<String> paramValues, String defVal) {
+        return (paramValues == null || paramValues.isEmpty()) ? defVal : paramValues.stream().collect(Collectors.joining(", "));
     }
 
     public static String bold(String text) {

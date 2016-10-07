@@ -1,5 +1,7 @@
 package org.baddev.currency.security.exception;
 
+import org.baddev.currency.core.exception.ServiceException;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -7,7 +9,7 @@ import java.util.stream.Collectors;
 /**
  * Created by IPotapchuk on 9/19/2016.
  */
-public class RoleAlreadyAssignedException extends RuntimeException {
+public class RoleAlreadyAssignedException extends ServiceException {
 
     public static final String MSG_PART = "Role(s) %s already assigned";
 

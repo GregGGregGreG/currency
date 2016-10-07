@@ -1,12 +1,9 @@
 package org.baddev.currency.ui.util;
 
-import com.vaadin.ui.AbstractOrderedLayout;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.Field;
 
 import java.util.Arrays;
-
-import static org.baddev.currency.ui.CurrencyUI.currencyUI;
 
 /**
  * Created by IPOTAPCHUK on 6/13/2016.
@@ -20,20 +17,12 @@ public final class UIUtils {
         return Arrays.stream(f).allMatch(fd -> fd.getValue() != null && fd.isValid());
     }
 
-    public static void attachComponents(AbstractOrderedLayout l, Component... cs) {
-        Arrays.stream(cs).filter(c -> l.getComponentIndex(c) == -1).forEach(l::addComponent);
-    }
-
     public static void toggleVisible(boolean visible, Component... components) {
         Arrays.stream(components).forEach(c -> c.setVisible(visible));
     }
 
     public static void toggleEnabled(boolean enabled, Component... components) {
         Arrays.stream(components).forEach(c -> c.setEnabled(enabled));
-    }
-
-    public static void navigate(String viewName) {
-        currencyUI().getNavigator().navigateTo(viewName);
     }
 
 }

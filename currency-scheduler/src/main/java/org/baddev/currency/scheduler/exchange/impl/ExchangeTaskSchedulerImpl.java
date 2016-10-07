@@ -1,26 +1,22 @@
 package org.baddev.currency.scheduler.exchange.impl;
 
-import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.notifier.Notifier;
-import org.baddev.currency.exchanger.ExchangerService;
-import org.baddev.currency.fetcher.service.ExchangeRateService;
-import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
-import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.scheduler.exchange.ExchangeTaskScheduler;
 import org.baddev.currency.scheduler.exchange.service.ExchangeTaskService;
-import org.joda.time.LocalDate;
+import org.baddev.currency.scheduler.exchange.task.NotifiableExchangeTask;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
@@ -28,70 +24,48 @@ import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
 /**
  * Created by IPOTAPCHUK on 6/8/2016.
  */
-@Service
+@Component
 public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangeTaskSchedulerImpl.class);
 
     @Autowired
-    private ExchangerService exchangerService;
-    @Autowired
-    private ExchangeRateService rateService;
-    @Autowired
     private DSLContext dsl;
     @Autowired
     private ThreadPoolTaskScheduler pool;
-    @Autowired
-    private Notifier notifier;
     @Autowired
     private ExchangeTaskService taskService;
 
     private Set<IExchangeTask> exchangeTasks = new HashSet<>();
     private Map<Long, ScheduledFuture> exchangeTasksJobsMap = new HashMap<>();
 
-    private class ExchangeJob implements Runnable {
+//    private AbstractTask createExchangeJob(IExchangeTask taskData){
+//        return new NotifiableExchangeTask(notifier, taskData, exchangerService, rateService);
+//    }
 
-        private IExchangeTask taskData;
-        private boolean success = true;
+//    @PostConstruct
+//    private void init() {
+//        exchangeTasks.addAll(taskService.findAll());
+//        exchangeTasks.stream().filter(IExchangeTask::getActive).forEach(this::scheduleTask);
+//        log.info("All active tasks are scheduled");
+//    }
 
-        ExchangeJob(final IExchangeTask taskData) {
-            this.taskData = taskData;
-        }
-
-        @Override
-        public void run() {
-            IExchangeOperation exchOp = new ExchangeOperation();
-            exchOp.setUserId(taskData.getUserId());
-            exchOp.setFromCcy(taskData.getFromCcy());
-            exchOp.setToCcy(taskData.getToCcy());
-            exchOp.setFromAmount(taskData.getAmount());
-            exchOp.setRatesDate(LocalDate.now());
-            try {
-                exchOp = exchangerService.exchange(exchOp, rateService.fetchCurrent());
-            } catch (Exception e) {
-                success = false;
-                log.error("Error while performing exchange", e);
-            } finally {
-                if (!notifier.getSubscribers().isEmpty())
-                    notifier.doNotify(new ExchangeCompletionEvent(this, exchOp, success));
-            }
-        }
-
-    }
-
-    @PostConstruct
-    public void init() {
-        Collection<ExchangeTask> tasks = dsl.selectFrom(EXCHANGE_TASK).fetchInto(ExchangeTask.class);
-        tasks.forEach(t -> {
-            ScheduledFuture task = scheduleTask(t);
-            if (!t.getActive())
-                task.cancel(false);
-        });
-        log.info("{} task(s) loaded and scheduled", tasks.size());
-    }
+//    @Override
+//    public Long schedule(final IExchangeTask taskData) {
+//        IExchangeTask prepared = prepareSchedule(taskData);
+//        scheduleTask(prepared);
+//        return prepared.getId();
+//    }
 
     @Override
-    public Long schedule(final IExchangeTask taskData) {
+    public Long schedule(NotifiableExchangeTask taskData) {
+        IExchangeTask prepared = prepareSchedule(taskData.getTaskData());
+        taskData.setTaskData(prepared);
+        scheduleTask(taskData);
+        return prepared.getId();
+    }
+
+    private IExchangeTask prepareSchedule(IExchangeTask taskData){
         IExchangeTask task = taskData.into(new ExchangeTask());
         task.setActive(true);
         if (exchangeTasks.contains(taskData)) {
@@ -107,21 +81,25 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
         } else {
             task = taskService.saveReturning(task);
         }
-        scheduleTask(task);
-        return task.getId();
+        return task;
     }
 
-    private ScheduledFuture scheduleTask(final IExchangeTask op) {
-        ScheduledFuture scheduled = pool.schedule(new ExchangeJob(op), new CronTrigger(op.getCron()));
-        exchangeTasks.add(op);
-        exchangeTasksJobsMap.put(op.getId(), scheduled);
+    private ScheduledFuture scheduleTask(NotifiableExchangeTask task) {
+        ScheduledFuture scheduled = pool.schedule(task, new CronTrigger(task.getTaskData().getCron()));
+        exchangeTasks.add(task.getTaskData());
+        exchangeTasksJobsMap.put(task.getTaskData().getId(), scheduled);
         return scheduled;
     }
 
     @Override
-    public void execute(IExchangeTask taskData) {
-        pool.execute(new ExchangeJob(taskData));
+    public void execute(NotifiableExchangeTask taskData) {
+        pool.execute(taskData);
     }
+
+//    @Override
+//    public void execute(IExchangeTask taskData) {
+//        pool.execute(createExchangeJob(taskData));
+//    }
 
     @Override
     public void cancel(Long id, boolean remove) {

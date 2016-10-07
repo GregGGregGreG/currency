@@ -1,11 +1,15 @@
 package org.baddev.currency.exchanger.impl;
 
-import org.baddev.currency.core.RoleEnum;
+import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.exchanger.ExchangeAction;
 import org.baddev.currency.exchanger.ExchangerService;
+import org.baddev.currency.jooq.schema.Tables;
 import org.baddev.currency.jooq.schema.tables.daos.ExchangeOperationDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
+import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
+import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +39,17 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     @Override
     @Transactional
-    public IExchangeOperation exchange(IExchangeOperation operation,
-                                      Collection<? extends IExchangeRate> rates) {
-        return exchangeAction.exchange(operation, rates);
+    public Optional<IExchangeOperation> exchange(IExchangeOperation operation,
+                                                 Collection<? extends IExchangeRate> rates) {
+        Optional<IExchangeOperation> maybeResult = exchangeAction.exchange(operation, rates);
+        return (maybeResult.isPresent()) ?
+                Optional.of(DSL.using(exchangeDao.configuration())
+                        .insertInto(Tables.EXCHANGE_OPERATION)
+                        .set(maybeResult.get().into(new ExchangeOperationRecord()))
+                        .returning()
+                        .fetchOne()
+                        .into(ExchangeOperation.class))
+                : maybeResult;
     }
 
     @Override
@@ -64,7 +76,7 @@ public class ExchangerServiceImpl implements ExchangerService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN})
-    public Optional<IExchangeOperation> findOneById(Long id) {
+    public Optional<? extends IExchangeOperation> findOneById(Long id) {
         return Optional.ofNullable(exchangeDao.fetchOneById(id));
     }
 
@@ -74,7 +86,6 @@ public class ExchangerServiceImpl implements ExchangerService {
     public void delete(Long... ids) {
         exchangeDao.deleteById(ids);
     }
-
 
 
 }

@@ -1,6 +1,6 @@
 package org.baddev.currency.scheduler.exchange.service.impl;
 
-import org.baddev.currency.core.RoleEnum;
+import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.ExchangeTaskDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;

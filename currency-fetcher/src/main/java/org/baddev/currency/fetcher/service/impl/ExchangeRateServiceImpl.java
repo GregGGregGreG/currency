@@ -1,8 +1,9 @@
 package org.baddev.currency.fetcher.service.impl;
 
-import org.baddev.currency.core.RoleEnum;
+import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.fetcher.ExchangeRateFetcher;
 import org.baddev.currency.fetcher.ExtendedExchangeRateDao;
+import org.baddev.currency.fetcher.exception.RatesNotFoundException;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.joda.time.LocalDate;
@@ -10,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Collection;
 import java.util.Currency;
@@ -26,13 +26,6 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
     private ExchangeRateFetcher fetcher;
     @Autowired
     private ExtendedExchangeRateDao rateDao;
-
-    @Override
-    @Transactional(readOnly = true)
-    @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<? extends IExchangeRate> findForUser(Long key) {
-        throw new NotImplementedException();
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -67,19 +60,39 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
 
     @Override
     @Transactional
-    public Collection<? extends IExchangeRate> fetchCurrent() {
-        return fetcher.fetchCurrent();
+    public Collection<? extends IExchangeRate> fetchCurrent() throws RatesNotFoundException {
+        try {
+            Collection<? extends IExchangeRate> fetched = fetcher.fetchCurrent();
+            if (fetched.isEmpty()) throw ratesNotFound(null);
+            return fetched;
+        } catch (RatesNotFoundException e) {
+            throw e; //throw to a higher level
+        } catch (Exception e) {
+            throw ratesNotFound(e);
+        }
+    }
+
+    private RatesNotFoundException ratesNotFound(Throwable cause) {
+        return new RatesNotFoundException("Rates were not found", cause);
     }
 
     @Override
     @Transactional
-    public Collection<? extends IExchangeRate> fetchByDate(LocalDate date) {
-        return fetcher.fetchByDate(date);
+    public Collection<? extends IExchangeRate> fetchByDate(LocalDate date) throws RatesNotFoundException {
+        try {
+            Collection<? extends IExchangeRate> fetched = fetcher.fetchByDate(date);
+            if (fetched.isEmpty()) throw ratesNotFound(null);
+            return fetched;
+        } catch (RatesNotFoundException e) {
+            throw e; //throw to a higher level
+        } catch (Exception e) {
+            throw ratesNotFound(e);
+        }
     }
 
     @Override
     @Transactional
-    public Optional<IExchangeRate> fetchByCurrencyAndDate(Currency currency, LocalDate date) {
+    public Optional<? extends IExchangeRate> fetchByCurrencyAndDate(Currency currency, LocalDate date) {
         return fetcher.fetchByCurrencyAndDate(currency, date);
     }
 }

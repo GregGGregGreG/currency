@@ -1,14 +1,13 @@
-package org.baddev.currency.ui.component;
+package org.baddev.currency.ui.component.toolbar;
 
 import com.vaadin.event.SelectionEvent;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.ui.util.NotificationUtils;
+import org.baddev.currency.ui.util.FormatUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -16,9 +15,11 @@ import java.util.function.Consumer;
  */
 public class GridButtonToolbar extends HorizontalLayout implements SelectionEvent.SelectionListener {
 
+    private static final Logger log = LoggerFactory.getLogger(GridButtonToolbar.class);
+
     private static final String DEF_BTN_STYLE = "small";
 
-    private Map<Consumer, Button> buttonActionMap = new HashMap<>();
+    private Map<Consumer, Button> actionButtonMap = new HashMap<>();
     private Set selected = new HashSet();
     private CssLayout buttonLayout = new CssLayout();
 
@@ -37,22 +38,23 @@ public class GridButtonToolbar extends HorizontalLayout implements SelectionEven
 
     @Override
     public void select(SelectionEvent event) {
-        buttonActionMap.values().forEach(b -> b.setEnabled(!event.getSelected().isEmpty()));
+        actionButtonMap.values().forEach(b -> b.setEnabled(!event.getSelected().isEmpty()));
         selected = event.getSelected();
     }
 
     public GridButtonToolbar addButton(String caption, Consumer<Set> action) {
+        return addButton(caption, action, new String[0]);
+    }
+
+    public GridButtonToolbar addButton(String caption, Consumer<Set> action, String...customStyles) {
         Button btn = new Button(caption);
         btn.setEnabled(!selected.isEmpty());
-        buttonActionMap.put(action, btn);
+        actionButtonMap.put(action, btn);
         btn.addClickListener((Button.ClickListener) event -> {
-            try {
                 action.accept(selected);
-            } catch (Exception e){
-                NotificationUtils.notifyFailure("Unexpected Error", e.getMessage());
-            }
         });
         btn.addStyleName(DEF_BTN_STYLE);
+        btn.addStyleName(FormatUtils.joinByComma(Arrays.asList(customStyles)));
         buttonLayout.addComponent(btn);
         return this;
     }

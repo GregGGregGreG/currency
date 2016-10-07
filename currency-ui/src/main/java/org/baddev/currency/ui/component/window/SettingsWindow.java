@@ -5,7 +5,7 @@ import com.vaadin.spring.annotation.SpringComponent;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.core.listener.NotificationListener;
+import org.baddev.currency.core.event.NotificationListener;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
 import org.baddev.currency.mail.ExchangeCompletionMailer;
 import org.baddev.currency.security.utils.SecurityUtils;
@@ -45,7 +45,7 @@ public class SettingsWindow extends Window {
         CheckBox uiNotifCb = new CheckBox("UI notification on exchange task completion");
         uiNotifCb.addValueChangeListener(e -> valChange(e, (CurrencyUI) getUI()));
 
-        tabSheet.addTab(newTab(uiNotifCb, mailNotifCb), "Notifications");
+        tabSheet.addTab(createTab(uiNotifCb, mailNotifCb), "Notifications");
 
         NativeSelect themeSelect = new NativeSelect("Theme",
                 Collections.unmodifiableList(Arrays.asList(Theme.VALUES)));
@@ -67,7 +67,7 @@ public class SettingsWindow extends Window {
             themeSelect.setValue(VaadinSessionUtils.getSessionAttribute(UserPreferences.class).getThemeName());
         });
 
-        tabSheet.addTab(newTab(themeSelect), "Appearance");
+        tabSheet.addTab(createTab(themeSelect), "Appearance");
 
         setContent(tabSheet);
         center();
@@ -78,7 +78,7 @@ public class SettingsWindow extends Window {
         tabSheet.addStyleName(ValoTheme.TABSHEET_PADDED_TABBAR);
     }
 
-    private static FormLayout newTab(Component... components) {
+    private static FormLayout createTab(Component... components) {
         FormLayout fl = new FormLayout(components);
         fl.setMargin(true);
         fl.setSizeFull();

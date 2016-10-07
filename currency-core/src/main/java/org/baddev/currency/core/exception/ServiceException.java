@@ -1,13 +1,11 @@
 package org.baddev.currency.core.exception;
 
+import org.springframework.core.NestedRuntimeException;
+
 /**
  * Created by Ilya on 23.04.2016.
  */
-public class ServiceException extends RuntimeException {
-
-    public ServiceException() {
-        super();
-    }
+public class ServiceException extends NestedRuntimeException {
 
     public ServiceException(String message) {
         super(message);
@@ -16,4 +14,5 @@ public class ServiceException extends RuntimeException {
     public ServiceException(String message, Throwable cause) {
         super(message, cause);
     }
+
 }

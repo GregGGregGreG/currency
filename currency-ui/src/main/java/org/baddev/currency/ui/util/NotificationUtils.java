@@ -16,29 +16,29 @@ public class NotificationUtils {
     public static final int DEFAULT_DELAY = 3500;
 
     public static void notifySuccess(String caption, String message) {
-        showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_CENTER,
+        notifyCustom(caption, message, DEFAULT_DELAY, Position.BOTTOM_CENTER,
                 ValoTheme.NOTIFICATION_SUCCESS);
     }
 
     public static void notifyFailure(String caption, String message) {
-        showStyledNotification(caption, message, -1, Position.TOP_CENTER,
+        notifyCustom(caption, message, -1, Position.TOP_CENTER,
                 ValoTheme.NOTIFICATION_FAILURE,
                 ValoTheme.NOTIFICATION_CLOSABLE);
     }
 
     public static void notifyWarn(String caption, String message){
-        showStyledNotification(caption, message, -1, Position.TOP_CENTER,
+        notifyCustom(caption, message, -1, Position.TOP_CENTER,
                 ValoTheme.NOTIFICATION_WARNING,
                 ValoTheme.NOTIFICATION_CLOSABLE);
     }
 
     public static void notifyTray(String caption, String message) {
-        showStyledNotification(caption, message, DEFAULT_DELAY, Position.BOTTOM_RIGHT,
+        notifyCustom(caption, message, DEFAULT_DELAY, Position.BOTTOM_RIGHT,
                 ValoTheme.NOTIFICATION_TRAY,
                 ValoTheme.NOTIFICATION_SMALL);
     }
 
-    public static void showStyledNotification(String caption, String message, int delay, Position position, String... styles) {
+    public static void notifyCustom(String caption, String message, int delay, Position position, String... styles) {
         Notification n = new Notification(caption, message);
         n.setHtmlContentAllowed(true);
         if (styles != null && styles.length > 0) {

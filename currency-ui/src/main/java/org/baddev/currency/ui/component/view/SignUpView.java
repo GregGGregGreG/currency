@@ -1,17 +1,18 @@
 package org.baddev.currency.ui.component.view;
 
-import com.google.common.eventbus.EventBus;
 import com.vaadin.data.Validator;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
+import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.baddev.currency.ui.component.view.base.AbstractFormView;
+import org.baddev.currency.ui.exception.WrappedUIException;
 import org.baddev.currency.ui.security.event.SignUpEvent;
-import org.baddev.currency.ui.util.NotificationUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.baddev.currency.ui.util.EventBus;
+import org.baddev.currency.ui.util.Navigator;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -23,22 +24,27 @@ import java.util.Objects;
 public class SignUpView extends AbstractFormView<SignUpDTO> {
 
     public static final String NAME = "signup";
-    private final EventBus bus;
 
-    @Autowired
-    public SignUpView(EventBus bus) {
+    public SignUpView() {
         super(new SignUpDTO(), SignUpDTO.class);
-        this.bus = bus;
     }
 
     @Override
     protected void customizeForm(final FormLayout formLayout, final BeanFieldGroup<SignUpDTO> binder, final Button submitBtn) {
+        setPanelCaption("Sign Up");
+
         TextField userName = binder.buildAndBind("Username", "username", TextField.class);
+        userName.setIcon(FontAwesome.USER);
         TextField email = binder.buildAndBind("Email", "email", TextField.class);
+        email.setIcon(FontAwesome.AT);
         TextField firstName = binder.buildAndBind("First Name", "firstName", TextField.class);
+        firstName.setIcon(FontAwesome.INFO);
         TextField lastName = binder.buildAndBind("Last Name", "lastName", TextField.class);
+        lastName.setIcon(FontAwesome.INFO);
         PasswordField password = binder.buildAndBind("Password", "password", PasswordField.class);
+        password.setIcon(FontAwesome.LOCK);
         PasswordField passwordCheck = binder.buildAndBind("Password Confirmation", "confirmPassword", PasswordField.class);
+        passwordCheck.setIcon(FontAwesome.LOCK);
 
         Arrays.asList(userName, firstName, lastName, password, passwordCheck, email).forEach(f -> {
             f.setWidth(300, Unit.PIXELS);
@@ -65,19 +71,19 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
 
             @Override
             public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                bus.post(new SignUpEvent(this, formBean, binder));
+                EventBus.post(new SignUpEvent(this, formBean, binder));
             }
         });
 
         submitBtn.setCaption("Sign Up");
+        submitBtn.addStyleName(ValoTheme.BUTTON_PRIMARY);
         submitBtn.addClickListener(event -> {
             try {
                 binder.commit();
             } catch (FieldGroup.CommitException e) {
                 password.clear();
                 passwordCheck.clear();
-                NotificationUtils.notifyWarn("Sign Up Submit Error",
-                        "Some fields contain errors. Check them and try again");
+                throw new WrappedUIException(e);
             }
         });
 
@@ -86,6 +92,6 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
 
     @Override
     public void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Login", FontAwesome.SIGN_IN, selectedItem -> navigateTo(LoginView.NAME));
+        menuBar.addItem("Login", FontAwesome.SIGN_IN, selectedItem -> Navigator.navigate(LoginView.NAME));
     }
 }

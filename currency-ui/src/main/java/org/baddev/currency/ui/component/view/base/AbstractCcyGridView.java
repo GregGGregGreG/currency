@@ -10,10 +10,10 @@ import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.renderers.ClickableRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
+import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,10 +28,10 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
     protected Grid grid = new Grid();
 
     @Override
-    protected final void init(VerticalLayout rootLayout) {
-        VerticalLayout gridWithBar = gridWithBar();
-        rootLayout.addComponent(gridWithBar);
-        rootLayout.setExpandRatio(gridWithBar, 1.0f);
+    protected final void init(VerticalSpacedLayout rootLayout) {
+        rootLayout.addComponent(gridBar());
+        rootLayout.addComponent(grid);
+        rootLayout.setExpandRatio(grid, 1.0f);
     }
 
     protected void setup(Class<T> type, Collection<? extends T> items, Object... excludePropIds) {
@@ -51,24 +51,13 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
             for (Object prop : excludeProps) wrapperContainer.removeContainerProperty(prop);
     }
 
-    private HorizontalLayout topBar() {
-        HorizontalLayout topBar = new HorizontalLayout();
-        topBar.setSizeUndefined();
-        topBar.setWidth(100.0f, Unit.PERCENTAGE);
-        topBar.setSpacing(true);
-        customizeTopBar(topBar);
-        return topBar;
-    }
-
-    private VerticalLayout gridWithBar() {
-        VerticalLayout gridWithBar = new VerticalLayout();
-        gridWithBar.addComponent(topBar());
-        gridWithBar.addComponent(grid);
-        gridWithBar.setMargin(true);
-        gridWithBar.setSpacing(true);
-        gridWithBar.setSizeFull();
-        gridWithBar.setExpandRatio(grid, 1.0f);
-        return gridWithBar;
+    private HorizontalLayout gridBar() {
+        HorizontalLayout gridBar = new HorizontalLayout();
+        gridBar.setSizeUndefined();
+        gridBar.setWidth(100.0f, Unit.PERCENTAGE);
+        gridBar.setSpacing(true);
+        customizeGridBar(gridBar);
+        return gridBar;
     }
 
     protected Object getSelectedRow() {
@@ -85,7 +74,7 @@ public abstract class AbstractCcyGridView<T> extends AbstractCcyView {
         return (GeneratedPropertyContainer) grid.getContainerDataSource();
     }
 
-    protected abstract void customizeTopBar(HorizontalLayout topBar);
+    protected abstract void customizeGridBar(HorizontalLayout topBar);
 
     protected void refresh(Collection<? extends T> data, Object sortPropId) {
         refresh(data, sortPropId, SortDirection.ASCENDING);

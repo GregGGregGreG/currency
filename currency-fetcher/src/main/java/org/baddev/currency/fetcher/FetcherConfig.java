@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.baddev.currency.core.util.Safe.trySupply;
+
 /**
  * Created by IPotapchuk on 3/15/2016.
  */
@@ -53,27 +55,21 @@ public class FetcherConfig {
 
     @Bean(name = "IsoCurCcys")
     public List<IsoCcyEntry> isoCurCcyEntryList() {
-        IsoCcyEntries entries = null;
-        try {
+        IsoCcyEntries entries = trySupply(() -> {
             WebClient client = WebClient.create(isoCurSourceURI);
             configureClient(client);
-            entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            return client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
+        }).get();
         return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
     }
 
     @Bean(name = "IsoHistCcys")
     public List<IsoCcyHistEntry> isoCcyHistEntryList() {
-        IsoCcyHistEntries entries = null;
-        try {
+        IsoCcyHistEntries entries = trySupply(() -> {
             WebClient client = WebClient.create(isoHistSourceURI);
             configureClient(client);
-            entries = client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            return client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
+        }).get();
         return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
     }
 

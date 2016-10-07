@@ -13,9 +13,10 @@ import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.DateRenderer;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.core.RoleEnum;
-import org.baddev.currency.core.exception.RatesNotFoundException;
+import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.exchanger.ExchangerService;
+import org.baddev.currency.exchanger.exception.ExchangeException;
+import org.baddev.currency.fetcher.exception.RatesNotFoundException;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
@@ -23,10 +24,12 @@ import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.security.utils.SecurityUtils;
+import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
 import org.baddev.currency.ui.converter.DateToLocalDateTimeConverter;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.FormatUtils;
+import org.baddev.currency.ui.util.Navigator;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,12 +54,12 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
 
     public static final String NAME = "exchanges";
 
-    private TextField      amountF        = new TextField("Amount:");
-    private ComboBox       fromCcyChoiseF = new ComboBox("From:");
-    private ComboBox       toCcyChoiseF   = new ComboBox("To:");
-    private PopupDateField exchDateF      = new PopupDateField("Rate's date:");
-    private Button         exchBtn        = new Button("Exchange");
-    private Button         resetBtn       = new Button("Reset");
+    private TextField amountF = new TextField("Amount:");
+    private ComboBox fromCcyChoiseF = new ComboBox("From:");
+    private ComboBox toCcyChoiseF = new ComboBox("To:");
+    private PopupDateField exchDateF = new PopupDateField("Rate's date:");
+    private Button exchBtn = new Button("Exchange");
+    private Button resetBtn = new Button("Reset");
 
     @Value("${min_date_nbu}")
     private String minDateVal;
@@ -69,7 +72,7 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
     private ExchangeRateService rateService;
 
     @Override
-    protected void postInit(VerticalLayout rootLayout) {
+    protected void postInit(VerticalSpacedLayout rootLayout) {
         setup(IExchangeOperation.class,
                 exchangerService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                 P_ID, P_USER_ID);
@@ -104,12 +107,12 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
 
     @Override
     public void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Rates", FontAwesome.DOLLAR, selectedItem -> navigateTo(RatesView.NAME));
-        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> navigateTo(SchedulerView.NAME));
+        menuBar.addItem("Rates", FontAwesome.DOLLAR, selectedItem -> Navigator.navigate(RatesView.NAME));
+        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> Navigator.navigate(SchedulerView.NAME));
     }
 
     @Override
-    protected void customizeTopBar(HorizontalLayout topBar) {
+    protected void customizeGridBar(HorizontalLayout topBar) {
         exchDateF.setResolution(Resolution.DAY);
         exchDateF.setIcon(FontAwesome.CALENDAR);
         exchDateF.setTextFieldEnabled(false);
@@ -192,7 +195,8 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
             exc.setToCcy(((ExchangeRate) toCcyChoiseF.getValue()).getCcy());
             exc.setRatesDate(LocalDate.fromDateFields(exchDateF.getValue()));
             exc.setFromAmount((double) amountF.getConvertedValue());
-            exchangerService.exchange(exc, (Collection<? extends IExchangeRate>) fromCcyChoiseF.getItemIds());
+            exchangerService.exchange(exc, (Collection<? extends IExchangeRate>) fromCcyChoiseF.getItemIds())
+                    .orElseThrow(() -> new ExchangeException("Failed to perform exchange", exc));
             refresh(exchangerService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                     P_PERFORM_DATETIME, SortDirection.DESCENDING);
             resetInputs();
