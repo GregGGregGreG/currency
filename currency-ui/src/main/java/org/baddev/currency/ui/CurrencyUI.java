@@ -3,36 +3,30 @@ package org.baddev.currency.ui;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.vaadin.annotations.*;
-import com.vaadin.server.CustomizedSystemMessages;
-import com.vaadin.server.DefaultErrorHandler;
-import com.vaadin.server.VaadinRequest;
-import com.vaadin.server.VaadinService;
+import com.vaadin.server.*;
 import com.vaadin.shared.ui.ui.Transport;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
-import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.event.NotificationListener;
 import org.baddev.currency.core.event.Notifier;
 import org.baddev.currency.core.util.RoleEnum;
-import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
-import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
+import org.baddev.currency.jooq.schema.tables.daos.UserPreferencesDao;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
-import org.baddev.currency.mail.ExchangeCompletionMailer;
+import org.baddev.currency.mail.MailExchangeCompletionListener;
 import org.baddev.currency.security.dto.LoginDTO;
 import org.baddev.currency.security.dto.SignUpDTO;
 import org.baddev.currency.security.user.UserService;
-import org.baddev.currency.ui.component.view.ErrorView;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.MainView;
 import org.baddev.currency.ui.component.view.RatesView;
-import org.baddev.currency.ui.config.SessionInitDestroyListener;
+import org.baddev.currency.ui.listener.AppSessionInitListener;
+import org.baddev.currency.ui.listener.UIExchangeCompletionListener;
 import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
 import org.baddev.currency.ui.security.event.LoginEvent;
 import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.baddev.currency.ui.security.event.SignUpEvent;
-import org.baddev.currency.ui.service.UserPreferencesService;
-import org.baddev.currency.ui.util.FormatUtils;
+import org.baddev.currency.ui.util.VaadinSessionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,40 +39,37 @@ import javax.servlet.annotation.WebServlet;
 
 import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
 import static org.baddev.currency.security.utils.SecurityUtils.loggedInUserName;
-import static org.baddev.currency.ui.util.AppSettingsUtils.applyUserPreferences;
 import static org.baddev.currency.ui.util.NotificationUtils.notifySuccess;
-import static org.baddev.currency.ui.util.NotificationUtils.notifyTray;
-import static org.baddev.currency.ui.util.VaadinSessionUtils.*;
 
 @Theme("valo-default")
 @Widgetset("org.baddev.currency.ui.MyAppWidgetset")
 @PreserveOnRefresh
 @SpringUI
 @Push(transport = Transport.WEBSOCKET_XHR)
-public class CurrencyUI extends UI implements NotificationListener<ExchangeCompletionEvent> {
+public class CurrencyUI extends UI implements SessionDestroyListener {
+
+    private static final long serialVersionUID = 2223841791673821941L;
 
     private static final Logger log = LoggerFactory.getLogger(CurrencyUI.class);
 
     @Autowired
-    private Notifier notifier;
-    @Autowired
     private EventBus bus;
     @Autowired
-    private Iso4217CcyService ccyService;
-    @Autowired
     private UserService userService;
-    @Autowired
-    private UserPreferencesService preferencesService;
-    @Autowired
-    private ExchangeCompletionMailer mailer;
     @Autowired
     private NavigatorFactory navigatorFactory;
     @Autowired
     private MainView mainView;
     @Autowired
-    private ErrorView errorView;
+    private Notifier notifier;
+    @Autowired
+    private UserPreferencesDao userPreferencesDao;
+    @Autowired
+    private MailExchangeCompletionListener mailListener;
+    @Autowired
+    private UIExchangeCompletionListener uiListener;
 
-    public EventBus getEventBus(){
+    public EventBus getEventBus() {
         return bus;
     }
 
@@ -86,17 +77,10 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
         return (CurrencyUI) UI.getCurrent();
     }
 
-    public void registerListener(NotificationListener l) {
-        notifier.subscribe(l);
-    }
-
-    public void unregisterListener(NotificationListener l) {
-        notifier.unsubscribe(l);
-    }
-
     @Override
     protected void init(VaadinRequest vaadinRequest) {
-        setErrorHandler(new DefaultErrorHandler(){
+        VaadinService.getCurrent().addSessionDestroyListener(this);
+        setErrorHandler(new DefaultErrorHandler() {
             @Override
             public void error(com.vaadin.server.ErrorEvent event) {
                 boolean handled = false;
@@ -108,37 +92,33 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
             }
         });
         setContent(mainView);
-        setNavigator(navigatorFactory.create(this, mainView, errorView));
+        setNavigator(navigatorFactory.create(this, mainView));
         if (isLoggedIn()) {
-            setTheme(getSessionAttribute(UserPreferences.class).getThemeName());
+            UserPreferences prefs = VaadinSessionUtils.getAttribute(UserPreferences.class);
+            setTheme(prefs.getThemeName());
+            if (prefs.getUiNotifications())
+                notifier.subscribe(uiListener);
             getNavigator().navigateTo(RatesView.NAME);
         } else getNavigator().navigateTo(LoginView.NAME);
     }
 
     @Override
-    protected void refresh(VaadinRequest request) {
-        super.refresh(request);
+    public void attach() {
+        super.attach();
+        bus.register(this);
     }
 
     @Override
-    public void notificationReceived(ExchangeCompletionEvent e) {
-        IExchangeOperation operation = e.getEventData();
-        access(() -> {
-            String fromCcyNames = FormatUtils.joinByComma(
-                    ccyService.findCcyNamesByCode(operation.getFromCcy())
-            );
-            String toCcyNames = FormatUtils.joinByComma(
-                    ccyService.findCcyNamesByCode(operation.getToCcy())
-            );
-            String exchInfo = String.format("%.2f %s(%s) <> %.2f %s(%s)",
-                    operation.getFromAmount(),
-                    fromCcyNames,
-                    operation.getFromCcy(),
-                    operation.getToAmount(),
-                    toCcyNames,
-                    operation.getToCcy());
-            notifyTray("Exchange Task Completion", exchInfo);
-        });
+    public void detach() {
+        bus.unregister(this);
+        notifier.unsubscribe(uiListener);
+        super.detach();
+    }
+
+    @Override
+    public void sessionDestroy(SessionDestroyEvent event) {
+        userPreferencesDao.update(VaadinSessionUtils.getAttribute(UserPreferences.class));
+        log.debug("Session destroyed, {}", event.getSession());
     }
 
     @Subscribe
@@ -146,8 +126,13 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
         try {
             userService.authenticate(event.getEventData());
             VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
-            preferencesService.loadPreferencesIntoSession();
-            applyUserPreferences(mailer);
+            UserPreferences preferences = userPreferencesDao.fetchOneByUserId(SecurityUtils.getIdentityUserPrincipal().getId());
+            VaadinSessionUtils.setAttribute(UserPreferences.class, preferences);
+            if(preferences.getMailNotifications())
+                notifier.subscribe(mailListener);
+            if(preferences.getUiNotifications())
+                notifier.subscribe(uiListener);
+            setTheme(preferences.getThemeName());
             getNavigator().navigateTo(RatesView.NAME);
         } catch (Exception e) {
             event.getBinder().clear();
@@ -177,20 +162,6 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
         }
     }
 
-    @Override
-    public void attach() {
-        super.attach();
-        bus.register(this);
-        if (!isSessionAttributeExist(UserPreferences.class))
-            setSessionAttribute(UserPreferences.class, new UserPreferences());
-    }
-
-    @Override
-    public void detach() {
-        bus.unregister(this);
-        super.detach();
-    }
-
     @WebServlet(urlPatterns = "/*", name = "vaadinServlet", asyncSupported = true)
     @VaadinServletConfiguration(
             ui = CurrencyUI.class,
@@ -199,6 +170,8 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
             closeIdleSessions = true
     )
     public static class AppServlet extends SpringVaadinServlet {
+
+        private static final long serialVersionUID = -2328685994490607984L;
 
         @Override
         protected void servletInitialized() throws ServletException {
@@ -210,9 +183,7 @@ public class CurrencyUI extends UI implements NotificationListener<ExchangeCompl
                 systemMessages.setCommunicationErrorNotificationEnabled(false);
                 return systemMessages;
             });
-            SessionInitDestroyListener listener = new SessionInitDestroyListener();
-            getService().addSessionInitListener(listener);
-            getService().addSessionDestroyListener(listener);
+            getService().addSessionInitListener(new AppSessionInitListener());
         }
     }
 

@@ -1,16 +1,14 @@
 package org.baddev.currency.ui.component.window;
 
-import com.vaadin.data.Property;
 import com.vaadin.spring.annotation.SpringComponent;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.core.event.NotificationListener;
+import org.baddev.currency.core.event.Notifier;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
-import org.baddev.currency.mail.ExchangeCompletionMailer;
-import org.baddev.currency.security.utils.SecurityUtils;
+import org.baddev.currency.mail.MailExchangeCompletionListener;
 import org.baddev.currency.ui.CurrencyUI;
-import org.baddev.currency.ui.util.AppSettingsUtils;
+import org.baddev.currency.ui.listener.UIExchangeCompletionListener;
 import org.baddev.currency.ui.util.Theme;
 import org.baddev.currency.ui.util.VaadinSessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +24,16 @@ import java.util.Collections;
 @UIScope
 public class SettingsWindow extends Window {
 
+    private static final long serialVersionUID = 4376763543379699312L;
+
     private final TabSheet tabSheet = new TabSheet();
 
     @Autowired
-    private ExchangeCompletionMailer mailListener;
+    private Notifier notifier;
+    @Autowired
+    private MailExchangeCompletionListener mailListener;
+    @Autowired
+    private UIExchangeCompletionListener uiListener;
 
     @PostConstruct
     private void init() {
@@ -41,9 +45,17 @@ public class SettingsWindow extends Window {
         configureTabsheet();
 
         CheckBox mailNotifCb = new CheckBox("Mail on exchange task completion");
-        mailNotifCb.addValueChangeListener(e -> valChange(e, mailListener));
+        mailNotifCb.addValueChangeListener(event -> {
+            if(Boolean.TRUE.equals(event.getProperty().getValue())){
+                notifier.subscribe(mailListener);
+            } else notifier.unsubscribe(mailListener);
+        });
         CheckBox uiNotifCb = new CheckBox("UI notification on exchange task completion");
-        uiNotifCb.addValueChangeListener(e -> valChange(e, (CurrencyUI) getUI()));
+        uiNotifCb.addValueChangeListener(event -> {
+            if(Boolean.TRUE.equals(event.getProperty().getValue())){
+                notifier.subscribe(uiListener);
+            } else notifier.unsubscribe(uiListener);
+        });
 
         tabSheet.addTab(createTab(uiNotifCb, mailNotifCb), "Notifications");
 
@@ -56,15 +68,17 @@ public class SettingsWindow extends Window {
         themeSelect.addValueChangeListener(e -> {
             String newTheme = String.valueOf(e.getProperty().getValue());
             if (!newTheme.equals(CurrencyUI.getCurrent().getTheme())) {
-                VaadinSessionUtils.getSessionAttribute(UserPreferences.class).setThemeName(newTheme);
-                AppSettingsUtils.applyUISharedUserTheme();
+                VaadinSessionUtils.getAttribute(UserPreferences.class).setThemeName(newTheme);
+                VaadinSessionUtils.getSession().getUIs().forEach(ui -> {
+                    ui.setTheme(VaadinSessionUtils.getAttribute(UserPreferences.class).getThemeName());
+                });
             }
         });
 
         addAttachListener(e -> {
-            uiNotifCb.setValue(VaadinSessionUtils.getSessionAttribute(UserPreferences.class).getUiNotifications());
-            mailNotifCb.setValue(VaadinSessionUtils.getSessionAttribute(UserPreferences.class).getMailNotifications());
-            themeSelect.setValue(VaadinSessionUtils.getSessionAttribute(UserPreferences.class).getThemeName());
+            uiNotifCb.setValue(VaadinSessionUtils.getAttribute(UserPreferences.class).getUiNotifications());
+            mailNotifCb.setValue(VaadinSessionUtils.getAttribute(UserPreferences.class).getMailNotifications());
+            themeSelect.setValue(VaadinSessionUtils.getAttribute(UserPreferences.class).getThemeName());
         });
 
         tabSheet.addTab(createTab(themeSelect), "Appearance");
@@ -85,13 +99,4 @@ public class SettingsWindow extends Window {
         return fl;
     }
 
-    private void valChange(Property.ValueChangeEvent e, NotificationListener l) {
-        boolean checked = (boolean) e.getProperty().getValue();
-        if (l instanceof CurrencyUI)
-            VaadinSessionUtils.getSessionAttribute(UserPreferences.class).setUiNotifications(checked);
-        else if (l instanceof ExchangeCompletionMailer) {
-            ((ExchangeCompletionMailer) l).setEmail(SecurityUtils.getUserDetails().getEmail());
-            VaadinSessionUtils.getSessionAttribute(UserPreferences.class).setMailNotifications(true);
-        }
-    }
 }

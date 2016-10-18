@@ -39,24 +39,6 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     private Set<IExchangeTask> exchangeTasks = new HashSet<>();
     private Map<Long, ScheduledFuture> exchangeTasksJobsMap = new HashMap<>();
 
-//    private AbstractTask createExchangeJob(IExchangeTask taskData){
-//        return new NotifiableExchangeTask(notifier, taskData, exchangerService, rateService);
-//    }
-
-//    @PostConstruct
-//    private void init() {
-//        exchangeTasks.addAll(taskService.findAll());
-//        exchangeTasks.stream().filter(IExchangeTask::getActive).forEach(this::scheduleTask);
-//        log.info("All active tasks are scheduled");
-//    }
-
-//    @Override
-//    public Long schedule(final IExchangeTask taskData) {
-//        IExchangeTask prepared = prepareSchedule(taskData);
-//        scheduleTask(prepared);
-//        return prepared.getId();
-//    }
-
     @Override
     public Long schedule(NotifiableExchangeTask taskData) {
         IExchangeTask prepared = prepareSchedule(taskData.getTaskData());
@@ -95,11 +77,6 @@ public class ExchangeTaskSchedulerImpl implements ExchangeTaskScheduler {
     public void execute(NotifiableExchangeTask taskData) {
         pool.execute(taskData);
     }
-
-//    @Override
-//    public void execute(IExchangeTask taskData) {
-//        pool.execute(createExchangeJob(taskData));
-//    }
 
     @Override
     public void cancel(Long id, boolean remove) {

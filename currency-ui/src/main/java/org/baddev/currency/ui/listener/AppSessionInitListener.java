@@ -1,6 +1,8 @@
-package org.baddev.currency.ui.config;
+package org.baddev.currency.ui.listener;
 
 import com.vaadin.server.*;
+import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
+import org.baddev.currency.ui.util.VaadinSessionUtils;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,18 +10,15 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by IPotapchuk on 10/5/2016.
  */
-public class SessionInitDestroyListener implements SessionInitListener, SessionDestroyListener {
+public class AppSessionInitListener implements SessionInitListener {
 
-    private static final Logger log = LoggerFactory.getLogger(SessionInitDestroyListener.class);
+    private static final long serialVersionUID = -4066511175848771057L;
 
-    @Override
-    public void sessionDestroy(SessionDestroyEvent event) {
-        log.debug("Session destroyed, {}", event.getSession());
-    }
+    private static final Logger log = LoggerFactory.getLogger(AppSessionInitListener.class);
 
     @Override
     public void sessionInit(SessionInitEvent event) throws ServiceException {
-        log.debug("Session initialized, {}", event.getSession());
+        VaadinSessionUtils.setAttribute(UserPreferences.class, new UserPreferences());
         event.getSession().addBootstrapListener(new BootstrapListener() {
 
             @Override
@@ -48,5 +47,6 @@ public class SessionInitDestroyListener implements SessionInitListener, SessionD
 
             }
         });
+        log.debug("Session initialized, {}", event.getSession());
     }
 }

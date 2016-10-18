@@ -19,8 +19,10 @@ public class NavigatorFactory {
 
     @Autowired
     private SpringViewProvider viewProvider;
+    @Autowired
+    private ErrorView errorView;
 
-    public Navigator create(UI ui, ViewDisplay display, ErrorView errorView){
+    public Navigator create(UI ui, ViewDisplay display){
         Navigator navigator = new Navigator(UI.getCurrent(), display);
         navigator.setErrorProvider(new ViewProvider() {
             @Override

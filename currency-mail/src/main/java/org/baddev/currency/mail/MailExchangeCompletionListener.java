@@ -16,18 +16,20 @@ import java.util.Date;
 /**
  * Created by IPotapchuk on 6/22/2016.
  */
-public class ExchangeCompletionMailer implements NotificationListener<ExchangeCompletionEvent> {
+public class MailExchangeCompletionListener implements NotificationListener<ExchangeCompletionEvent> {
 
-    private static final Logger log = LoggerFactory.getLogger(ExchangeCompletionMailer.class);
+    private static final long serialVersionUID = 2586601749325354904L;
+
+    private static final Logger log = LoggerFactory.getLogger(MailExchangeCompletionListener.class);
 
     private MailSender             sender;
     private SimpleMailMessage      template;
     private ThreadPoolTaskExecutor pool;
     private String                 email;
 
-    public ExchangeCompletionMailer(MailSender sender,
-                                    SimpleMailMessage template,
-                                    ThreadPoolTaskExecutor pool) {
+    public MailExchangeCompletionListener(MailSender sender,
+                                          SimpleMailMessage template,
+                                          ThreadPoolTaskExecutor pool) {
         this.pool = pool;
         this.template = template;
         this.sender = sender;

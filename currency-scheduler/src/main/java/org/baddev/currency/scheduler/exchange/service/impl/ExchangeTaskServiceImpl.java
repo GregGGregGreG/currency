@@ -7,6 +7,7 @@ import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeTaskRecord;
 import org.baddev.currency.scheduler.exchange.ExchangeTaskScheduler;
 import org.baddev.currency.scheduler.exchange.service.ExchangeTaskService;
+import org.baddev.currency.scheduler.exchange.task.NotifiableExchangeTask;
 import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
@@ -98,14 +99,14 @@ public class ExchangeTaskServiceImpl implements ExchangeTaskService {
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Long schedule(IExchangeTask taskData) {
+    public Long schedule(NotifiableExchangeTask taskData) {
         return scheduler.schedule(taskData);
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void execute(IExchangeTask taskData) {
+    public void execute(NotifiableExchangeTask taskData) {
         scheduler.execute(taskData);
     }
 

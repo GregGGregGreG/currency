@@ -27,4 +27,14 @@ public final class FormatUtils {
         return "\"" + bold(text) + "\"";
     }
 
+    public static String exchangeNotification(double fromAmount, String fromCcyNames, String fromCcy, double toAmount, String toCcyNames, String toCcy){
+        return String.format("%.2f %s(%s) <> %.2f %s(%s)",
+                fromAmount,
+                fromCcyNames,
+                fromCcy,
+                toAmount,
+                toCcyNames,
+                toCcy);
+    }
+
 }

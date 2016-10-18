@@ -6,7 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.core.context.SecurityContextImpl;
 
 import static org.baddev.currency.ui.util.VaadinSessionUtils.getSession;
-import static org.baddev.currency.ui.util.VaadinSessionUtils.setSessionAttribute;
+import static org.baddev.currency.ui.util.VaadinSessionUtils.setAttribute;
 
 /**
  * Created by IPotapchuk on 7/1/2016.
@@ -15,7 +15,7 @@ public class VaadinSessionSecurityContextHolderStrategy implements SecurityConte
 
     @Override
     public void clearContext() {
-        setSessionAttribute(SecurityContext.class, null);
+        setAttribute(SecurityContext.class, null);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class VaadinSessionSecurityContextHolderStrategy implements SecurityConte
 
     @Override
     public void setContext(SecurityContext context) {
-        setSessionAttribute(SecurityContext.class, context);
+        setAttribute(SecurityContext.class, context);
     }
 
     @Override

@@ -10,10 +10,12 @@ import org.baddev.currency.core.event.Notifier;
 import org.baddev.currency.core.event.NotifierImpl;
 import org.baddev.currency.exchanger.ExchangerService;
 import org.baddev.currency.fetcher.FetcherConfig;
+import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.service.ExchangeRateService;
-import org.baddev.currency.mail.ExchangeCompletionMailer;
+import org.baddev.currency.mail.MailExchangeCompletionListener;
 import org.baddev.currency.scheduler.exchange.task.NotifiableExchangeTask;
 import org.baddev.currency.security.SecurityConfig;
+import org.baddev.currency.ui.listener.UIExchangeCompletionListener;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
 import org.springframework.mail.MailSender;
@@ -38,6 +40,18 @@ public class ApplicationConfig {
     }
 
     @Bean
+    @VaadinSessionScope
+    MailExchangeCompletionListener mailer(MailSender sender, SimpleMailMessage template, ThreadPoolTaskExecutor mailerPool) {
+        return new MailExchangeCompletionListener(sender, template, mailerPool);
+    }
+
+    @Bean
+    @UIScope
+    UIExchangeCompletionListener uiExchangeCompletionListener(Iso4217CcyService iso4217CcyService){
+        return new UIExchangeCompletionListener(iso4217CcyService);
+    }
+
+    @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     NotifiableExchangeTask exchangeTask(Notifier notifier, ExchangeRateService exchangeRateService, ExchangerService exchangerService){
         return new NotifiableExchangeTask(notifier, exchangerService, exchangeRateService);
@@ -49,12 +63,6 @@ public class ApplicationConfig {
         return new EventBus((exception, context) -> {
             UI.getCurrent().getErrorHandler().error(new ErrorEvent(exception));
         });
-    }
-
-    @Bean
-    @VaadinSessionScope
-    ExchangeCompletionMailer mailer(MailSender sender, SimpleMailMessage template, ThreadPoolTaskExecutor mailerPool) {
-        return new ExchangeCompletionMailer(sender, template, mailerPool);
     }
 
 }

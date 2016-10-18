@@ -35,9 +35,9 @@ public class FetcherConfig {
     private static final Logger log = LoggerFactory.getLogger(FetcherConfig.class);
 
     @Value("${source_nbu}")               String nbuSourceURI;
-    @Value("${enabled}")                  String proxyEnabled;
-    @Value("${server}")                   String proxyHost;
-    @Value("${port}")                     String proxyPort;
+    @Value("${proxy.enabled}")                  String proxyEnabled;
+    @Value("${proxy.host}")                   String proxyHost;
+    @Value("${proxy.port}")                     String proxyPort;
     @Value("${source_iso_cur}")           String isoCurSourceURI;
     @Value("${source_iso_hist}")          String isoHistSourceURI;
     @Value("${policy.receiveTimeout}")    String receiveTimeount;
@@ -55,22 +55,20 @@ public class FetcherConfig {
 
     @Bean(name = "IsoCurCcys")
     public List<IsoCcyEntry> isoCurCcyEntryList() {
-        IsoCcyEntries entries = trySupply(() -> {
+        return trySupply(() -> {
             WebClient client = WebClient.create(isoCurSourceURI);
             configureClient(client);
             return client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
-        }).get();
-        return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
+        }).map(IsoCcyEntries::getEntries).orElse(new ArrayList<>());
     }
 
     @Bean(name = "IsoHistCcys")
     public List<IsoCcyHistEntry> isoCcyHistEntryList() {
-        IsoCcyHistEntries entries = trySupply(() -> {
+        return trySupply(() -> {
             WebClient client = WebClient.create(isoHistSourceURI);
             configureClient(client);
             return client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
-        }).get();
-        return (entries != null && entries.getEntries() != null) ? entries.getEntries() : new ArrayList<>();
+        }).map(IsoCcyHistEntries::getEntries).orElse(new ArrayList<>());
     }
 
     private void configureClient(WebClient client) {
