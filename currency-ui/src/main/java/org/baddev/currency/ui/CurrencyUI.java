@@ -8,14 +8,13 @@ import com.vaadin.shared.ui.ui.Transport;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
+import org.baddev.currency.core.api.UserService;
+import org.baddev.currency.core.dto.LoginDTO;
+import org.baddev.currency.core.dto.SignUpDTO;
 import org.baddev.currency.core.event.Notifier;
 import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.UserPreferencesDao;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
-import org.baddev.currency.mail.MailExchangeCompletionListener;
-import org.baddev.currency.security.dto.LoginDTO;
-import org.baddev.currency.security.dto.SignUpDTO;
-import org.baddev.currency.security.user.UserService;
 import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.MainView;
@@ -48,26 +47,16 @@ import static org.baddev.currency.ui.util.NotificationUtils.notifySuccess;
 @Push(transport = Transport.WEBSOCKET_XHR)
 public class CurrencyUI extends UI implements SessionDestroyListener {
 
-    private static final long serialVersionUID = 2223841791673821941L;
+    private static final long   serialVersionUID = 2223841791673821941L;
+    private static final Logger log              = LoggerFactory.getLogger(CurrencyUI.class);
 
-    private static final Logger log = LoggerFactory.getLogger(CurrencyUI.class);
-
-    @Autowired
-    private EventBus bus;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private NavigatorFactory navigatorFactory;
-    @Autowired
-    private MainView mainView;
-    @Autowired
-    private Notifier notifier;
-    @Autowired
-    private UserPreferencesDao userPreferencesDao;
-    @Autowired
-    private MailExchangeCompletionListener mailListener;
-    @Autowired
-    private UIExchangeCompletionListener uiListener;
+    @Autowired private EventBus                       bus;
+    @Autowired private UserService                    userService;
+    @Autowired private NavigatorFactory               navigatorFactory;
+    @Autowired private MainView                       mainView;
+    @Autowired private Notifier                       notifier;
+    @Autowired private UserPreferencesDao             userPreferencesDao;
+    @Autowired private UIExchangeCompletionListener   uiListener;
 
     public EventBus getEventBus() {
         return bus;
@@ -88,18 +77,64 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
                 if (t instanceof Exception) {
                     handled = new UIErrorHandler().handle((Exception) t);
                 }
-                if (!handled) doDefault(event);
+                if (!handled) super.error(event);
             }
         });
         setContent(mainView);
         setNavigator(navigatorFactory.create(this, mainView));
+        uiListener.setUI(this);
         if (isLoggedIn()) {
-            UserPreferences prefs = VaadinSessionUtils.getAttribute(UserPreferences.class);
-            setTheme(prefs.getThemeName());
-            if (prefs.getUiNotifications())
-                notifier.subscribe(uiListener);
+            applyUserPreferences();
             getNavigator().navigateTo(RatesView.NAME);
         } else getNavigator().navigateTo(LoginView.NAME);
+    }
+
+    @Subscribe
+    private void login(LoginEvent event)  {
+        try {
+            userService.authenticate(event.getEventData());
+            VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
+            initUserPreferences();
+            getNavigator().navigateTo(RatesView.NAME);
+        } catch (Exception e) {
+            event.getBinder().clear();
+            throw e;
+        }
+    }
+
+    @Subscribe
+    private void signUp(SignUpEvent event) {
+        SignUpDTO data = event.getEventData();
+        try {
+            userService.signUp(event.getEventData(), RoleEnum.USER);
+            login(new LoginEvent(this, new LoginDTO(data.getUsername(), data.getPassword())));
+            notifySuccess("Account Creation",
+                    String.format("Account \"%s\" successfully created", loggedInUserName()));
+        } catch (Exception e) {
+            event.getBinder().getField("password").clear();
+            event.getBinder().getField("confirmPassword").clear();
+            throw e;
+        }
+    }
+
+    @Subscribe
+    private void logout(LogoutEvent event) {
+        getSession().close();
+        VaadinService.getCurrentRequest().getWrappedSession().invalidate();
+        getPage().reload();
+    }
+
+    private void applyUserPreferences(){
+        UserPreferences prefs = VaadinSessionUtils.getAttribute(UserPreferences.class);
+        setTheme(prefs.getThemeName());
+        if (prefs.getUiNotifications())
+            notifier.subscribe(uiListener);
+    }
+
+    private void initUserPreferences(){
+        UserPreferences preferences = userPreferencesDao.fetchOneByUserId(SecurityUtils.getIdentityUserPrincipal().getId());
+        VaadinSessionUtils.setAttribute(UserPreferences.class, preferences);
+        applyUserPreferences();
     }
 
     @Override
@@ -119,47 +154,6 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
     public void sessionDestroy(SessionDestroyEvent event) {
         userPreferencesDao.update(VaadinSessionUtils.getAttribute(UserPreferences.class));
         log.debug("Session destroyed, {}", event.getSession());
-    }
-
-    @Subscribe
-    private void login(LoginEvent event) {
-        try {
-            userService.authenticate(event.getEventData());
-            VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
-            UserPreferences preferences = userPreferencesDao.fetchOneByUserId(SecurityUtils.getIdentityUserPrincipal().getId());
-            VaadinSessionUtils.setAttribute(UserPreferences.class, preferences);
-            if(preferences.getMailNotifications())
-                notifier.subscribe(mailListener);
-            if(preferences.getUiNotifications())
-                notifier.subscribe(uiListener);
-            setTheme(preferences.getThemeName());
-            getNavigator().navigateTo(RatesView.NAME);
-        } catch (Exception e) {
-            event.getBinder().clear();
-            throw e;
-        }
-    }
-
-    @Subscribe
-    private void logout(LogoutEvent event) {
-        getSession().close();
-        VaadinService.getCurrentRequest().getWrappedSession().invalidate();
-        getPage().reload();
-    }
-
-    @Subscribe
-    private void signUp(SignUpEvent event) {
-        SignUpDTO data = event.getEventData();
-        try {
-            userService.signUp(event.getEventData(), RoleEnum.USER);
-            login(new LoginEvent(this, new LoginDTO(data.getUsername(), data.getPassword())));
-            notifySuccess("Account Creation",
-                    String.format("Account \"%s\" successfully created", loggedInUserName()));
-        } catch (Exception e) {
-            event.getBinder().getField("password").clear();
-            event.getBinder().getField("confirmPassword").clear();
-            throw e;
-        }
     }
 
     @WebServlet(urlPatterns = "/*", name = "vaadinServlet", asyncSupported = true)

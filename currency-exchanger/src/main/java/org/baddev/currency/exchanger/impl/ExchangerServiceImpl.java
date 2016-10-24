@@ -1,8 +1,8 @@
 package org.baddev.currency.exchanger.impl;
 
+import org.baddev.currency.core.action.ExchangeAction;
+import org.baddev.currency.core.api.ExchangerService;
 import org.baddev.currency.core.util.RoleEnum;
-import org.baddev.currency.exchanger.ExchangeAction;
-import org.baddev.currency.exchanger.ExchangerService;
 import org.baddev.currency.jooq.schema.Tables;
 import org.baddev.currency.jooq.schema.tables.daos.ExchangeOperationDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;

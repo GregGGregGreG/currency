@@ -7,6 +7,12 @@
 
     <context:component-scan base-package="org.baddev.currency.mail"/>
 
+    <bean id="mailer" class="org.baddev.currency.mail.Mailer">
+        <property name="pool" ref="mailerPool"/>
+        <property name="sender" ref="mailSender"/>
+        <property name="template" ref="templateMessage"/>
+    </bean>
+
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
         <property name="host" value="${mail.host}" />
         <property name="port" value="${mail.port}" />

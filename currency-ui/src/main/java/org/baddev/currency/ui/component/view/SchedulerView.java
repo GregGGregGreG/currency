@@ -14,16 +14,16 @@ import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import net.redhogs.cronparser.CronExpressionDescriptor;
 import net.redhogs.cronparser.Options;
+import org.baddev.currency.core.api.ExchangeRateService;
+import org.baddev.currency.core.api.ExchangeTaskService;
+import org.baddev.currency.core.exception.RatesNotFoundException;
+import org.baddev.currency.core.task.NotifiableExchangeTask;
 import org.baddev.currency.core.util.RoleEnum;
-import org.baddev.currency.fetcher.exception.RatesNotFoundException;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
-import org.baddev.currency.fetcher.service.ExchangeRateService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
-import org.baddev.currency.scheduler.exchange.service.ExchangeTaskService;
-import org.baddev.currency.scheduler.exchange.task.NotifiableExchangeTask;
 import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
@@ -34,6 +34,7 @@ import org.baddev.currency.ui.util.Navigator;
 import org.baddev.currency.ui.validation.CronValidator;
 import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.support.CronTrigger;
 
 import javax.annotation.security.DeclareRoles;
 import java.text.ParseException;
@@ -52,6 +53,7 @@ import static org.baddev.currency.ui.util.UIUtils.toggleEnabled;
 public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
 
     public  static final String NAME           = "scheduler";
+
     private static final String P_GEN_EXEC_BTN = "execution";
     private static final String P_GEN_MNG_BTN  = "managing";
     private static final String P_GEN_RMV_BTN  = "removal";
@@ -87,7 +89,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
             footer.getCell(P_GEN_RMV_BTN).setHtml("<b>Total: " + grid.getContainerDataSource().size() + "</b>");
             footer.getCell(P_ACTIVE).setHtml("<b>Active: " +
-                    taskService.getActiveCountByUser(SecurityUtils.getIdentityUserPrincipal().getId()) + "</b>");
+                    taskService.getActiveCount() + "</b>");
         });
 
         addGeneratedButton(P_GEN_EXEC_BTN, "Execute", e -> {
@@ -99,10 +101,10 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
                 event -> {
                     ExchangeTask taskData = (ExchangeTask) event.getItemId();
                     if (!taskData.getActive()) {
-                        taskService.schedule(createTask(taskData));
+                        taskService.schedule(createTask(taskData), new CronTrigger(taskData.getCron()));
                         log.debug("Exchange task {} has been scheduled", taskData.getId());
                     } else {
-                        taskService.cancel(taskData.getId(), false);
+                        taskService.terminate(taskData.getId());
                         log.debug("Exchange task {} has been canceled", taskData.getId());
                     }
                     refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
@@ -111,7 +113,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         );
 
         addGeneratedButton(P_GEN_RMV_BTN, "Remove", e -> {
-            taskService.cancel(((ExchangeTask) e.getItemId()).getId(), true);
+            taskService.delete(((ExchangeTask) e.getItemId()).getId());
             grid.getContainerDataSource().removeItem(e.getItemId());
             log.debug("Exchange task {} was removed", ((ExchangeTask) e.getItemId()).getId());
         });
@@ -241,7 +243,9 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
             taskData.setAddedDatetime(LocalDateTime.now());
             taskData.setAmount((double) amountF.getConvertedValue());
             taskData.setCron(cronF.getValue());
-            taskService.schedule(createTask(taskData));
+            taskData.setActive(false);
+            IExchangeTask saved = taskService.saveReturning(taskData);
+            taskService.schedule(createTask(saved), new CronTrigger(taskData.getCron()));
             refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                     P_ID, SortDirection.DESCENDING);
             resetInputs();

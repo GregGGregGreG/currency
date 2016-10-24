@@ -6,7 +6,7 @@ import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.event.Notifier;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
-import org.baddev.currency.mail.MailExchangeCompletionListener;
+import org.baddev.currency.mail.listener.MailExchangeCompletionListener;
 import org.baddev.currency.ui.CurrencyUI;
 import org.baddev.currency.ui.listener.UIExchangeCompletionListener;
 import org.baddev.currency.ui.util.Theme;

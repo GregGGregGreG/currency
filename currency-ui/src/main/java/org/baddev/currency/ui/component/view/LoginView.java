@@ -6,7 +6,7 @@ import com.vaadin.server.FontAwesome;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.security.dto.LoginDTO;
+import org.baddev.currency.core.dto.LoginDTO;
 import org.baddev.currency.ui.component.view.base.AbstractFormView;
 import org.baddev.currency.ui.exception.WrappedUIException;
 import org.baddev.currency.ui.security.event.LoginEvent;

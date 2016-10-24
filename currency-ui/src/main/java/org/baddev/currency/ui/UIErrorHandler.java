@@ -18,7 +18,7 @@ public class UIErrorHandler extends SecurityErrorHandler {
         if (!handled) {
             if (e instanceof WrappedUIException) {
                 if (e.getCause() instanceof FieldGroup.CommitException) {
-                    log.warn(e.getMessage(), e);
+                    log.warn("Failed to submit form", e.getMessage());
                     NotificationUtils.notifyWarn("Submit Error",
                             "Some fields contain errors. Check them and try again");
                 } else {
@@ -28,11 +28,11 @@ public class UIErrorHandler extends SecurityErrorHandler {
                 return true;
             }
         }
-        postHandle(e);
+        maybeShowUINotification(e);
         return handled;
     }
 
-    protected void postHandle(Exception e) {
+    protected void maybeShowUINotification(Exception e) {
         if (e instanceof ServiceException) {
             NotificationUtils.notifyFailure("Service Error", e.getMessage());
         } else if (e instanceof AuthenticationException) {

@@ -1,8 +1,8 @@
 package org.baddev.currency.ui.security.event;
 
 import com.vaadin.data.fieldgroup.FieldGroup;
+import org.baddev.currency.core.dto.SignUpDTO;
 import org.baddev.currency.core.event.BaseNotificationEvent;
-import org.baddev.currency.security.dto.SignUpDTO;
 
 /**
  * Created by IPotapchuk on 6/30/2016.

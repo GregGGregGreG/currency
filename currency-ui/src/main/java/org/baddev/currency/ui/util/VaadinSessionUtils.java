@@ -2,6 +2,8 @@ package org.baddev.currency.ui.util;
 
 import com.vaadin.server.VaadinSession;
 
+import java.util.function.Consumer;
+
 /**
  * Created by IPotapchuk on 7/1/2016.
  */
@@ -18,14 +20,18 @@ public final class VaadinSessionUtils {
     }
 
     public static Object getAttribute(String name) {
+        getSession().lock();
         Object attr = getSession().getAttribute(name);
+        getSession().unlock();
         if (attr == null)
             throw new IllegalArgumentException("Can't find required session attribute: " + name);
         return attr;
     }
 
     public static <T> T getAttribute(Class<T> clazz) {
+        getSession().lock();
         T attr = getSession().getAttribute(clazz);
+        getSession().unlock();
         if (attr == null)
             throw new IllegalArgumentException("Can't find required session attribute: " + clazz.getName());
         return attr;
@@ -50,7 +56,17 @@ public final class VaadinSessionUtils {
     }
 
     public static <T> void setAttribute(Class<T> type, T value){
+        getSession().lock();
         getSession().setAttribute(type, value);
+        getSession().unlock();
+    }
+
+    public static <T> void alterAttribute(Class<T> clazz, Consumer<T> attrConsumer){
+        getSession().lock();
+        T attr = getSession().getAttribute(clazz);
+        attrConsumer.accept(attr);
+        getSession().setAttribute(clazz, attr);
+        getSession().unlock();
     }
 
 }

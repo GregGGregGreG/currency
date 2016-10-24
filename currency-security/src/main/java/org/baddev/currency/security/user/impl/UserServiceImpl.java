@@ -1,5 +1,11 @@
 package org.baddev.currency.security.user.impl;
 
+import org.baddev.currency.core.api.UserService;
+import org.baddev.currency.core.dto.LoginDTO;
+import org.baddev.currency.core.dto.PasswordChangeDTO;
+import org.baddev.currency.core.dto.SignUpDTO;
+import org.baddev.currency.core.dto.UserPasswordChangeDTO;
+import org.baddev.currency.core.exception.*;
 import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
@@ -14,12 +20,6 @@ import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
 import org.baddev.currency.jooq.schema.tables.records.UserDetailsRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRoleRecord;
-import org.baddev.currency.security.dto.LoginDTO;
-import org.baddev.currency.security.dto.PasswordChangeDTO;
-import org.baddev.currency.security.dto.SignUpDTO;
-import org.baddev.currency.security.dto.UserPasswordChangeDTO;
-import org.baddev.currency.security.exception.*;
-import org.baddev.currency.security.user.UserService;
 import org.baddev.currency.security.utils.SecurityUtils;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void assignToRoles(Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException{
+    public void assignToRoles(Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException {
         validateRoles(userId, roleIds);
         List<Number> assigned = dsl.selectFrom(USER_ROLE)
                 .where(USER_ROLE.USER_ID.eq(userId))

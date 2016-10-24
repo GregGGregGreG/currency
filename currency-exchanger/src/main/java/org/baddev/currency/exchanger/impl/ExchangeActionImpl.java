@@ -1,6 +1,6 @@
 package org.baddev.currency.exchanger.impl;
 
-import org.baddev.currency.exchanger.ExchangeAction;
+import org.baddev.currency.core.action.ExchangeAction;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;

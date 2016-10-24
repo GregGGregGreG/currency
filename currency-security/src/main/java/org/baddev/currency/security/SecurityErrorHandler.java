@@ -13,10 +13,8 @@ public class SecurityErrorHandler extends CommonErrorHandler {
         boolean handled = super.handle(e);
         if (!handled) {
             if (e instanceof AuthenticationException) {
-                log.info(e.getMessage(), e);
+                log.info("Failed to authenticate", e.getMessage());
                 return true;
-            } else if (e instanceof SecurityException) {
-                log.info(e.getMessage(), e);
             }
         }
         return handled;

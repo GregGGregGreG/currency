@@ -1,13 +1,13 @@
 package org.baddev.currency.core;
 
-import org.baddev.currency.core.operation.DeleteOperation;
-import org.baddev.currency.core.operation.SaveOperation;
-import org.baddev.currency.core.operation.UpdateOperation;
-import org.baddev.currency.core.operation.UserRestrictedFindOperation;
+import org.baddev.currency.core.action.DeleteAction;
+import org.baddev.currency.core.action.SaveAction;
+import org.baddev.currency.core.action.UpdateAction;
+import org.baddev.currency.core.action.UserRestrictedFindAction;
 
 /**
  * Created by IPotapchuk on 9/16/2016.
  */
-public interface CRUDService<T, ID> extends SaveOperation<T>, UserRestrictedFindOperation<T, ID>, UpdateOperation<T>, DeleteOperation<ID> {
+public interface CRUDService<T, ID> extends SaveAction<T>, UserRestrictedFindAction<T, ID>, UpdateAction<T>, DeleteAction<ID> {
     T saveReturning(T entity);
 }

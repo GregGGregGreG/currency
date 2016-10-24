@@ -1,7 +1,7 @@
 package org.baddev.currency.fetcher.nbu;
 
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.baddev.currency.fetcher.ExchangeRateFetcher;
+import org.baddev.currency.core.ExchangeRateFetcher;
 import org.baddev.currency.fetcher.ExtendedExchangeRateDao;
 import org.baddev.currency.fetcher.nbu.entity.NBUExchange;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;

@@ -18,24 +18,26 @@ public class UIExchangeCompletionListener implements NotificationListener<Exchan
     private static final long serialVersionUID = -4068324837833281874L;
 
     private Iso4217CcyService ccyService;
-
-    public UIExchangeCompletionListener() {
-    }
+    private UI ui;
 
     public UIExchangeCompletionListener(Iso4217CcyService ccyService) {
         this.ccyService = ccyService;
     }
 
-    @Required
-    public UIExchangeCompletionListener setCcyService(Iso4217CcyService ccyService) {
+    public UIExchangeCompletionListener(Iso4217CcyService ccyService, UI ui) {
         this.ccyService = ccyService;
-        return this;
+        this.ui = ui;
+    }
+
+    @Required
+    public void setUI(UI ui) {
+        this.ui = ui;
     }
 
     @Override
     public void notificationReceived(ExchangeCompletionEvent e) {
         IExchangeOperation operation = e.getEventData();
-        UI.getCurrent().access(() -> {
+        ui.access(() -> {
             String fromCcyNames = FormatUtils.joinByComma(
                     ccyService.findCcyNamesByCode(operation.getFromCcy())
             );
@@ -50,5 +52,21 @@ public class UIExchangeCompletionListener implements NotificationListener<Exchan
                     toCcyNames,
                     operation.getToCcy()));
         });
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UIExchangeCompletionListener)) return false;
+
+        UIExchangeCompletionListener that = (UIExchangeCompletionListener) o;
+
+        return ui != null ? ui.equals(that.ui) : that.ui == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return ui != null ? ui.hashCode() : 0;
     }
 }
