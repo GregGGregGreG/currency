@@ -2,6 +2,7 @@ package org.baddev.currency.security.utils;
 
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.security.user.IdentityUser;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -58,6 +59,10 @@ public final class SecurityUtils {
 
     public static <T extends IUserDetails> T getUserDetails() {
         return safeAuth().flatMap(auth -> Optional.of((T) auth.getDetails())).orElseThrow(notAuthorized());
+    }
+
+    public static void setUserDetails(Object details){
+        safeAuth().map(a -> ((AbstractAuthenticationToken)a)).ifPresent(a -> a.setDetails(details));
     }
 
     public static String loggedInUserName() {

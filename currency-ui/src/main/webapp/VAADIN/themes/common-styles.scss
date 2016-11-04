@@ -1,7 +1,10 @@
 $v-margin-size: 10px;
 $v-grid-cell-focused-border: none;
 
+@import "valo/valo";
+
 @mixin common-styles {
+  @include valo;
 
   .v-menubar {
     border-radius: 0;
@@ -26,6 +29,31 @@ $v-grid-cell-focused-border: none;
   .v-menubar:focus:after {
     border-color:transparent;
     box-shadow:none;
+  }
+
+  .v-menubar-menuitem-push-right {
+    float: right;
+    border-left-width: 1px !important;
+    border-radius: 0 !important;
+  }
+
+  .v-menubar-menuitem-title {
+    cursor: default !important;
+    font-weight: bold !important;
+    opacity: 0.75 !important;
+  }
+
+  .v-menubar-menuitem-nav {
+    border-right: none !important;
+  }
+
+  .v-grid-cell {
+    padding:{
+      top: 2px;
+      bottom: 2px;
+      left: 5px;
+      right: 5px;
+    }
   }
 
 }

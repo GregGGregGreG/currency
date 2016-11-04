@@ -4,7 +4,7 @@ import com.vaadin.spring.annotation.SpringComponent;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
-import org.baddev.currency.core.event.Notifier;
+import org.baddev.currency.core.event.EventPublisher;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
 import org.baddev.currency.mail.listener.MailExchangeCompletionListener;
 import org.baddev.currency.ui.CurrencyUI;
@@ -28,12 +28,9 @@ public class SettingsWindow extends Window {
 
     private final TabSheet tabSheet = new TabSheet();
 
-    @Autowired
-    private Notifier notifier;
-    @Autowired
-    private MailExchangeCompletionListener mailListener;
-    @Autowired
-    private UIExchangeCompletionListener uiListener;
+    @Autowired private EventPublisher                 eventPublisher;
+    @Autowired private MailExchangeCompletionListener mailListener;
+    @Autowired private UIExchangeCompletionListener   uiListener;
 
     @PostConstruct
     private void init() {
@@ -47,14 +44,17 @@ public class SettingsWindow extends Window {
         CheckBox mailNotifCb = new CheckBox("Mail on exchange task completion");
         mailNotifCb.addValueChangeListener(event -> {
             if(Boolean.TRUE.equals(event.getProperty().getValue())){
-                notifier.subscribe(mailListener);
-            } else notifier.unsubscribe(mailListener);
+                eventPublisher.subscribe(mailListener);
+            } else eventPublisher.unsubscribe(mailListener);
+            VaadinSessionUtils.getAttribute(UserPreferences.class).setMailNotifications((Boolean) event.getProperty().getValue());
         });
+
         CheckBox uiNotifCb = new CheckBox("UI notification on exchange task completion");
         uiNotifCb.addValueChangeListener(event -> {
             if(Boolean.TRUE.equals(event.getProperty().getValue())){
-                notifier.subscribe(uiListener);
-            } else notifier.unsubscribe(uiListener);
+                eventPublisher.subscribe(uiListener);
+            } else eventPublisher.unsubscribe(uiListener);
+            VaadinSessionUtils.getAttribute(UserPreferences.class).setUiNotifications((Boolean) event.getProperty().getValue());
         });
 
         tabSheet.addTab(createTab(uiNotifCb, mailNotifCb), "Notifications");

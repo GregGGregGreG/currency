@@ -1,6 +1,5 @@
 package org.baddev.currency.fetcher.iso4217.entity;
 
-import org.baddev.currency.core.MutableIdentity;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -12,7 +11,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * Created by Ilya on 15.04.2016.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BaseIsoCcyEntry implements MutableIdentity<Long> {
+public class BaseIsoCcyEntry {
 
     @XmlTransient
     private Long id;
@@ -36,12 +35,10 @@ public class BaseIsoCcyEntry implements MutableIdentity<Long> {
         setCcyNumber(builder.ccyNumber);
     }
 
-    @Override
     public Long getId() {
         return id;
     }
 
-    @Override
     public void setId(Long id) {
         this.id = id;
     }

@@ -13,11 +13,13 @@ public class DateToLocalDateConverter implements Converter<Date, LocalDate> {
 
     @Override
     public LocalDate convertToModel(Date value, Class<? extends LocalDate> targetType, Locale locale) throws ConversionException {
+        if (value == null) return null;
         return LocalDate.fromDateFields(value);
     }
 
     @Override
     public Date convertToPresentation(LocalDate value, Class<? extends Date> targetType, Locale locale) throws ConversionException {
+        if(value == null) return null;
         return value.toDate();
     }
 
@@ -30,5 +32,5 @@ public class DateToLocalDateConverter implements Converter<Date, LocalDate> {
     public Class<Date> getPresentationType() {
         return Date.class;
     }
-    
+
 }

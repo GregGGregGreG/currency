@@ -1,11 +1,8 @@
 package org.baddev.currency.ui.component.view;
 
-import com.vaadin.data.Container;
+import com.vaadin.data.util.GeneratedPropertyContainer;
 import com.vaadin.data.util.IndexedContainer;
-import com.vaadin.data.util.filter.Or;
-import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.validator.DateRangeValidator;
-import com.vaadin.event.FieldEvents;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.shared.ui.datefield.Resolution;
@@ -31,8 +28,10 @@ import javax.annotation.security.DeclareRoles;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 import static org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate.*;
+import static org.baddev.currency.ui.util.FormatUtils.joinByComma;
 import static org.baddev.currency.ui.util.UIUtils.toggleVisible;
 
 /**
@@ -42,7 +41,7 @@ import static org.baddev.currency.ui.util.UIUtils.toggleVisible;
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
 public class RatesView extends AbstractCcyGridView<IExchangeRate> {
 
-    public static final String NAME = "rates";
+    public  static final String NAME           = "rates";
     private static final String P_GEN_CCY_NAME = IsoEntityParam.CCY_NM.fieldName();
 
     @Value("${min_date_nbu}")
@@ -51,12 +50,9 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     private ComboBox       fetchOptCb = new ComboBox("Fetch:");
     private PopupDateField df         = new PopupDateField("Select Date:");
     private Button         fetchBtn   = new Button("Fetch");
-    private TextField      filter     = new TextField();
 
-    @Autowired
-    private Iso4217CcyService ccyService;
-    @Autowired
-    private ExchangeRateService rateService;
+    @Autowired private Iso4217CcyService   ccyService;
+    @Autowired private ExchangeRateService rateService;
 
     private interface FetchOption {
         String ALL = "All";
@@ -71,16 +67,8 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
 
     @Override
     protected void postInit(VerticalSpacedLayout rootLayout) {
-        Collection<? extends IExchangeRate> data = rateService.fetchCurrent();;
+        Collection<? extends IExchangeRate> data = rateService.fetchCurrent();
         setup(IExchangeRate.class, data, P_ID);
-
-        container().addItemSetChangeListener((Container.ItemSetChangeListener) event -> {
-            containerWrapper().addGeneratedProperty(P_GEN_CCY_NAME,
-                    new Iso4217PropertyValGen(IsoEntityParam.CCY_NM, IsoEntityParam.CCY,
-                            ccyService));
-        });
-
-        refresh(data, P_CCY);
 
         grid.setCellDescriptionGenerator(cell -> P_GEN_CCY_NAME.equals(cell.getPropertyId()) ? String.valueOf(cell.getValue()) : "");
 
@@ -95,14 +83,29 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
     }
 
     @Override
-    protected void filter(String text) {
-        super.filter(text);
-        if (!text.isEmpty()) {
-            containerWrapper().addContainerFilter(new SimpleStringFilter(P_GEN_CCY_NAME, text, true, false));
-            Or mergedOrs = new Or(container().getContainerFilters().stream().toArray(Container.Filter[]::new));
-            container().removeAllContainerFilters();
-            container().addContainerFilter(mergedOrs);
-        }
+    protected void setupGeneratedProperties(GeneratedPropertyContainer container) {
+        addGeneratedProperty(P_GEN_CCY_NAME,
+                new Iso4217PropertyValGen(IsoEntityParam.CCY_NM, IsoEntityParam.CCY, ccyService));
+    }
+
+    @Override
+    protected void postRefresh(Collection<? extends IExchangeRate> data) {
+        if (fetchOptCb.getValue().equals(FetchOption.ALL))
+            addRowFilter(new FilterConfig()
+                    .setPropId(P_EXCHANGE_DATE)
+                    .setKind(FilterKind.DATE)
+                    .setExactDateOrDateTime(true));
+        addRowFilter(new FilterConfig()
+                .setPropId(P_CCY)
+                .setKind(FilterKind.SELECT)
+                .setSelectOptions(data.stream().map(IExchangeRate::getCcy).collect(Collectors.toList())));
+        addRowFilter(new FilterConfig()
+                .setPropId(P_GEN_CCY_NAME)
+                .setKind(FilterKind.TEXT)
+                .setTextAutocomplete(true)
+                .setSelectOptions(data.stream()
+                        .map(er -> joinByComma(ccyService.findCcyNamesByCode(er.getCcy())))
+                        .collect(Collectors.toList())));
     }
 
     @Override
@@ -160,28 +163,27 @@ public class RatesView extends AbstractCcyGridView<IExchangeRate> {
         });
         fetchOptCb.setImmediate(true);
 
-        filter.setInputPrompt("Type to filter...");
-        filter.addTextChangeListener((FieldEvents.TextChangeListener) event -> {
-            filter(event.getText());
-        });
-
         Label space = new Label();
 
-        topBar.addComponents(fetchOptCb, df, fetchBtn, space, filter);
+        topBar.addComponents(fetchOptCb, df, fetchBtn, space);
         topBar.setExpandRatio(space, 1.0f);
 
         topBar.setComponentAlignment(fetchOptCb, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(df, Alignment.MIDDLE_LEFT);
         topBar.setComponentAlignment(fetchBtn, Alignment.BOTTOM_LEFT);
-        topBar.setComponentAlignment(filter, Alignment.BOTTOM_RIGHT);
         topBar.setImmediate(true);
         toggleVisible(false, df, fetchBtn);
     }
 
     @Override
-    public void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> Navigator.navigate(ExchangesView.NAME));
-        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> Navigator.navigate(SchedulerView.NAME));
+    public Collection<MenuBar.MenuItem> customizeMenuBar(MenuBar menuBar) {
+        return Arrays.asList(
+                menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> Navigator.navigate(ExchangesView.NAME)),
+                menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> Navigator.navigate(SchedulerView.NAME)));
     }
 
+    @Override
+    public String getNameCaption() {
+        return "Rates";
+    }
 }

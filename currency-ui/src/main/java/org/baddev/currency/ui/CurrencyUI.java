@@ -9,26 +9,28 @@ import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
 import org.baddev.currency.core.api.UserService;
-import org.baddev.currency.core.dto.LoginDTO;
+import org.baddev.currency.core.dto.SignInDTO;
 import org.baddev.currency.core.dto.SignUpDTO;
-import org.baddev.currency.core.event.Notifier;
+import org.baddev.currency.core.event.EventPublisher;
 import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.UserPreferencesDao;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
+import org.baddev.currency.mail.listener.MailExchangeCompletionListener;
 import org.baddev.currency.security.utils.SecurityUtils;
-import org.baddev.currency.ui.component.view.LoginView;
 import org.baddev.currency.ui.component.view.MainView;
 import org.baddev.currency.ui.component.view.RatesView;
+import org.baddev.currency.ui.component.view.SignInView;
 import org.baddev.currency.ui.listener.AppSessionInitListener;
 import org.baddev.currency.ui.listener.UIExchangeCompletionListener;
 import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
-import org.baddev.currency.ui.security.event.LoginEvent;
 import org.baddev.currency.ui.security.event.LogoutEvent;
+import org.baddev.currency.ui.security.event.SignInEvent;
 import org.baddev.currency.ui.security.event.SignUpEvent;
 import org.baddev.currency.ui.util.VaadinSessionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ContextLoaderListener;
 
@@ -47,16 +49,20 @@ import static org.baddev.currency.ui.util.NotificationUtils.notifySuccess;
 @Push(transport = Transport.WEBSOCKET_XHR)
 public class CurrencyUI extends UI implements SessionDestroyListener {
 
-    private static final long   serialVersionUID = 2223841791673821941L;
-    private static final Logger log              = LoggerFactory.getLogger(CurrencyUI.class);
+    private static final long serialVersionUID = 2223841791673821941L;
+    private static final Logger log = LoggerFactory.getLogger(CurrencyUI.class);
 
     @Autowired private EventBus                       bus;
     @Autowired private UserService                    userService;
     @Autowired private NavigatorFactory               navigatorFactory;
     @Autowired private MainView                       mainView;
-    @Autowired private Notifier                       notifier;
+    @Autowired private EventPublisher                 userEventPublisher;
     @Autowired private UserPreferencesDao             userPreferencesDao;
     @Autowired private UIExchangeCompletionListener   uiListener;
+    @Autowired private MailExchangeCompletionListener mailListener;
+
+    @Value("${app.title}")
+    private String pageTitle;
 
     public EventBus getEventBus() {
         return bus;
@@ -68,16 +74,15 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {
+        Page.getCurrent().setTitle(pageTitle);
         VaadinService.getCurrent().addSessionDestroyListener(this);
         setErrorHandler(new DefaultErrorHandler() {
             @Override
             public void error(com.vaadin.server.ErrorEvent event) {
-                boolean handled = false;
                 Throwable t = findRelevantThrowable(event.getThrowable());
                 if (t instanceof Exception) {
-                    handled = new UIErrorHandler().handle((Exception) t);
-                }
-                if (!handled) super.error(event);
+                    new UIErrorHandler().handle((Exception) t);
+                } else super.error(event);
             }
         });
         setContent(mainView);
@@ -86,11 +91,11 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
         if (isLoggedIn()) {
             applyUserPreferences();
             getNavigator().navigateTo(RatesView.NAME);
-        } else getNavigator().navigateTo(LoginView.NAME);
+        } else getNavigator().navigateTo(SignInView.NAME);
     }
 
     @Subscribe
-    private void login(LoginEvent event)  {
+    private void signIn(SignInEvent event) {
         try {
             userService.authenticate(event.getEventData());
             VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
@@ -107,7 +112,7 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
         SignUpDTO data = event.getEventData();
         try {
             userService.signUp(event.getEventData(), RoleEnum.USER);
-            login(new LoginEvent(this, new LoginDTO(data.getUsername(), data.getPassword())));
+            signIn(new SignInEvent(this, new SignInDTO(data.getUsername(), data.getPassword())));
             notifySuccess("Account Creation",
                     String.format("Account \"%s\" successfully created", loggedInUserName()));
         } catch (Exception e) {
@@ -124,14 +129,18 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
         getPage().reload();
     }
 
-    private void applyUserPreferences(){
+    private void applyUserPreferences() {
         UserPreferences prefs = VaadinSessionUtils.getAttribute(UserPreferences.class);
         setTheme(prefs.getThemeName());
         if (prefs.getUiNotifications())
-            notifier.subscribe(uiListener);
+            userEventPublisher.subscribe(uiListener);
+        if(prefs.getMailNotifications()) {
+            mailListener.setEmail(SecurityUtils.getUserDetails().getEmail());
+            userEventPublisher.subscribe(mailListener);
+        }
     }
 
-    private void initUserPreferences(){
+    private void initUserPreferences() {
         UserPreferences preferences = userPreferencesDao.fetchOneByUserId(SecurityUtils.getIdentityUserPrincipal().getId());
         VaadinSessionUtils.setAttribute(UserPreferences.class, preferences);
         applyUserPreferences();
@@ -146,7 +155,7 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
     @Override
     public void detach() {
         bus.unregister(this);
-        notifier.unsubscribe(uiListener);
+        userEventPublisher.unsubscribe(uiListener);
         super.detach();
     }
 

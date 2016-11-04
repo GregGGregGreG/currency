@@ -15,6 +15,8 @@ import org.baddev.currency.ui.util.EventBus;
 import org.baddev.currency.ui.util.Navigator;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -91,7 +93,12 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
     }
 
     @Override
-    public void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Login", FontAwesome.SIGN_IN, selectedItem -> Navigator.navigate(LoginView.NAME));
+    public Collection<MenuBar.MenuItem> customizeMenuBar(MenuBar menuBar) {
+        return Collections.singletonList(menuBar.addItem("Sign In", FontAwesome.SIGN_IN, selectedItem -> Navigator.navigate(SignInView.NAME)));
+    }
+
+    @Override
+    public String getNameCaption() {
+        return "Sign Up";
     }
 }

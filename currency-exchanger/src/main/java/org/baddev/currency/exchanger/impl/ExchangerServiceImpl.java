@@ -23,7 +23,7 @@ import java.util.Optional;
 /**
  * Created by IPotapchuk on 3/14/2016.
  */
-@Service("exchanger")
+@Service
 public class ExchangerServiceImpl implements ExchangerService {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangerServiceImpl.class);
@@ -39,17 +39,17 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     @Override
     @Transactional
-    public Optional<IExchangeOperation> exchange(IExchangeOperation operation,
+    public IExchangeOperation exchange(IExchangeOperation operation,
                                                  Collection<? extends IExchangeRate> rates) {
-        Optional<IExchangeOperation> maybeResult = exchangeAction.exchange(operation, rates);
-        return (maybeResult.isPresent()) ?
-                Optional.of(DSL.using(exchangeDao.configuration())
-                        .insertInto(Tables.EXCHANGE_OPERATION)
-                        .set(maybeResult.get().into(new ExchangeOperationRecord()))
-                        .returning()
-                        .fetchOne()
-                        .into(ExchangeOperation.class))
-                : maybeResult;
+        IExchangeOperation exchanged = exchangeAction.exchange(operation, rates);
+        IExchangeOperation saved = DSL.using(exchangeDao.configuration())
+                .insertInto(Tables.EXCHANGE_OPERATION)
+                .set(exchanged.into(new ExchangeOperationRecord()))
+                .returning()
+                .fetchOne()
+                .into(ExchangeOperation.class);
+        log.info("Exchanged amount: [{}]{}, userId=[{}]", saved.getToAmount(), saved.getToCcy(), saved.getUserId());
+        return saved;
     }
 
     @Override

@@ -5,17 +5,17 @@ import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.baddev.currency.core.meta.Prod;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyEntries;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyEntry;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntries;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.*;
+import org.springframework.core.env.Environment;
 
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
@@ -29,43 +29,41 @@ import static org.baddev.currency.core.util.Safe.trySupply;
  */
 @Configuration
 @ComponentScan("org.baddev.currency.fetcher")
-@EnableAspectJAutoProxy
+@PropertySources({
+        @PropertySource("classpath:api_sources.properties"),
+        @PropertySource("classpath:fetcher_policy.properties"),
+        @PropertySource("classpath:proxy.properties")
+})
 public class FetcherConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FetcherConfig.class);
 
-    @Value("${source_nbu}")               String nbuSourceURI;
-    @Value("${proxy.enabled}")                  String proxyEnabled;
-    @Value("${proxy.host}")                   String proxyHost;
-    @Value("${proxy.port}")                     String proxyPort;
-    @Value("${source_iso_cur}")           String isoCurSourceURI;
-    @Value("${source_iso_hist}")          String isoHistSourceURI;
-    @Value("${policy.receiveTimeout}")    String receiveTimeount;
-    @Value("${policy.connectionTimeout}") String connectionTimeout;
-    @Value("${policy.chunking}")          String chunking;
-    @Value("${policy.logging.in}")        String loggingIn;
-    @Value("${policy.logging.out}")       String loggingOut;
+    @Autowired
+    private Environment env;
 
     @Bean(name = "NBUClient")
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public WebClient nbuClient() {
-        WebClient client = WebClient.create(nbuSourceURI);
+        WebClient client = WebClient.create(env.getProperty("source_nbu"));
         configureClient(client);
         return client;
     }
 
     @Bean(name = "IsoCurCcys")
+    @Prod
     public List<IsoCcyEntry> isoCurCcyEntryList() {
         return trySupply(() -> {
-            WebClient client = WebClient.create(isoCurSourceURI);
+            WebClient client = WebClient.create(env.getProperty("source_iso_cur"));
             configureClient(client);
             return client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyEntries.class);
         }).map(IsoCcyEntries::getEntries).orElse(new ArrayList<>());
     }
 
     @Bean(name = "IsoHistCcys")
+    @Prod
     public List<IsoCcyHistEntry> isoCcyHistEntryList() {
         return trySupply(() -> {
-            WebClient client = WebClient.create(isoHistSourceURI);
+            WebClient client = WebClient.create(env.getProperty("source_iso_hist"));
             configureClient(client);
             return client.accept(MediaType.TEXT_XML_TYPE).get(IsoCcyHistEntries.class);
         }).map(IsoCcyHistEntries::getEntries).orElse(new ArrayList<>());
@@ -75,32 +73,27 @@ public class FetcherConfig {
         HTTPConduit conduit = (HTTPConduit) WebClient.getConfig(client).getConduit();
 
         HTTPClientPolicy policy = conduit.getClient();
-        policy.setReceiveTimeout(Integer.parseInt(receiveTimeount));
-        policy.setAllowChunking(Boolean.valueOf(chunking));
-        policy.setConnectionTimeout(Integer.parseInt(connectionTimeout));
+        policy.setReceiveTimeout(env.getProperty("policy.receiveTimeout", Integer.class));
+        policy.setAllowChunking(env.getProperty("policy.chunking", Boolean.class));
+        policy.setConnectionTimeout(env.getProperty("policy.connectionTimeout", Integer.class));
 
-        if(Boolean.TRUE.equals(Boolean.valueOf(loggingIn))) {
+        if(Boolean.TRUE.equals(env.getProperty("policy.logging.in", Boolean.class))) {
             WebClient.getConfig(client).setInInterceptors(
                     Collections.singletonList(new LoggingInInterceptor())
             );
         }
 
-        if(Boolean.TRUE.equals(Boolean.valueOf(loggingOut))){
+        if(Boolean.TRUE.equals(env.getProperty("policy.logging.out", Boolean.class))){
             WebClient.getConfig(client).setOutInterceptors(
                     Collections.singletonList(new LoggingOutInterceptor())
             );
         }
 
-        if (Boolean.TRUE.equals(Boolean.valueOf(proxyEnabled))) {
-            policy.setProxyServer(proxyHost);
-            policy.setProxyServerPort(Integer.parseInt(proxyPort));
-            log.info("Using proxy mode: {}:{}", proxyHost, proxyPort);
+        if (Boolean.TRUE.equals(env.getProperty("proxy.enabled", Boolean.class))) {
+            policy.setProxyServer(env.getProperty("proxy.host"));
+            policy.setProxyServerPort(env.getProperty("proxy.port", Integer.class));
+            log.info("Using proxy mode: {}:{}", env.getProperty("proxy.host"), env.getProperty("proxy.port"));
         }
-    }
-
-    @Bean(name = "WebClientAspect")
-    public WebClientAspect aspect() {
-        return new WebClientAspect(nbuClient());
     }
 
 }

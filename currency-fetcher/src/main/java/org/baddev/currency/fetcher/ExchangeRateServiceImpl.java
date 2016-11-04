@@ -1,6 +1,6 @@
 package org.baddev.currency.fetcher;
 
-import org.baddev.currency.core.ExchangeRateFetcher;
+import org.baddev.currency.core.api.ExchangeRateFetcher;
 import org.baddev.currency.core.api.ExchangeRateService;
 import org.baddev.currency.core.exception.RatesNotFoundException;
 import org.baddev.currency.core.util.RoleEnum;
@@ -65,7 +65,7 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
             if (fetched.isEmpty()) throw ratesNotFound(null);
             return fetched;
         } catch (RatesNotFoundException e) {
-            throw e; //throw to a higher level
+            throw e;
         } catch (Exception e) {
             throw ratesNotFound(e);
         }
@@ -83,7 +83,7 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
             if (fetched.isEmpty()) throw ratesNotFound(null);
             return fetched;
         } catch (RatesNotFoundException e) {
-            throw e; //throw to a higher level
+            throw e;
         } catch (Exception e) {
             throw ratesNotFound(e);
         }

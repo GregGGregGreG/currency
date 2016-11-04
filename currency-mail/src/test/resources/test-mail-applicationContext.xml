@@ -12,7 +12,7 @@
         <property name="port" value="${mail.port}" />
     </bean>
 
-    <bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage">
+    <bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage" scope="prototype">
         <property name="from" value="${mail.message.from}"/>
         <property name="replyTo" value="noreply"/>
     </bean>

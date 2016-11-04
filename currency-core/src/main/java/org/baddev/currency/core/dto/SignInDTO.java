@@ -5,17 +5,17 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * Created by IPotapchuk on 6/29/2016.
  */
-public class LoginDTO {
+public class SignInDTO {
 
     @NotEmpty(message = "must be filled")
     private String username = "";
     @NotEmpty(message = "must be filled")
     private String password = "";
 
-    public LoginDTO() {
+    public SignInDTO() {
     }
 
-    public LoginDTO(String username, String password) {
+    public SignInDTO(String username, String password) {
         this.username = username;
         this.password = password;
     }

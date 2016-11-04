@@ -1,22 +1,22 @@
 package org.baddev.currency.core.task;
 
-import org.baddev.currency.core.event.NotificationEvent;
-import org.baddev.currency.core.event.Notifier;
+import org.baddev.currency.core.event.BaseDataEvent;
+import org.baddev.currency.core.event.EventPublisher;
 
 /**
  * Created by IPotapchuk on 10/7/2016.
  */
-public abstract class AbstractCallbackTask<T extends NotificationEvent> extends AbstractTask {
+public abstract class AbstractCallbackTask<T extends BaseDataEvent> extends AbstractTask {
 
-    private Notifier notifier;
+    private volatile EventPublisher eventPublisher;
     private volatile boolean notified;
 
-    public void setNotifier(Notifier notifier) {
-        this.notifier = notifier;
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
-    public Notifier getNotifier() {
-        return notifier;
+    public EventPublisher getEventPublisher() {
+        return eventPublisher;
     }
 
     @Override
@@ -27,8 +27,8 @@ public abstract class AbstractCallbackTask<T extends NotificationEvent> extends 
     protected abstract T beforeCallback();
 
     protected void callback(T event) {
-        if (notifier != null && !notifier.getSubscribers().isEmpty()) {
-            notifier.doNotify(event);
+        if (eventPublisher != null && !eventPublisher.getSubscribers().isEmpty()) {
+            eventPublisher.publish(event);
             notified = true;
         }
     }

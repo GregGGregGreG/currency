@@ -13,6 +13,9 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Created by IPotapchuk on 5/16/2016.
  */
@@ -51,7 +54,10 @@ public abstract class AbstractCcyView extends VerticalLayout implements View, In
     protected void postInit(VerticalSpacedLayout rootLayout) {
     }
 
-    public void customizeMenuBar(MenuBar menuBar) {
+    public abstract String getNameCaption();
+
+    public Collection<MenuBar.MenuItem> customizeMenuBar(MenuBar menuBar) {
+        return Collections.emptyList();
     }
 
     @Override

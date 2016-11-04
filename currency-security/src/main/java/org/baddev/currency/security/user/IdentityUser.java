@@ -1,6 +1,5 @@
 package org.baddev.currency.security.user;
 
-import org.baddev.currency.core.Identity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
@@ -9,7 +8,7 @@ import java.util.Collection;
 /**
  * Created by IPotapchuk on 9/13/2016.
  */
-public class IdentityUser extends User implements Identity<Long> {
+public class IdentityUser extends User {
 
     private Long id;
 
@@ -23,7 +22,6 @@ public class IdentityUser extends User implements Identity<Long> {
         this.id = id;
     }
 
-    @Override
     public Long getId() {
         return id;
     }

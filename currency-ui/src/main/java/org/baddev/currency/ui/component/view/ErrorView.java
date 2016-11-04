@@ -17,4 +17,8 @@ public class ErrorView extends AbstractErrorView {
         super("Requested view with name <b>%s</b> was not found");
     }
 
+    @Override
+    public String getNameCaption() {
+        return "Error";
+    }
 }

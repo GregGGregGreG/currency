@@ -1,8 +1,9 @@
 package org.baddev.currency.scheduler;
 
-import org.baddev.currency.core.TaskManager;
 import org.baddev.currency.core.api.ExchangeTaskService;
+import org.baddev.currency.core.exception.ServiceException;
 import org.baddev.currency.core.task.AbstractTask;
+import org.baddev.currency.core.task.TaskManager;
 import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.ExchangeTaskDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
 
@@ -27,43 +29,10 @@ import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
 @Service
 public class ExchangeTaskServiceImpl implements ExchangeTaskService {
 
-    @Autowired private ExchangeTaskDao    taskDao;
-    @Autowired private TaskManager        taskManager;
-//    @Autowired private UserDetailsDao     userDetailsDao;
-//    @Autowired private UserPreferencesDao userPreferencesDao;
-//    @Autowired private ApplicationContext ctx;
-
-//    @PostConstruct
-//    private void scheduleOnStart() {
-//        Map<Long, UserPreferences> userPrefsCache = new HashMap<>();
-//        Set<UserDetails> userDetailsCache = new HashSet<>();
-//        taskDao.findAll().stream().filter(ExchangeTask::getActive).forEach(t -> {
-//            NotifiableExchangeTask task = ctx.getBean(NotifiableExchangeTask.class);
-//            task.setTaskData(t);
-//
-//            UserPreferences prefs;
-//            if (userPrefsCache.containsKey(t.getUserId())) {
-//                prefs = userPrefsCache.get(t.getUserId());
-//            } else {
-//                prefs = userPreferencesDao.fetchOneByUserId(t.getUserId());
-//                userPrefsCache.put(t.getUserId(), prefs);
-//            }
-//
-//            UserDetails details = userDetailsCache.stream()
-//                    .filter(ud -> ud.getUserId().equals(t.getUserId()))
-//                    .findFirst()
-//                    .orElseGet(() -> userDetailsDao.fetchOneByUserId(t.getUserId()));
-//            userDetailsCache.add(details);
-//
-//            if (prefs.getMailNotifications()) {
-//                MailExchangeCompletionListener mailer = ctx.getBean(MailExchangeCompletionListener.class);
-//                mailer.setEmail(details.getEmail());
-//                task.getNotifier().subscribe(mailer);
-//            }
-//
-//            taskManager.schedule(task, new CronTrigger(t.getCron()));
-//        });
-//    }
+    @Autowired
+    private ExchangeTaskDao taskDao;
+    @Autowired
+    private TaskManager taskManager;
 
     @Override
     @Transactional(readOnly = true)
@@ -96,14 +65,14 @@ public class ExchangeTaskServiceImpl implements ExchangeTaskService {
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void save(IExchangeTask exchangeTask) {
+    public void create(IExchangeTask exchangeTask) {
         taskDao.insert(exchangeTask.into(new ExchangeTask()));
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public IExchangeTask saveReturning(IExchangeTask exchangeTask) {
+    public IExchangeTask createReturning(IExchangeTask exchangeTask) {
         return DSL.using(taskDao.configuration())
                 .insertInto(EXCHANGE_TASK)
                 .set(exchangeTask.into(new ExchangeTaskRecord()))
@@ -134,7 +103,11 @@ public class ExchangeTaskServiceImpl implements ExchangeTaskService {
         ExchangeTask exchangeTask = taskDao.fetchOneById(task.getId());
         exchangeTask.setActive(true);
         taskDao.update(exchangeTask);
-        taskManager.schedule(task, trigger);
+        try {
+            taskManager.schedule(task, trigger);
+        } catch (Exception e) {
+            throw new ServiceException("Failed to schedule task", e);
+        }
     }
 
     @Override
@@ -165,10 +138,24 @@ public class ExchangeTaskServiceImpl implements ExchangeTaskService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
     public int getActiveCount() {
         return taskManager.getActiveCount();
+    }
+
+    @Override
+    public boolean isScheduled(Long id) {
+        return taskManager.isScheduled(id);
+    }
+
+    @Override
+    public Collection<AbstractTask> getScheduledTasks() {
+        return taskManager.getScheduledTasks();
+    }
+
+    @Override
+    public Optional<ScheduledFuture> getFuture(Long taskId) {
+        return taskManager.getFuture(taskId);
     }
 
 }

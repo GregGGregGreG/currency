@@ -1,7 +1,7 @@
-@import "../valo/valo";
+$v-font-size: 14px;
+
 @import "../common-styles";
 
 @mixin valo-default {
-  @include valo;
   @include common-styles;
 }

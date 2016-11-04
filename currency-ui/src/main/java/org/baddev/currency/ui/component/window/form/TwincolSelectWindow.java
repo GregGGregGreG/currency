@@ -6,6 +6,7 @@ import com.vaadin.ui.TwinColSelect;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -13,7 +14,7 @@ import java.util.function.Function;
 /**
  * Created by IPotapchuk on 10/4/2016.
  */
-class TwincolSelectWindow<T> extends AbstractFormWindow<TwinColSelect, Exception> {
+class TwincolSelectWindow<T> extends AbstractFormWindow<Set<T>, Exception> {
 
     private TwinColSelect twinColSelect;
     private Set<T> lhs;
@@ -21,7 +22,7 @@ class TwincolSelectWindow<T> extends AbstractFormWindow<TwinColSelect, Exception
     private Function<T, String> captionProducer;
     private boolean changed;
 
-    TwincolSelectWindow(Collection<T> lhs, Collection<T> rhs, Function<T, String> captionProducer) {
+    TwincolSelectWindow(Collection<? extends T> lhs, Collection<? extends T> rhs, Function<T, String> captionProducer) {
         super(FormWindow.Mode.EDIT);
         this.lhs = Collections.unmodifiableSet(Sets.newLinkedHashSet(lhs));
         this.rhs = Collections.unmodifiableSet(Sets.newLinkedHashSet(rhs));
@@ -30,18 +31,22 @@ class TwincolSelectWindow<T> extends AbstractFormWindow<TwinColSelect, Exception
     }
 
     @Override
-    protected TwinColSelect getEntity() {
-        return twinColSelect;
+    protected Set<T> getEntity() {
+        if(twinColSelect.isMultiSelect()){
+            return (Set<T>) twinColSelect.getValue();
+        } else {
+            return new HashSet<>(Collections.singletonList((T) twinColSelect.getValue()));
+        }
     }
 
     @Override
-    protected boolean submit(TwinColSelect entity, Consumer<TwinColSelect> successActionProvider) throws Exception {
+    protected boolean submit(Set<T> entity, Consumer<Set<T>> successActionProvider) throws Exception {
         if (changed) successActionProvider.accept(entity);
         return changed;
     }
 
     @Override
-    protected void postInit(FormLayout form, Consumer<TwinColSelect> onCommitSuccess) {
+    protected void postInit(FormLayout form, Consumer<Set<T>> onCommitSuccess) {
         twinColSelect = new TwinColSelect();
         twinColSelect.setNullSelectionAllowed(true);
         twinColSelect.setMultiSelect(true);

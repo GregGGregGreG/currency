@@ -15,7 +15,9 @@ import org.baddev.currency.ui.component.window.SettingsWindow;
 import org.baddev.currency.ui.security.event.LogoutEvent;
 import org.baddev.currency.ui.util.EventBus;
 import org.baddev.currency.ui.util.Navigator;
+import org.baddev.currency.ui.util.Styles;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
@@ -33,6 +35,8 @@ public class MainView extends VerticalLayout implements ViewDisplay {
     private MenuBar menuBar;
     @Autowired
     private SettingsWindow settingsWindow;
+    @Value("${app.title}")
+    private String appTitle;
 
     @PostConstruct
     private void init() {
@@ -56,13 +60,19 @@ public class MainView extends VerticalLayout implements ViewDisplay {
         menuBar.removeItems();
         String loggedIn = SecurityUtils.loggedInUserName();
         if (!StringUtils.isEmpty(loggedIn.trim())) {
-            MenuBar.MenuItem parent = menuBar.addItem(loggedIn, FontAwesome.USER, null);
+            MenuBar.MenuItem dropDownParent = menuBar.addItem(loggedIn, FontAwesome.USER, null);
             if (SecurityUtils.hasAnyRole(RoleEnum.ADMIN)) {
-                parent.addItem("Users", FontAwesome.USERS, item -> Navigator.navigate(UsersView.NAME));
+                dropDownParent.addItem("Users", FontAwesome.USERS, item -> Navigator.navigate(UsersView.NAME));
             }
-            parent.addItem("Settings", FontAwesome.GEAR, selectedItem -> get().addWindow(settingsWindow));
-            parent.addItem("Logout", FontAwesome.SIGN_OUT, selectedItem -> EventBus.post(new LogoutEvent(this)));
+            dropDownParent.addItem("Settings", FontAwesome.GEAR, selectedItem -> get().addWindow(settingsWindow));
+            dropDownParent.addSeparator();
+            dropDownParent.addItem("Logout", FontAwesome.SIGN_OUT, selectedItem -> EventBus.post(new LogoutEvent(this)));
+            dropDownParent.setStyleName(Styles.MENUBAR_PUSH_RIGHT);
         }
-        if (currentView != null) currentView.customizeMenuBar(menuBar);
+        MenuBar.MenuItem titleItem = menuBar.addItem(appTitle + " | " + currentView.getNameCaption(), null);
+        titleItem.setStyleName(Styles.MENUBAR_TITLE);
+        titleItem.setEnabled(false);
+        if (currentView != null)
+            currentView.customizeMenuBar(menuBar).forEach(menuItem -> menuItem.setStyleName(Styles.MENUBAR_NAV_BUTTON));
     }
 }

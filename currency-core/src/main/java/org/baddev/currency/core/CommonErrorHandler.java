@@ -14,8 +14,14 @@ public class CommonErrorHandler {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    public boolean handle(Exception e) {
-        return handleCommon(e);
+    public final void handle(Exception e) {
+        if(handleCommon(e)) return;
+        if(handleNext(e)) return;
+        handleUnexpected(e);
+    }
+
+    protected boolean handleNext(Exception e) {
+        return false;
     }
 
     private boolean handleCommon(Exception e) {
@@ -23,13 +29,17 @@ public class CommonErrorHandler {
             log.error("Error executing sql : {}; {}; {};", e.getMessage(), ((SQLException) e).getErrorCode(), ((SQLException) e).getSQLState());
             return true;
         } else if (e instanceof DataAccessException) {
-            log.error("Error accessing data : {}", e.getMessage());
+            log.error("Error accessing data", e);
             return true;
         } else if (e instanceof ServiceException) {
-            log.error("Service Error: {}", e.getMessage());
+            log.error("Service Error", e);
             return true;
         }
         return false;
+    }
+
+    private void handleUnexpected(Exception e) {
+        log.error("Unexpected error", e);
     }
 
 }

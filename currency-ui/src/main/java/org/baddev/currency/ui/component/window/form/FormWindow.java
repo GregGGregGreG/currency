@@ -3,11 +3,9 @@ package org.baddev.currency.ui.component.window.form;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.ui.Field;
 import com.vaadin.ui.TextField;
+import org.baddev.currency.ui.exception.WrappedUIException;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -25,15 +23,15 @@ public final class FormWindow {
     private FormWindow() {
     }
 
-    public static void show(Config config) {
+    public static <T> void show(Config<T> config) {
         AbstractFormWindow formWindow = null;
         if (config.beanClass != null) {
             formWindow = new BindableFormWindow<>(config.mode,
                     createBeanFieldGroup(config.beanClass, config.formBean,
                             config.captionToPropertyIdMap,
                             config.propertyIdToFieldTypeMap));
-        } else if (!config.lhs.isEmpty() || !config.rhs.isEmpty()){
-            formWindow = new TwincolSelectWindow(config.lhs, config.rhs, config.itemCaptionProducer);
+        } else if (!config.lhs.isEmpty() || !config.rhs.isEmpty()) {
+            formWindow = new TwincolSelectWindow<T>(config.lhs, config.rhs, config.itemCaptionProducer);
         }
         Objects.requireNonNull(formWindow);
         if (config.width != null) formWindow.withWidth(config.width);
@@ -46,7 +44,11 @@ public final class FormWindow {
         if (config.onCommitSuccess != null) formWindow.withSuccessActionProvider(config.onCommitSuccess);
         formWindow.setResizable(config.resizable);
         formWindow.setModal(config.modal);
-        formWindow.show(config.caption);
+        try {
+            formWindow.show(config.caption);
+        } catch (Exception e) {
+            throw new WrappedUIException("Failed to show FormWindow", e);
+        }
     }
 
     private static <T> BeanFieldGroup<T> createBeanFieldGroup(Class<T> beanClass,
@@ -63,7 +65,7 @@ public final class FormWindow {
         return bfg;
     }
 
-    public static class Config {
+    public static class Config<T> {
 
         private Mode mode;
         private String caption = "";
@@ -71,92 +73,92 @@ public final class FormWindow {
         private Consumer onCommitError;
         private Float width = 600f;
         private Float height;
-        private Class beanClass;
-        private Object formBean;
+        private Class<T> beanClass;
+        private T formBean;
         private Map<String, String> captionToPropertyIdMap = Collections.emptyMap();
         private Map<String, Class<? extends Field>> propertyIdToFieldTypeMap = Collections.emptyMap();
         private boolean resizable;
         private boolean modal = true;
-        private Collection rhs = Collections.EMPTY_LIST;
-        private Collection lhs = Collections.EMPTY_LIST;
-        private Function itemCaptionProducer = Object::toString;
+        private Collection<? extends T> rhs = Collections.emptyList();
+        private Collection<? extends T> lhs = Collections.emptyList();
+        private Function<T, String> itemCaptionProducer = Object::toString;
         private boolean uiErrorHandlingMode = true;
 
         public Config(Mode windowMode) {
             this.mode = windowMode;
         }
 
-        public Config setCaption(String caption) {
+        public Config<T> setCaption(String caption) {
             this.caption = caption;
             return this;
         }
 
-        public Config setUiErrorHandlingMode(boolean uiErrorHandlingMode) {
+        public Config<T> setUiErrorHandlingMode(boolean uiErrorHandlingMode) {
             this.uiErrorHandlingMode = uiErrorHandlingMode;
             return this;
         }
 
-        public <T> Config setOnCommitSuccess(Consumer<T> onCommitSuccess) {
+        public Config<T> setOnCommitSuccess(Consumer<Set<T>> onCommitSuccess) {
             this.onCommitSuccess = onCommitSuccess;
             return this;
         }
 
-        public <T extends Exception> Config setOnCommitError(Consumer<T> onCommitError) {
+        public <E extends Exception> Config setOnCommitError(Consumer<E> onCommitError) {
             this.onCommitError = onCommitError;
             return this;
         }
 
-        public Config setWidth(Float width) {
+        public Config<T> setWidth(Float width) {
             this.width = width;
             return this;
         }
 
-        public Config setHeight(Float height) {
+        public Config<T> setHeight(Float height) {
             this.height = height;
             return this;
         }
 
-        public <T> Config setBeanClass(Class<T> beanClass) {
+        public Config<T> setBeanClass(Class<T> beanClass) {
             this.beanClass = beanClass;
             return this;
         }
 
-        public Config setFormBean(Object formBean) {
+        public Config<T> setFormBean(T formBean) {
             this.formBean = formBean;
             return this;
         }
 
-        public Config setCaptionToPropertyIdMap(Map<String, String> captionToPropertyIdMap) {
+        public Config<T> setCaptionToPropertyIdMap(Map<String, String> captionToPropertyIdMap) {
             this.captionToPropertyIdMap = captionToPropertyIdMap;
             return this;
         }
 
-        public Config setPropertyIdToFieldTypeMap(Map<String, Class<? extends Field>> propertyIdToFieldTypeMap) {
+        public Config<T> setPropertyIdToFieldTypeMap(Map<String, Class<? extends Field>> propertyIdToFieldTypeMap) {
             this.propertyIdToFieldTypeMap = propertyIdToFieldTypeMap;
             return this;
         }
 
-        public Config setResizable(boolean resizable) {
+        public Config<T> setResizable(boolean resizable) {
             this.resizable = resizable;
             return this;
         }
 
-        public Config setModal(boolean modal) {
+        public Config<T> setModal(boolean modal) {
             this.modal = modal;
             return this;
         }
 
-        public <T> Config setRhs(Collection<T> rhs) {
+        public Config<T> setRhs(Collection<? extends T> rhs) {
             this.rhs = rhs;
             return this;
         }
 
-        public <T> Config setLhs(Collection<T> lhs) {
+        public Config<T> setLhs(Collection<? extends T> lhs) {
             this.lhs = lhs;
             return this;
         }
 
-        public <T> Config setItemCaptionProducer(Function<T, String> captionProducer) {
+        public Config<T> setItemCaptionProducer(Function<T, String> captionProducer) {
             this.itemCaptionProducer = captionProducer;
             return this;
         }

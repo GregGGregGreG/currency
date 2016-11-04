@@ -19,8 +19,8 @@ public final class FormatUtils {
         return (paramValues == null || paramValues.isEmpty()) ? defVal : paramValues.stream().collect(Collectors.joining(", "));
     }
 
-    public static String bold(String text) {
-        return "<b>" + text + "</b>";
+    public static String bold(Object text) {
+        return "<b>" + text.toString() + "</b>";
     }
 
     public static String boldInQuotes(String text) {

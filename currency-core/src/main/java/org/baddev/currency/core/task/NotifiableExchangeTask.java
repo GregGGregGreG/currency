@@ -1,5 +1,6 @@
 package org.baddev.currency.core.task;
 
+import org.baddev.currency.core.CommonErrorHandler;
 import org.baddev.currency.core.api.ExchangeRateService;
 import org.baddev.currency.core.api.ExchangerService;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
@@ -9,14 +10,12 @@ import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Required;
 
-import java.util.Optional;
-
 public class NotifiableExchangeTask extends AbstractCallbackTask<ExchangeCompletionEvent> {
 
     private IExchangeTask taskData;
     private final ExchangerService exchangerService;
     private final ExchangeRateService exchangeRateService;
-    private boolean success;
+    private boolean success = true;
 
     public NotifiableExchangeTask(IExchangeTask taskData, ExchangerService exchangerService, ExchangeRateService exchangeRateService) {
         setId(taskData.getId());
@@ -48,10 +47,13 @@ public class NotifiableExchangeTask extends AbstractCallbackTask<ExchangeComplet
         exchOp.setToCcy(taskData.getToCcy());
         exchOp.setFromAmount(taskData.getAmount());
         exchOp.setRatesDate(LocalDate.now());
-        Optional<IExchangeOperation> result = exchangerService.exchange(exchOp, exchangeRateService.fetchCurrent());
-        return new ExchangeCompletionEvent(this, result.orElseGet(() -> {
+        IExchangeOperation result = null;
+        try {
+            result = exchangerService.exchange(exchOp, exchangeRateService.fetchCurrent());
+        } catch (Exception e){
             success = false;
-            return exchOp;
-        }), success);
+            new CommonErrorHandler().handle(e);
+        }
+        return new ExchangeCompletionEvent(this, result, success);
     }
 }

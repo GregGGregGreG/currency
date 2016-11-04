@@ -1,22 +1,22 @@
 package org.baddev.currency.mail.listener;
 
+import org.baddev.currency.core.ApplicationMailer;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.event.NotificationListener;
+import org.baddev.currency.core.event.GenericEventListener;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
-import org.baddev.currency.mail.Mailer;
 import org.springframework.beans.factory.annotation.Required;
 
 /**
  * Created by IPotapchuk on 6/22/2016.
  */
-public class MailExchangeCompletionListener implements NotificationListener<ExchangeCompletionEvent> {
+public class MailExchangeCompletionListener implements GenericEventListener<ExchangeCompletionEvent> {
 
     private static final long serialVersionUID = 2586601749325354904L;
 
-    private Mailer mailer;
+    private ApplicationMailer mailer;
     private String email;
 
-    public MailExchangeCompletionListener(Mailer mailer) {
+    public MailExchangeCompletionListener(ApplicationMailer mailer) {
         this.mailer = mailer;
     }
 
@@ -26,7 +26,7 @@ public class MailExchangeCompletionListener implements NotificationListener<Exch
     }
 
     @Override
-    public void notificationReceived(ExchangeCompletionEvent e) {
+    public void onEvent(ExchangeCompletionEvent e) {
         IExchangeOperation operation = e.getEventData();
         String exchInfo = String.format("Exchange task %d completed. %.2f %s <> %.2f %s.",
                 operation.getId(),
@@ -34,7 +34,7 @@ public class MailExchangeCompletionListener implements NotificationListener<Exch
                 operation.getFromCcy(),
                 operation.getToAmount(),
                 operation.getToCcy());
-        mailer.sendSimpleMail(email, "Currency Exchange Task Completion", exchInfo);
+        mailer.sendMail(email, "Currency Exchange Task Completion", exchInfo);
     }
 
     @Override

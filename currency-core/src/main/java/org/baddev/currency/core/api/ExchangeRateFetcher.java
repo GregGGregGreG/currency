@@ -1,4 +1,4 @@
-package org.baddev.currency.core;
+package org.baddev.currency.core.api;
 
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.joda.time.LocalDate;

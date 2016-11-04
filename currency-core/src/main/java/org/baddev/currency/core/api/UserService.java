@@ -8,9 +8,9 @@ import org.baddev.currency.core.dto.UserPasswordChangeDTO;
 import org.baddev.currency.core.exception.RoleAlreadyAssignedException;
 import org.baddev.currency.core.exception.RoleNotFoundException;
 import org.baddev.currency.core.exception.UserNotFoundException;
+import org.baddev.currency.jooq.schema.tables.interfaces.IRole;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
-import org.baddev.currency.jooq.schema.tables.pojos.Role;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -24,7 +24,7 @@ public interface UserService extends FindAction<IUser, Long>, UpdateAction<IUser
     Collection<? extends IUser> findUserByUsername(String... userNames);
     Optional<IUser> findOneUserByUserName(String userName);
     void update(IUser user, IUserDetails userDetails);
-    Collection<Role> findUserRoles(Long userId);
+    Collection<IRole> findUserRoles(Long userId);
     void assignToRoles(Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException;
     void unassignFromRoles(Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException;
     void updateUserRoles(Long userId, Collection<Long> allUserRoles) throws RoleNotFoundException, UserNotFoundException;

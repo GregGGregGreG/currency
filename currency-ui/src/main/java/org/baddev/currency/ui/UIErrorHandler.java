@@ -1,11 +1,9 @@
 package org.baddev.currency.ui;
 
 import com.vaadin.data.fieldgroup.FieldGroup;
-import org.baddev.currency.core.exception.ServiceException;
 import org.baddev.currency.security.SecurityErrorHandler;
 import org.baddev.currency.ui.exception.WrappedUIException;
 import org.baddev.currency.ui.util.NotificationUtils;
-import org.springframework.security.core.AuthenticationException;
 
 /**
  * Created by IPotapchuk on 10/6/2016.
@@ -13,8 +11,8 @@ import org.springframework.security.core.AuthenticationException;
 public class UIErrorHandler extends SecurityErrorHandler {
 
     @Override
-    public boolean handle(Exception e) {
-        boolean handled = super.handle(e);
+    protected boolean handleNext(Exception e) {
+        boolean handled = super.handleNext(e);
         if (!handled) {
             if (e instanceof WrappedUIException) {
                 if (e.getCause() instanceof FieldGroup.CommitException) {
@@ -28,16 +26,7 @@ public class UIErrorHandler extends SecurityErrorHandler {
                 return true;
             }
         }
-        maybeShowUINotification(e);
         return handled;
-    }
-
-    protected void maybeShowUINotification(Exception e) {
-        if (e instanceof ServiceException) {
-            NotificationUtils.notifyFailure("Service Error", e.getMessage());
-        } else if (e instanceof AuthenticationException) {
-            NotificationUtils.notifyFailure("Login Error", e.getMessage());
-        }
     }
 
 }

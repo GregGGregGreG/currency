@@ -1,14 +1,13 @@
 package org.baddev.currency.scheduler;
 
-import org.baddev.currency.core.TaskManager;
 import org.baddev.currency.core.task.AbstractTask;
+import org.baddev.currency.core.task.TaskManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -16,10 +15,13 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class TaskManagerImpl implements TaskManager {
 
+    private static final long serialVersionUID = -1532514615699072681L;
     private static final Logger log = LoggerFactory.getLogger(TaskManagerImpl.class);
 
     private ThreadPoolTaskScheduler scheduler;
-    private Map<Long, ScheduledFuture> taskIdToFutureMap = new HashMap<>();
+
+    private Map<Long, ScheduledFuture> taskIdToFutureMap = Collections.synchronizedMap(new HashMap<>());
+    private Set<AbstractTask> tasks = Collections.synchronizedSet(new HashSet<>());
 
     public TaskManagerImpl(ThreadPoolTaskScheduler scheduler) {
         this.scheduler = scheduler;
@@ -60,6 +62,21 @@ public class TaskManagerImpl implements TaskManager {
     @Override
     public int getActiveCount() {
         return taskIdToFutureMap.size();
+    }
+
+    @Override
+    public boolean isScheduled(Long id) {
+        return taskIdToFutureMap.containsKey(id);
+    }
+
+    @Override
+    public Collection<AbstractTask> getScheduledTasks() {
+        return tasks;
+    }
+
+    @Override
+    public Optional<ScheduledFuture> getFuture(Long taskId) {
+        return Optional.ofNullable(taskIdToFutureMap.get(taskId));
     }
 
 }

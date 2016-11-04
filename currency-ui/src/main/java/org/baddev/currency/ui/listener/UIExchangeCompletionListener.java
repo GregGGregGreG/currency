@@ -2,7 +2,7 @@ package org.baddev.currency.ui.listener;
 
 import com.vaadin.ui.UI;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.event.NotificationListener;
+import org.baddev.currency.core.event.GenericEventListener;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.ui.util.FormatUtils;
@@ -13,7 +13,7 @@ import static org.baddev.currency.ui.util.NotificationUtils.notifyTray;
 /**
  * Created by Ilya on 18.10.2016.
  */
-public class UIExchangeCompletionListener implements NotificationListener<ExchangeCompletionEvent> {
+public class UIExchangeCompletionListener implements GenericEventListener<ExchangeCompletionEvent> {
 
     private static final long serialVersionUID = -4068324837833281874L;
 
@@ -35,8 +35,8 @@ public class UIExchangeCompletionListener implements NotificationListener<Exchan
     }
 
     @Override
-    public void notificationReceived(ExchangeCompletionEvent e) {
-        IExchangeOperation operation = e.getEventData();
+    public void onEvent(ExchangeCompletionEvent event) {
+        IExchangeOperation operation = event.getEventData();
         ui.access(() -> {
             String fromCcyNames = FormatUtils.joinByComma(
                     ccyService.findCcyNamesByCode(operation.getFromCcy())

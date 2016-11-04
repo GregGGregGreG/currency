@@ -1,7 +1,6 @@
 package org.baddev.currency.ui.component.view;
 
 import com.google.common.collect.ImmutableMap;
-import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.util.converter.Converter;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.shared.data.sort.SortDirection;
@@ -10,15 +9,17 @@ import com.vaadin.ui.*;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.api.UserService;
+import org.baddev.currency.core.dto.UserDetailsDTO;
 import org.baddev.currency.core.dto.UserPasswordChangeDTO;
 import org.baddev.currency.core.exception.ServiceException;
 import org.baddev.currency.core.util.RoleEnum;
 import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
+import org.baddev.currency.jooq.schema.tables.interfaces.IRole;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
-import org.baddev.currency.jooq.schema.tables.pojos.Role;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
+import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.baddev.currency.ui.component.toolbar.GridButtonToolbar;
 import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
@@ -29,10 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.dialogs.ConfirmDialog;
 
 import javax.annotation.security.DeclareRoles;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.baddev.currency.ui.util.FormatUtils.bold;
@@ -45,6 +43,7 @@ import static org.baddev.currency.ui.util.FormatUtils.boldInQuotes;
 @DeclareRoles({RoleEnum.ADMIN})
 public final class UsersView extends AbstractCcyGridView<IUser> {
 
+    private static final long serialVersionUID = 6755374220474749056L;
     public static final String NAME = "users";
 
     @Autowired
@@ -115,42 +114,71 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
     }
 
     @Override
-    public void customizeMenuBar(MenuBar menuBar) {
-        menuBar.addItem("Rates", FontAwesome.DOLLAR, selectedItem -> Navigator.navigate(RatesView.NAME));
-        menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> Navigator.navigate(ExchangesView.NAME));
-        menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> Navigator.navigate(SchedulerView.NAME));
+    protected void postRefresh(Collection<? extends IUser> data) {
+        addRowFilter(new FilterConfig()
+                .setPropId(User.P_USERNAME)
+                .setKind(FilterKind.TEXT));
+        addRowFilter(new FilterConfig()
+                .setPropId(User.P_ENABLED)
+                .setKind(FilterKind.SELECT)
+                .setSelectOptions(data.stream().map(user -> user.getEnabled().toString()).collect(Collectors.toList())));
+        addRowFilter(new FilterConfig()
+                .setPropId(User.P_ACC_NON_LOCKED)
+                .setKind(FilterKind.SELECT)
+                .setSelectOptions(data.stream().map(user -> user.getAccNonLocked().toString()).collect(Collectors.toList())));
+        addRowFilter(new FilterConfig()
+                .setPropId(User.P_ACC_NON_EXPIRED)
+                .setKind(FilterKind.SELECT)
+                .setSelectOptions(data.stream().map(user -> user.getAccNonExpired().toString()).collect(Collectors.toList())));
+        addRowFilter(new FilterConfig()
+                .setPropId(User.P_CRED_NON_EXPIRED)
+                .setKind(FilterKind.SELECT)
+                .setSelectOptions(data.stream().map(user -> user.getCredNonExpired().toString()).collect(Collectors.toList())));
+    }
+
+    @Override
+    public Collection<MenuBar.MenuItem> customizeMenuBar(MenuBar menuBar) {
+        return Arrays.asList(
+                menuBar.addItem("Rates", FontAwesome.DOLLAR, selectedItem -> Navigator.navigate(RatesView.NAME)),
+                menuBar.addItem("Exchanges", FontAwesome.EXCHANGE, selectedItem -> Navigator.navigate(ExchangesView.NAME)),
+                menuBar.addItem("Scheduler", FontAwesome.GEARS, selectedItem -> Navigator.navigate(SchedulerView.NAME)));
     }
 
     @Override
     protected void customizeGridBar(HorizontalLayout topBar) {
-        toolbar.addButton("Details", selectedUsers -> {
+        toolbar.withButton("Details", selectedUsers -> {
             String uname = ((Set<IUser>) selectedUsers).iterator().next().getUsername();
-            FormWindow.show(new FormWindow.Config(FormWindow.Mode.EDIT)
-                    .setBeanClass(IUserDetails.class)
+            FormWindow.show(new FormWindow.Config<UserDetailsDTO>(FormWindow.Mode.EDIT)
+                    .setBeanClass(UserDetailsDTO.class)
                     .setFormBean(userService.findUserDetailsByUsername(uname)
+                            .map(ud -> ud.into(new UserDetailsDTO()))
                             .orElseThrow(() -> new ServiceException("User Details not found for user " + uname)))
-                    .setOnCommitSuccess((BeanFieldGroup<IUserDetails> b) -> userService.update(null, b.getItemDataSource().getBean()))
-                    .setCaptionToPropertyIdMap(ImmutableMap.of(
+                    .setOnCommitSuccess((Set<UserDetailsDTO> detailsSet) -> {
+                        if (detailsSet.iterator().hasNext()) {
+                            IUserDetails details = detailsSet.iterator().next();
+                            userService.update(null, details);
+                            SecurityUtils.setUserDetails(details);
+                        }
+                    }).setCaptionToPropertyIdMap(ImmutableMap.of(
                             "First Name", UserDetails.P_FIRST_NAME,
                             "Last Name", UserDetails.P_LAST_NAME,
                             "Email", UserDetails.P_EMAIL))
                     .setCaption("User Details - " + bold(uname))
             );
-        }).addButton("Roles", selectedUsers -> {
+        }).withButton("Roles", selectedUsers -> {
             IUser user = ((Set<IUser>) selectedUsers).iterator().next();
-            FormWindow.show(new FormWindow.Config(FormWindow.Mode.EDIT)
+            FormWindow.show(new FormWindow.Config<IRole>(FormWindow.Mode.EDIT)
                     .setCaption("User Roles - " + bold(user.getUsername()))
                     .setWidth(500f)
                     .setLhs(roleDao.findAll())
                     .setRhs(userService.findUserRoles(user.getId()))
-                    .setItemCaptionProducer(Role::getRoleName)
-                    .setOnCommitSuccess((TwinColSelect select) -> {
-                        Set<Role> selected = (Set<Role>) select.getValue();
-                        userService.updateUserRoles(user.getId(), selected.stream().map(Role::getId).collect(Collectors.toList()));
+                    .setItemCaptionProducer(IRole::getRoleName)
+                    .setOnCommitSuccess((Set<IRole> roleSet) -> {
+                        userService.updateUserRoles(user.getId(), roleSet.stream().map(IRole::getId).collect(Collectors.toList()));
                     }));
-        }).addButton("Restrictions", selectedUsers -> {
+        }).withButton("Restrictions", selectedUsers -> {
             IUser user = ((Set<IUser>) selectedUsers).iterator().next();
-            FormWindow.show(new FormWindow.Config(FormWindow.Mode.EDIT)
+            FormWindow.show(new FormWindow.Config<IUser>(FormWindow.Mode.EDIT)
                     .setBeanClass(IUser.class)
                     .setFormBean(user)
                     .setCaptionToPropertyIdMap(ImmutableMap.of(
@@ -165,21 +193,20 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
                             User.P_CRED_NON_EXPIRED, CheckBox.class))
                     .setCaption("Account Restrictions - " + bold(user.getUsername()))
                     .setWidth(400f)
-                    .setOnCommitSuccess((BeanFieldGroup<IUser> binder) -> {
-                        userService.update(binder.getItemDataSource().getBean(), null);
+                    .setOnCommitSuccess((Set<IUser> userSet) -> {
+                        userService.update(userSet.iterator().next(), null);
                         refresh(userService.findAll(), User.P_ID, SortDirection.ASCENDING);
                     }));
-        }).addButton("Change Password", selectedUsers -> {
+        }).withButton("Change Password", selectedUsers -> {
             IUser user = ((Set<IUser>) selectedUsers).iterator().next();
-            FormWindow.show(new FormWindow.Config(FormWindow.Mode.EDIT)
+            FormWindow.show(new FormWindow.Config<UserPasswordChangeDTO>(FormWindow.Mode.EDIT)
                     .setBeanClass(UserPasswordChangeDTO.class)
                     .setFormBean(new UserPasswordChangeDTO(user.getId(), ""))
                     .setCaptionToPropertyIdMap(ImmutableMap.of("New Password", "newPassword"))
                     .setPropertyIdToFieldTypeMap(ImmutableMap.of("newPassword", PasswordField.class))
-                    .setOnCommitSuccess((BeanFieldGroup<UserPasswordChangeDTO> binder) ->
-                            userService.changeUserPassword(binder.getItemDataSource().getBean()))
+                    .setOnCommitSuccess((Set<UserPasswordChangeDTO> set) -> userService.changeUserPassword(set.iterator().next()))
                     .setCaption("Password Change - " + bold(user.getUsername())));
-        }).addButton("Remove", selectedUsers -> {
+        }).withButtonStyled("Remove", selectedUsers -> {
             String uname = ((Set<IUser>) selectedUsers).iterator().next().getUsername();
             ConfirmDialog.show(UI.getCurrent(),
                     "Removal Confirmation",
@@ -197,5 +224,10 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
         }, ValoTheme.BUTTON_DANGER);
         topBar.addComponent(toolbar);
         topBar.setComponentAlignment(toolbar, Alignment.MIDDLE_RIGHT);
+    }
+
+    @Override
+    public String getNameCaption() {
+        return "Users";
     }
 }

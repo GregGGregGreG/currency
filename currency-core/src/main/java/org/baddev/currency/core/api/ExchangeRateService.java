@@ -1,6 +1,5 @@
 package org.baddev.currency.core.api;
 
-import org.baddev.currency.core.ExchangeRateFetcher;
 import org.baddev.currency.core.action.DeleteAction;
 import org.baddev.currency.core.action.FindAction;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;

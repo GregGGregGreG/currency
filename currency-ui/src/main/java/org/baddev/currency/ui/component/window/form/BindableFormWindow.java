@@ -1,20 +1,24 @@
 package org.baddev.currency.ui.component.window.form;
 
+import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.ui.AbstractTextField;
 import com.vaadin.ui.Field;
 import com.vaadin.ui.FormLayout;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
  * Created by IPotapchuk on 10/3/2016.
  */
-class BindableFormWindow<T extends FieldGroup> extends AbstractFormWindow<T, FieldGroup.CommitException> {
+class BindableFormWindow<T> extends AbstractFormWindow<Set<T>, FieldGroup.CommitException> {
 
-    private T binder;
+    private BeanFieldGroup<T> binder;
 
-    protected BindableFormWindow(FormWindow.Mode mode, T binder) {
+    protected BindableFormWindow(FormWindow.Mode mode, BeanFieldGroup<T> binder) {
         super(mode);
         this.binder = binder;
     }
@@ -26,19 +30,19 @@ class BindableFormWindow<T extends FieldGroup> extends AbstractFormWindow<T, Fie
     }
 
     @Override
-    protected T getEntity() {
-        return binder;
+    protected Set<T> getEntity() {
+        return new HashSet<>(Collections.singletonList(binder.getItemDataSource().getBean()));
     }
 
     @Override
-    protected boolean submit(T entity, Consumer<T> successActionProvider) throws FieldGroup.CommitException {
-        boolean notifyAfter = binder.isModified();
-        if (notifyAfter) binder.commit();
-        return notifyAfter;
+    protected boolean submit(Set<T> entity, Consumer<Set<T>> successActionProvider) throws FieldGroup.CommitException {
+        boolean modified = binder.isModified();
+        if (modified) binder.commit();
+        return modified;
     }
 
     @Override
-    protected void postInit(FormLayout form, Consumer<T> successActionProvider) {
+    protected void postInit(FormLayout form, Consumer<Set<T>> onCommitSuccess) {
         if (getMode() == FormWindow.Mode.READONLY) binder.setReadOnly(true);
         else
             binder.addCommitHandler(new FieldGroup.CommitHandler() {
@@ -48,7 +52,7 @@ class BindableFormWindow<T extends FieldGroup> extends AbstractFormWindow<T, Fie
 
                 @Override
                 public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                    successActionProvider.accept(binder);
+                    onCommitSuccess.accept(new HashSet<>(Collections.singletonList(binder.getItemDataSource().getBean())));
                 }
             });
         binder.getFields().forEach(f -> {

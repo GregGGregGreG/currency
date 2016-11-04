@@ -17,4 +17,8 @@ public class AccessDeniedView extends AbstractErrorView {
         super("Sorry, but <b>you don't have permissions</b> to access the requested view <b>%s</b>");
     }
 
+    @Override
+    public String getNameCaption() {
+        return "Access Denied";
+    }
 }

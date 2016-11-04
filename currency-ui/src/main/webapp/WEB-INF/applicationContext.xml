@@ -7,15 +7,6 @@
                            http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <context:component-scan base-package="org.baddev.currency.ui"/>
-
-    <context:property-placeholder
-            location="classpath:db.properties,
-            classpath:scheduler.pool.properties,
-            classpath:api_sources.properties,
-            classpath:proxy.properties,
-            classpath:fetcher_policy.properties,
-            classpath:mail.properties,
-            classpath:mail.pool.properties" ignore-unresolvable="true"/>
+    <context:component-scan base-package="org.baddev.currency.ui, org.baddev.currency.exchanger"/>
 
 </beans>

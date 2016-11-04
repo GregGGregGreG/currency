@@ -1,6 +1,6 @@
 package org.baddev.currency.core.dto;
 
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 
 /**
  * Created by IPotapchuk on 9/23/2016.
@@ -8,7 +8,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 public class UserPasswordChangeDTO {
 
     private Long userId;
-    @NotEmpty(message = "must be filled")
+    @Size(min = 1, max = 50)
     private String newPassword;
 
     public UserPasswordChangeDTO() {

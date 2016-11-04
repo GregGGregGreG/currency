@@ -1,11 +1,10 @@
 package org.baddev.currency.ui.security;
 
-import com.vaadin.server.VaadinSession;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.core.context.SecurityContextImpl;
 
-import static org.baddev.currency.ui.util.VaadinSessionUtils.getSession;
+import static org.baddev.currency.ui.util.VaadinSessionUtils.getAttribute;
 import static org.baddev.currency.ui.util.VaadinSessionUtils.setAttribute;
 
 /**
@@ -20,9 +19,10 @@ public class VaadinSessionSecurityContextHolderStrategy implements SecurityConte
 
     @Override
     public SecurityContext getContext() {
-        VaadinSession session = getSession();
-        SecurityContext context = session.getAttribute(SecurityContext.class);
-        if (context == null) {
+        SecurityContext context;
+        try {
+            context = getAttribute(SecurityContext.class);
+        } catch (Exception e) {
             context = createEmptyContext();
             setContext(context);
         }

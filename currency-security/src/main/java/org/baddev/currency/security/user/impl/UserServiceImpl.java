@@ -1,8 +1,8 @@
 package org.baddev.currency.security.user.impl;
 
 import org.baddev.currency.core.api.UserService;
-import org.baddev.currency.core.dto.LoginDTO;
 import org.baddev.currency.core.dto.PasswordChangeDTO;
+import org.baddev.currency.core.dto.SignInDTO;
 import org.baddev.currency.core.dto.SignUpDTO;
 import org.baddev.currency.core.dto.UserPasswordChangeDTO;
 import org.baddev.currency.core.exception.*;
@@ -11,6 +11,7 @@ import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDetailsDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserPreferencesDao;
+import org.baddev.currency.jooq.schema.tables.interfaces.IRole;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.Role;
@@ -73,15 +74,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public void authenticate(LoginDTO loginDTO) throws AuthenticationException {
-        authenticate(loginDTO.getUsername(), loginDTO.getPassword());
+    public void authenticate(SignInDTO signInDTO) throws AuthenticationException {
+        authenticate(signInDTO.getUsername(), signInDTO.getPassword());
     }
 
     private void authenticate(String username, String password) {
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
         Authentication auth = manager.authenticate(token);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        ((AbstractAuthenticationToken) auth).setDetails(findUserDetailsByUsername(username));
+        ((AbstractAuthenticationToken) auth).setDetails(findUserDetailsByUsername(username).get());
     }
 
     @Override
@@ -168,7 +169,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN})
-    public Collection<Role> findUserRoles(Long userId) {
+    public Collection<IRole> findUserRoles(Long userId) {
         return dsl.select(ROLE.fields())
                 .from(USER)
                 .leftOuterJoin(USER_ROLE).on(USER.ID.eq(USER_ROLE.USER_ID))

@@ -9,14 +9,12 @@ import org.springframework.security.core.AuthenticationException;
 public class SecurityErrorHandler extends CommonErrorHandler {
 
     @Override
-    public boolean handle(Exception e) {
-        boolean handled = super.handle(e);
-        if (!handled) {
-            if (e instanceof AuthenticationException) {
-                log.info("Failed to authenticate", e.getMessage());
-                return true;
-            }
+    protected boolean handleNext(Exception e) {
+        if (e instanceof AuthenticationException) {
+            log.info("Failed to authenticate", e.getMessage());
+            return true;
         }
-        return handled;
+        return false;
     }
+
 }

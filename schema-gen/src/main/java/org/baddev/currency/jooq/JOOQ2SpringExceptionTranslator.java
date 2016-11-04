@@ -10,7 +10,9 @@ import org.springframework.jdbc.support.SQLStateSQLExceptionTranslator;
 /**
  * Created by IPotapchuk on 2/15/2016.
  */
-public class JOOQ2SpringExceptionTranslator extends DefaultExecuteListener {
+class JOOQ2SpringExceptionTranslator extends DefaultExecuteListener {
+
+    private static final long serialVersionUID = 6619729023075572982L;
 
     @Override
     public void exception(ExecuteContext ctx) {
