@@ -13,8 +13,10 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 @Scope(SCOPE_PROTOTYPE)
 public class AccessDeniedView extends AbstractErrorView {
 
+    private static final long serialVersionUID = 8268092077665984858L;
+
     public AccessDeniedView() {
-        super("Sorry, but <b>you don't have permissions</b> to access the requested view <b>%s</b>");
+        setErrorMsg("Sorry, but <b>you don't have permissions</b> to access the requested view <b>%s</b>");
     }
 
     @Override

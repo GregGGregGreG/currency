@@ -6,7 +6,6 @@ import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.ui.*;
-import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.dto.SignUpDTO;
 import org.baddev.currency.ui.component.view.base.AbstractFormView;
 import org.baddev.currency.ui.exception.WrappedUIException;
@@ -25,7 +24,12 @@ import java.util.Objects;
 @SpringView(name = SignUpView.NAME)
 public class SignUpView extends AbstractFormView<SignUpDTO> {
 
+    private static final long serialVersionUID = -141726028201569275L;
+
     public static final String NAME = "signup";
+
+    private PasswordField password;
+    private PasswordField passwordCheck;
 
     public SignUpView() {
         super(new SignUpDTO(), SignUpDTO.class);
@@ -43,9 +47,9 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
         firstName.setIcon(FontAwesome.INFO);
         TextField lastName = binder.buildAndBind("Last Name", "lastName", TextField.class);
         lastName.setIcon(FontAwesome.INFO);
-        PasswordField password = binder.buildAndBind("Password", "password", PasswordField.class);
+        password = binder.buildAndBind("Password", "password", PasswordField.class);
         password.setIcon(FontAwesome.LOCK);
-        PasswordField passwordCheck = binder.buildAndBind("Password Confirmation", "confirmPassword", PasswordField.class);
+        passwordCheck = binder.buildAndBind("Password Confirmation", "confirmPassword", PasswordField.class);
         passwordCheck.setIcon(FontAwesome.LOCK);
 
         Arrays.asList(userName, firstName, lastName, password, passwordCheck, email).forEach(f -> {
@@ -61,35 +65,31 @@ public class SignUpView extends AbstractFormView<SignUpDTO> {
             }
         });
 
-        binder.addCommitHandler(new FieldGroup.CommitHandler() {
-            @Override
-            public void preCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                try {
-                    password.validate();
-                } catch (Validator.InvalidValueException e) {
-                    throw new FieldGroup.CommitException(e.getMessage(), e);
-                }
-            }
-
-            @Override
-            public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                EventBus.post(new SignUpEvent(this, formBean, binder));
-            }
-        });
-
         submitBtn.setCaption("Sign Up");
-        submitBtn.addStyleName(ValoTheme.BUTTON_PRIMARY);
-        submitBtn.addClickListener(event -> {
-            try {
-                binder.commit();
-            } catch (FieldGroup.CommitException e) {
-                password.clear();
-                passwordCheck.clear();
-                throw new WrappedUIException(e);
-            }
-        });
+        submitBtn.setIcon(FontAwesome.USER_PLUS);
 
         formLayout.addComponents(userName, email, firstName, lastName, password, passwordCheck, submitBtn);
+    }
+
+    @Override
+    protected void submitBtnClicked(Button.ClickEvent clickEvent, BeanFieldGroup<SignUpDTO> binder) {
+        try {
+            binder.commit();
+        } catch (FieldGroup.CommitException e) {
+            password.clear();
+            passwordCheck.clear();
+            throw new WrappedUIException(e);
+        }
+    }
+
+    @Override
+    public void preCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
+        password.validate();
+    }
+
+    @Override
+    public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
+        EventBus.post(new SignUpEvent(this, formBean, commitEvent.getFieldBinder()));
     }
 
     @Override

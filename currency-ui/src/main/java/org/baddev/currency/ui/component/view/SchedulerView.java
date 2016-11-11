@@ -16,29 +16,26 @@ import net.redhogs.cronparser.CronExpressionDescriptor;
 import net.redhogs.cronparser.Options;
 import org.baddev.currency.core.api.ExchangeRateService;
 import org.baddev.currency.core.api.ExchangeTaskService;
-import org.baddev.currency.core.event.EventPublisher;
 import org.baddev.currency.core.exception.RatesNotFoundException;
-import org.baddev.currency.core.task.NotifiableExchangeTask;
-import org.baddev.currency.core.util.RoleEnum;
+import org.baddev.currency.core.security.RoleEnum;
+import org.baddev.currency.core.security.utils.SecurityUtils;
+import org.baddev.currency.exchanger.task.NotifiableExchangeTask;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
-import org.baddev.currency.mail.listener.MailExchangeCompletionListener;
-import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.baddev.currency.ui.component.toolbar.GridButtonToolbar;
-import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.view.base.AbstractGridView;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.exception.WrappedUIException;
 import org.baddev.currency.ui.util.Navigator;
 import org.baddev.currency.ui.util.NotificationUtils;
 import org.baddev.currency.ui.validation.CronValidator;
 import org.joda.time.LocalDateTime;
-import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.support.CronTrigger;
 import org.vaadin.dialogs.ConfirmDialog;
 
 import javax.annotation.security.DeclareRoles;
@@ -60,7 +57,9 @@ import static org.baddev.currency.ui.util.UIUtils.toggleEnabled;
  */
 @SpringView(name = SchedulerView.NAME)
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
-public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
+public class SchedulerView extends AbstractGridView<IExchangeTask> {
+
+    private static final long serialVersionUID = -5154398389155929098L;
 
     public static final String NAME = "scheduler";
 
@@ -76,15 +75,7 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
     @Autowired private ExchangeTaskService taskService;
     @Autowired private Iso4217CcyService   ccyService;
     @Autowired private ExchangeRateService fetcher;
-
-    private static NotifiableExchangeTask createTask(IExchangeTask taskData, BeanFactory beanFactory){
-        NotifiableExchangeTask task = beanFactory.getBean(NotifiableExchangeTask.class);
-        task.setEventPublisher(beanFactory.getBean(EventPublisher.class));
-        task.setTaskData(taskData);
-        MailExchangeCompletionListener listener = beanFactory.getBean(MailExchangeCompletionListener.class);
-        listener.setEmail(SecurityUtils.getUserDetails().getEmail());
-        return task;
-    }
+    @Autowired private ObjectProvider<NotifiableExchangeTask> exchangeTaskProvider;
 
     @Override
     protected void postInit(VerticalSpacedLayout rootLayout) {
@@ -243,7 +234,9 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
             taskData.setCron(cronF.getValue());
             taskData.setActive(false);
             IExchangeTask saved = taskService.createReturning(taskData);
-            taskService.schedule(createTask(saved, beanFactory), new CronTrigger(taskData.getCron()));
+            NotifiableExchangeTask task = exchangeTaskProvider.getObject();
+            task.setTaskData(taskData);
+            taskService.schedule(task, taskData.getCron());
             refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
                     P_ID, SortDirection.DESCENDING);
             resetInputs();
@@ -271,45 +264,47 @@ public class SchedulerView extends AbstractCcyGridView<IExchangeTask> {
         toggleEnabled(false, fromCcyChoiseF, toCcyChoiseF, cronF, resetBtn, scheduleBtn);
 
         GridButtonToolbar toolbar = new GridButtonToolbar(grid, true);
-        toolbar
-                .withButton("Execute", selected -> {
-                    IExchangeTask task = (IExchangeTask) selected.iterator().next();
-                    taskService.execute(createTask(task, beanFactory));
-                    log.debug("Task {} executed manually", task.getId());
-                })
-                .withButton(selected -> {
-                    IExchangeTask taskData = selected.iterator().hasNext() ? (IExchangeTask) selected.iterator().next() : null;
-                    return taskData == null ? "Schedule" : taskData.getActive() ? "Cancel" : "Schedule";
-                }, selected -> {
-                    IExchangeTask taskData = (IExchangeTask) selected.iterator().next();
-                    if (!taskData.getActive()) {
-                        taskService.schedule(createTask(taskData, beanFactory), new CronTrigger(taskData.getCron()));
-                        log.debug("Exchange task {} has been scheduled", taskData.getId());
-                    } else {
-                        taskService.terminate(taskData.getId());
-                        log.debug("Exchange task {} has been canceled", taskData.getId());
-                    }
-                    refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
-                            P_ID, SortDirection.DESCENDING);
-                })
-                .withButtonStyled("Remove", selected -> {
-                    IExchangeTask taskData = (IExchangeTask) selected.iterator().next();
-                    ConfirmDialog.show(UI.getCurrent(),
-                            "Removal Confirmation",
-                            "Are you really sure you want to remove exchange task " + bold(taskData.getId()) + "?",
-                            "Yes",
-                            "Cancel",
-                            dialog -> {
-                                if (dialog.isConfirmed()) {
-                                    taskService.delete(taskData.getId());
-                                    refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
-                                            P_ID, SortDirection.DESCENDING);
-                                    log.debug("Exchange task {} was removed", taskData.getId());
-                                    NotificationUtils.notifySuccess("Task Removal",
-                                            "Exchange task " + taskData.getId() + " successfully removed");
-                                }
-                            }).setContentMode(ConfirmDialog.ContentMode.HTML);
-                }, ValoTheme.BUTTON_DANGER);
+
+        toolbar.withButton("Execute", selected -> {
+            IExchangeTask taskData = (IExchangeTask) selected.iterator().next();
+            NotifiableExchangeTask task = exchangeTaskProvider.getObject();
+            task.setTaskData(taskData);
+            taskService.execute(task);
+            log.debug("Task {} executed manually", task.getId());
+        }).withButton(selected -> {
+            IExchangeTask taskData = selected.iterator().hasNext() ? (IExchangeTask) selected.iterator().next() : null;
+            return taskData == null ? "Schedule" : taskData.getActive() ? "Cancel" : "Schedule";
+        }, selected -> {
+            IExchangeTask taskData = (IExchangeTask) selected.iterator().next();
+            if (!taskData.getActive()) {
+                NotifiableExchangeTask task = exchangeTaskProvider.getObject();
+                task.setTaskData(taskData);
+                taskService.schedule(task, taskData.getCron());
+                log.debug("Exchange task {} has been scheduled", taskData.getId());
+            } else {
+                taskService.terminate(taskData.getId());
+                log.debug("Exchange task {} has been canceled", taskData.getId());
+            }
+            refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
+                    P_ID, SortDirection.DESCENDING);
+        }).withButtonStyled("Remove", selected -> {
+            IExchangeTask taskData = (IExchangeTask) selected.iterator().next();
+            ConfirmDialog.show(UI.getCurrent(),
+                    "Removal Confirmation",
+                    "Are you really sure you want to remove exchange task " + bold(taskData.getId()) + "?",
+                    "Yes",
+                    "Cancel",
+                    dialog -> {
+                        if (dialog.isConfirmed()) {
+                            taskService.delete(taskData.getId());
+                            refresh(taskService.findForUser(SecurityUtils.getIdentityUserPrincipal().getId()),
+                                    P_ID, SortDirection.DESCENDING);
+                            log.debug("Exchange task {} was removed", taskData.getId());
+                            NotificationUtils.notifySuccess("Task Removal",
+                                    "Exchange task " + taskData.getId() + " successfully removed");
+                        }
+                    }).setContentMode(ConfirmDialog.ContentMode.HTML);
+        }, ValoTheme.BUTTON_DANGER);
 
         gridBar.addComponent(toolbar);
         gridBar.setComponentAlignment(toolbar, Alignment.BOTTOM_RIGHT);

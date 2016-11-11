@@ -20,6 +20,12 @@ public class NotificationUtils {
                 ValoTheme.NOTIFICATION_SUCCESS);
     }
 
+    public static void notifySuccessCloseable(String caption, String message) {
+        notifyCustom(caption, message, -1, Position.BOTTOM_CENTER,
+                ValoTheme.NOTIFICATION_SUCCESS,
+                ValoTheme.NOTIFICATION_CLOSABLE);
+    }
+
     public static void notifyFailure(String caption, String message) {
         notifyCustom(caption, message, -1, Position.TOP_CENTER,
                 ValoTheme.NOTIFICATION_FAILURE,

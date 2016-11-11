@@ -1,9 +1,10 @@
 package org.baddev.currency.core.api;
 
-import org.baddev.currency.core.action.DeleteAction;
-import org.baddev.currency.core.action.FindAction;
-import org.baddev.currency.core.action.UpdateAction;
+import org.baddev.common.action.DeleteAction;
+import org.baddev.common.action.FindAction;
+import org.baddev.common.action.UpdateAction;
 import org.baddev.currency.core.action.UserAction;
+import org.baddev.currency.core.dto.ResetPasswordDTO;
 import org.baddev.currency.core.dto.UserPasswordChangeDTO;
 import org.baddev.currency.core.exception.RoleAlreadyAssignedException;
 import org.baddev.currency.core.exception.RoleNotFoundException;
@@ -29,4 +30,7 @@ public interface UserService extends FindAction<IUser, Long>, UpdateAction<IUser
     void unassignFromRoles(Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException;
     void updateUserRoles(Long userId, Collection<Long> allUserRoles) throws RoleNotFoundException, UserNotFoundException;
     void changeUserPassword(UserPasswordChangeDTO dto);
+    void createPasswordResetToken(String userEmail, String token, int expirationDuration);
+    boolean isPasswordResetTokenValid(String token);
+    void resetPassword(ResetPasswordDTO resetPasswordDTO);
 }

@@ -1,6 +1,6 @@
 package org.baddev.currency.core.event;
 
-
+import org.baddev.common.event.BaseDataEvent;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 
 /**

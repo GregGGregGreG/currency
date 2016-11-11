@@ -3,7 +3,7 @@ package org.baddev.currency.jooq.transaction;
 import org.jooq.TransactionContext;
 import org.jooq.TransactionProvider;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
@@ -14,7 +14,8 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
  */
 public class SpringTransactionProvider implements TransactionProvider{
 
-    private static final Logger log = LoggerFactory.getLogger(SpringTransactionProvider.class);
+    @Autowired
+    private Logger log;
 
     private DataSourceTransactionManager txMgr;
 

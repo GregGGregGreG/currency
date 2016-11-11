@@ -1,12 +1,13 @@
 package org.baddev.currency.ui.listener;
 
 import com.vaadin.ui.UI;
+import org.baddev.common.event.GenericEventListener;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
-import org.baddev.currency.core.event.GenericEventListener;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.ui.util.FormatUtils;
 import org.springframework.beans.factory.annotation.Required;
+import org.springframework.util.Assert;
 
 import static org.baddev.currency.ui.util.NotificationUtils.notifyTray;
 
@@ -21,22 +22,25 @@ public class UIExchangeCompletionListener implements GenericEventListener<Exchan
     private UI ui;
 
     public UIExchangeCompletionListener(Iso4217CcyService ccyService) {
+        Assert.notNull(ccyService, "ccyService can't be null");
         this.ccyService = ccyService;
     }
 
     public UIExchangeCompletionListener(Iso4217CcyService ccyService, UI ui) {
-        this.ccyService = ccyService;
-        this.ui = ui;
+        this(ccyService);
+        setUI(ui);
     }
 
     @Required
     public void setUI(UI ui) {
+        Assert.notNull(ui, "ui can't be null");
         this.ui = ui;
     }
 
     @Override
     public void onEvent(ExchangeCompletionEvent event) {
         IExchangeOperation operation = event.getEventData();
+        Assert.notNull(event.getEventData(), "eventData can't be null");
         ui.access(() -> {
             String fromCcyNames = FormatUtils.joinByComma(
                     ccyService.findCcyNamesByCode(operation.getFromCcy())

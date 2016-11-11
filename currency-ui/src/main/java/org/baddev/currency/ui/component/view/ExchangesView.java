@@ -16,15 +16,15 @@ import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.core.api.ExchangeRateService;
 import org.baddev.currency.core.api.ExchangerService;
 import org.baddev.currency.core.exception.RatesNotFoundException;
-import org.baddev.currency.core.util.RoleEnum;
+import org.baddev.currency.core.security.RoleEnum;
+import org.baddev.currency.core.security.utils.SecurityUtils;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeRate;
-import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
-import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.view.base.AbstractGridView;
 import org.baddev.currency.ui.converter.DateToLocalDateTimeConverter;
 import org.baddev.currency.ui.converter.DoubleAmountToStringConverter;
 import org.baddev.currency.ui.util.FormatUtils;
@@ -50,7 +50,9 @@ import static org.baddev.currency.ui.util.UIUtils.*;
  */
 @SpringView(name = ExchangesView.NAME)
 @DeclareRoles({RoleEnum.ADMIN, RoleEnum.USER})
-public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
+public class ExchangesView extends AbstractGridView<IExchangeOperation> {
+
+    private static final long serialVersionUID = -165412350565466854L;
 
     public static final String NAME = "exchanges";
 
@@ -61,7 +63,7 @@ public class ExchangesView extends AbstractCcyGridView<IExchangeOperation> {
     private Button         exchBtn        = new Button("Exchange");
     private Button         resetBtn       = new Button("Reset");
 
-    @Value("${min_date_nbu}")
+    @Value("${nbu.url_param_val.min_date}")
     private String minDateVal;
 
     @Autowired private ExchangerService    exchangerService;

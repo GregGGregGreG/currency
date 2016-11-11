@@ -23,6 +23,8 @@ import java.util.Collections;
 @SpringView(name = SignInView.NAME)
 public class SignInView extends AbstractFormView<SignInDTO> {
 
+    private static final long serialVersionUID = 2149935732094845683L;
+
     public static final String NAME = "signin";
 
     public SignInView() {
@@ -44,28 +46,38 @@ public class SignInView extends AbstractFormView<SignInDTO> {
             f.setImmediate(true);
         });
 
-        binder.addCommitHandler(new FieldGroup.CommitHandler() {
-            @Override
-            public void preCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-            }
-
-            @Override
-            public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
-                EventBus.post(new SignInEvent(this, formBean, binder));
-            }
-        });
-
         submitBtn.setCaption("Sign In");
-        submitBtn.addStyleName(ValoTheme.BUTTON_PRIMARY);
-        submitBtn.addClickListener(event -> {
-            try {
-                binder.commit();
-            } catch (FieldGroup.CommitException e) {
-                binder.clear();
-                throw new WrappedUIException(e);
-            }
+        submitBtn.setIcon(FontAwesome.SIGN_IN);
+
+        Button forgot = new Button("Forgot Password?", event -> {
+            Navigator.navigate(ResetPasswordStep1View.NAME);
         });
-        formLayout.addComponents(userName, password, submitBtn);
+        forgot.setStyleName(ValoTheme.BUTTON_LINK);
+        forgot.addStyleName(ValoTheme.BUTTON_SMALL);
+
+        HorizontalLayout wrapper = new HorizontalLayout(submitBtn, forgot);
+        wrapper.setComponentAlignment(forgot, Alignment.MIDDLE_RIGHT);
+
+        formLayout.addComponents(userName, password, wrapper);
+    }
+
+    @Override
+    protected void submitBtnClicked(Button.ClickEvent clickEvent, BeanFieldGroup<SignInDTO> binder) {
+        try {
+            binder.commit();
+        } catch (FieldGroup.CommitException e) {
+            binder.clear();
+            throw new WrappedUIException(e);
+        }
+    }
+
+    @Override
+    public void preCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
+    }
+
+    @Override
+    public void postCommit(FieldGroup.CommitEvent commitEvent) throws FieldGroup.CommitException {
+        EventBus.post(new SignInEvent(this, formBean, commitEvent.getFieldBinder()));
     }
 
     @Override

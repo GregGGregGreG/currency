@@ -25,10 +25,6 @@
             <artifactId>jooq-codegen</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-dbcp</groupId>
             <artifactId>commons-dbcp</artifactId>
         </dependency>
@@ -169,7 +165,6 @@
                                             <springAnnotations>true</springAnnotations>
                                             <pojosToString>true</pojosToString>
                                             <pojosEqualsAndHashCode>true</pojosEqualsAndHashCode>
-                                            <jpaAnnotations>true</jpaAnnotations>
                                             <propertiesConstants>true</propertiesConstants>
                                             <jaxbAnnotations>true</jaxbAnnotations>
                                         </generate>

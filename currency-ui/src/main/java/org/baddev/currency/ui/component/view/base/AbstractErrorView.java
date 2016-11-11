@@ -5,15 +5,17 @@ import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
+import org.springframework.util.Assert;
 
 import java.util.IllegalFormatException;
 
-public abstract class AbstractErrorView extends AbstractCcyView {
+public abstract class AbstractErrorView extends AbstractView {
 
     private Label msgLabel;
-    private String errorMsg;
+    private String errorMsg = "";
 
-    protected AbstractErrorView(String errorMsg) {
+    protected void setErrorMsg(String errorMsg) {
+        Assert.notNull(errorMsg, "errorMsg can't be null");
         this.errorMsg = errorMsg;
     }
 

@@ -62,8 +62,8 @@ public final class VaadinSessionUtils {
     }
 
     public static <T> void alterAttribute(Class<T> clazz, Consumer<T> attrConsumer){
-        getSession().lock();
         T attr = getSession().getAttribute(clazz);
+        getSession().lock();
         attrConsumer.accept(attr);
         getSession().setAttribute(clazz, attr);
         getSession().unlock();

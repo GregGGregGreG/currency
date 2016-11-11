@@ -1,5 +1,7 @@
 package org.baddev.currency.core.action;
 
+import org.baddev.common.action.FindAction;
+
 import java.util.Collection;
 
 /**

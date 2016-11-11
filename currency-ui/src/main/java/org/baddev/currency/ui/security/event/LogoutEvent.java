@@ -1,7 +1,6 @@
 package org.baddev.currency.ui.security.event;
 
-
-import org.baddev.currency.core.event.BaseDataEvent;
+import org.baddev.common.event.BaseDataEvent;
 
 /**
  * Created by IPotapchuk on 6/29/2016.

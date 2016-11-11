@@ -1,11 +1,9 @@
 package org.baddev.currency.core.exception;
 
-import org.springframework.core.NestedRuntimeException;
-
 /**
  * Created by IPotapchuk on 9/19/2016.
  */
-public class UserNotFoundException extends NestedRuntimeException {
+public class UserNotFoundException extends ServiceException {
 
     private static final String MSG_PART = "User %s was not found";
 

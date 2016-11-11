@@ -13,8 +13,10 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 @Scope(SCOPE_PROTOTYPE)
 public class ErrorView extends AbstractErrorView {
 
+    private static final long serialVersionUID = 110792557690891243L;
+
     public ErrorView() {
-        super("Requested view with name <b>%s</b> was not found");
+        setErrorMsg("Requested view with name <b>%s</b> was not found");
     }
 
     @Override

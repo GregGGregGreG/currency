@@ -1,6 +1,5 @@
 package org.baddev.currency.ui.component.toolbar;
 
-import com.google.common.collect.ImmutableSet;
 import com.vaadin.event.SelectionEvent;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
@@ -8,10 +7,7 @@ import org.baddev.currency.ui.util.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -26,7 +22,7 @@ public class GridButtonToolbar extends HorizontalLayout implements SelectionEven
 
     private Map<Consumer, Button> actionBtnMap = new HashMap<>();
     private Map<Function<Set, String>, Button> captionRenderedBtnMap = new HashMap<>();
-    private Set selected =  ImmutableSet.of();
+    private Set selected =  new HashSet();
     private CssLayout buttonLayout = new CssLayout();
     private boolean hideNoSelect;
 
@@ -51,7 +47,7 @@ public class GridButtonToolbar extends HorizontalLayout implements SelectionEven
 
     @Override
     public void select(SelectionEvent event) {
-        selected = ImmutableSet.copyOf(event.getSelected());
+        selected = event.getSelected();
         actionBtnMap.values().forEach(b -> {
             b.setEnabled(!selected.isEmpty());
             if (hideNoSelect) setVisible(!selected.isEmpty());

@@ -1,6 +1,7 @@
 package org.baddev.currency.ui.component.view.base;
 
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
+import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
@@ -11,12 +12,12 @@ import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 /**
  * Created by IPotapchuk on 6/29/2016.
  */
-public abstract class AbstractFormView<T> extends AbstractCcyView {
+public abstract class AbstractFormView<T> extends AbstractView implements FieldGroup.CommitHandler, Button.ClickListener {
 
     protected T formBean;
     private Class<T> beanClass;
-    private Button submitBtn;
     private String panelCaption = "";
+    private BeanFieldGroup<T> binder;
 
     protected AbstractFormView(T formBean, Class<T> beanClass) {
         this.formBean = formBean;
@@ -32,11 +33,15 @@ public abstract class AbstractFormView<T> extends AbstractCcyView {
         FormLayout form = new FormLayout();
         form.setSizeUndefined();
 
-        BeanFieldGroup<T> binder = new BeanFieldGroup<>(beanClass);
+        binder = new BeanFieldGroup<>(beanClass);
         binder.setItemDataSource(formBean);
 
-        submitBtn = new Button();
+        binder.addCommitHandler(this);
+
+        Button submitBtn = new Button();
         submitBtn.setClickShortcut(ShortcutAction.KeyCode.ENTER);
+        submitBtn.addClickListener(this);
+        submitBtn.setStyleName(ValoTheme.BUTTON_PRIMARY);
 
         customizeForm(form, binder, submitBtn);
 
@@ -59,6 +64,13 @@ public abstract class AbstractFormView<T> extends AbstractCcyView {
 
         submitBtn.focus();
     }
+
+    @Override
+    public final void buttonClick(Button.ClickEvent clickEvent) {
+        submitBtnClicked(clickEvent, binder);
+    }
+
+    protected abstract void submitBtnClicked(Button.ClickEvent clickEvent, BeanFieldGroup<T> binder);
 
     protected abstract void customizeForm(final FormLayout formLayout, final BeanFieldGroup<T> binder, final Button submitBtn);
 

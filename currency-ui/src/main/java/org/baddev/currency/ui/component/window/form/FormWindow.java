@@ -3,6 +3,7 @@ package org.baddev.currency.ui.component.window.form;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.ui.Field;
 import com.vaadin.ui.TextField;
+import org.baddev.currency.ui.component.window.Showable;
 import org.baddev.currency.ui.exception.WrappedUIException;
 
 import java.util.*;
@@ -24,31 +25,36 @@ public final class FormWindow {
     }
 
     public static <T> void show(Config<T> config) {
+        Showable formWindow = configure(config);
+        try {
+            formWindow.show(config.caption);
+        } catch (Exception e) {
+            throw new WrappedUIException("Failed to show FormWindow", e);
+        }
+    }
+
+    private static <T> Showable configure(Config<T> config) {
         AbstractFormWindow formWindow = null;
+
         if (config.beanClass != null) {
             formWindow = new BindableFormWindow<>(config.mode,
                     createBeanFieldGroup(config.beanClass, config.formBean,
                             config.captionToPropertyIdMap,
                             config.propertyIdToFieldTypeMap));
         } else if (!config.lhs.isEmpty() || !config.rhs.isEmpty()) {
-            formWindow = new TwincolSelectWindow<T>(config.lhs, config.rhs, config.itemCaptionProducer);
+            formWindow = new TwincolSelectWindow<>(config.lhs, config.rhs, config.itemCaptionProducer);
         }
         Objects.requireNonNull(formWindow);
         if (config.width != null) formWindow.withWidth(config.width);
         if (config.height != null) formWindow.withHeight(config.height);
         formWindow.withUIErrorHandling(config.uiErrorHandlingMode);
-        if (config.onCommitError != null) {
-            formWindow.withUIErrorHandling(false);
-            formWindow.withErrorActionProvider(config.onCommitError);
-        }
-        if (config.onCommitSuccess != null) formWindow.withSuccessActionProvider(config.onCommitSuccess);
+        formWindow.withErrorActionProvider(config.onCommitError);
+        formWindow.withSuccessActionProvider(config.onCommitSuccess);
+        if (config.successCaption != null) formWindow.withSuccessCaption(config.successCaption);
+        if (config.successMsg != null) formWindow.withSuccessMsg(config.successMsg);
         formWindow.setResizable(config.resizable);
         formWindow.setModal(config.modal);
-        try {
-            formWindow.show(config.caption);
-        } catch (Exception e) {
-            throw new WrappedUIException("Failed to show FormWindow", e);
-        }
+        return formWindow;
     }
 
     private static <T> BeanFieldGroup<T> createBeanFieldGroup(Class<T> beanClass,
@@ -83,6 +89,8 @@ public final class FormWindow {
         private Collection<? extends T> lhs = Collections.emptyList();
         private Function<T, String> itemCaptionProducer = Object::toString;
         private boolean uiErrorHandlingMode = true;
+        private String successMsg;
+        private String successCaption;
 
         public Config(Mode windowMode) {
             this.mode = windowMode;
@@ -93,11 +101,6 @@ public final class FormWindow {
             return this;
         }
 
-        public Config<T> setUiErrorHandlingMode(boolean uiErrorHandlingMode) {
-            this.uiErrorHandlingMode = uiErrorHandlingMode;
-            return this;
-        }
-
         public Config<T> setOnCommitSuccess(Consumer<Set<T>> onCommitSuccess) {
             this.onCommitSuccess = onCommitSuccess;
             return this;
@@ -105,6 +108,7 @@ public final class FormWindow {
 
         public <E extends Exception> Config setOnCommitError(Consumer<E> onCommitError) {
             this.onCommitError = onCommitError;
+            this.uiErrorHandlingMode = false;
             return this;
         }
 
@@ -160,6 +164,22 @@ public final class FormWindow {
 
         public Config<T> setItemCaptionProducer(Function<T, String> captionProducer) {
             this.itemCaptionProducer = captionProducer;
+            return this;
+        }
+
+        public Config<T> setSuccessMsg(String successMsg) {
+            this.successMsg = successMsg;
+            return this;
+        }
+
+        public Config<T> setSuccessCaption(String successCaption) {
+            this.successCaption = successCaption;
+            return this;
+        }
+
+        public Config<T> setSuccessNotification(String caption, String msg) {
+            this.successCaption = caption;
+            this.successMsg = msg;
             return this;
         }
     }

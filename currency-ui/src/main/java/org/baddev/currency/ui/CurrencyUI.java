@@ -2,44 +2,44 @@ package org.baddev.currency.ui;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.vaadin.annotations.*;
+import com.vaadin.annotations.PreserveOnRefresh;
+import com.vaadin.annotations.Push;
+import com.vaadin.annotations.Theme;
+import com.vaadin.annotations.Widgetset;
 import com.vaadin.server.*;
 import com.vaadin.shared.ui.ui.Transport;
 import com.vaadin.spring.annotation.SpringUI;
-import com.vaadin.spring.server.SpringVaadinServlet;
 import com.vaadin.ui.UI;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.baddev.common.event.EventPublisher;
+import org.baddev.common.mail.ApplicationMailer;
+import org.baddev.common.utils.AssertUtils;
 import org.baddev.currency.core.api.UserService;
-import org.baddev.currency.core.dto.SignInDTO;
 import org.baddev.currency.core.dto.SignUpDTO;
-import org.baddev.currency.core.event.EventPublisher;
-import org.baddev.currency.core.util.RoleEnum;
+import org.baddev.currency.core.exception.UserNotFoundException;
+import org.baddev.currency.core.security.RoleEnum;
+import org.baddev.currency.core.security.utils.SecurityUtils;
 import org.baddev.currency.jooq.schema.tables.daos.UserPreferencesDao;
 import org.baddev.currency.jooq.schema.tables.pojos.UserPreferences;
 import org.baddev.currency.mail.listener.MailExchangeCompletionListener;
-import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.view.MainView;
 import org.baddev.currency.ui.component.view.RatesView;
+import org.baddev.currency.ui.component.view.ResetPasswordStep2View;
 import org.baddev.currency.ui.component.view.SignInView;
-import org.baddev.currency.ui.listener.AppSessionInitListener;
 import org.baddev.currency.ui.listener.UIExchangeCompletionListener;
-import org.baddev.currency.ui.security.VaadinSessionSecurityContextHolderStrategy;
-import org.baddev.currency.ui.security.event.LogoutEvent;
-import org.baddev.currency.ui.security.event.SignInEvent;
-import org.baddev.currency.ui.security.event.SignUpEvent;
+import org.baddev.currency.ui.security.event.*;
+import org.baddev.currency.ui.util.NotificationUtils;
 import org.baddev.currency.ui.util.VaadinSessionUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.security.authentication.encoding.MessageDigestPasswordEncoder;
+import org.springframework.util.StringUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.annotation.WebServlet;
+import javax.annotation.PostConstruct;
+import java.util.UUID;
 
-import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
-import static org.baddev.currency.security.utils.SecurityUtils.loggedInUserName;
+import static org.baddev.currency.core.security.utils.SecurityUtils.isLoggedIn;
 import static org.baddev.currency.ui.util.NotificationUtils.notifySuccess;
 
 @Theme("valo-default")
@@ -50,8 +50,8 @@ import static org.baddev.currency.ui.util.NotificationUtils.notifySuccess;
 public class CurrencyUI extends UI implements SessionDestroyListener {
 
     private static final long serialVersionUID = 2223841791673821941L;
-    private static final Logger log = LoggerFactory.getLogger(CurrencyUI.class);
 
+    @Autowired private Logger                         log;
     @Autowired private EventBus                       bus;
     @Autowired private UserService                    userService;
     @Autowired private NavigatorFactory               navigatorFactory;
@@ -60,9 +60,17 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
     @Autowired private UserPreferencesDao             userPreferencesDao;
     @Autowired private UIExchangeCompletionListener   uiListener;
     @Autowired private MailExchangeCompletionListener mailListener;
+    @Autowired private ApplicationMailer              mailer;
+    @Autowired private MessageDigestPasswordEncoder   encoder;
 
     @Value("${app.title}")
     private String pageTitle;
+
+    @PostConstruct
+    public void postConstruct(){
+        AssertUtils.objectsNotNull(log, bus, userService, navigatorFactory, mainView,
+                userEventPublisher, userPreferencesDao, uiListener, mailListener, pageTitle, mailer);
+    }
 
     public EventBus getEventBus() {
         return bus;
@@ -79,18 +87,23 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
         setErrorHandler(new DefaultErrorHandler() {
             @Override
             public void error(com.vaadin.server.ErrorEvent event) {
-                Throwable t = findRelevantThrowable(event.getThrowable());
-                if (t instanceof Exception) {
-                    new UIErrorHandler().handle((Exception) t);
+                Throwable relevant = findRelevantThrowable(event.getThrowable());
+                Throwable cause = ExceptionUtils.getRootCause(relevant);
+                relevant = (cause == null) ? relevant : cause;
+                if (relevant instanceof Exception) {
+                    new UIErrorHandler().handle((Exception) relevant);
                 } else super.error(event);
             }
         });
         setContent(mainView);
         setNavigator(navigatorFactory.create(this, mainView));
         uiListener.setUI(this);
+        String fragment = Page.getCurrent().getLocation().getFragment();
         if (isLoggedIn()) {
             applyUserPreferences();
             getNavigator().navigateTo(RatesView.NAME);
+        } else if (!StringUtils.isEmpty(fragment) && fragment.startsWith("!reset")) {
+            getNavigator().navigateTo(fragment);
         } else getNavigator().navigateTo(SignInView.NAME);
     }
 
@@ -112,9 +125,9 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
         SignUpDTO data = event.getEventData();
         try {
             userService.signUp(event.getEventData(), RoleEnum.USER);
-            signIn(new SignInEvent(this, new SignInDTO(data.getUsername(), data.getPassword())));
             notifySuccess("Account Creation",
-                    String.format("Account \"%s\" successfully created", loggedInUserName()));
+                    String.format("Account \"%s\" successfully created. Please, use your credentials to sign in",
+                            data.getUsername()));
         } catch (Exception e) {
             event.getBinder().getField("password").clear();
             event.getBinder().getField("confirmPassword").clear();
@@ -127,6 +140,37 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
         getSession().close();
         VaadinService.getCurrentRequest().getWrappedSession().invalidate();
         getPage().reload();
+    }
+
+    @Subscribe
+    private void requestPasswordReset(ResetPwdStep1Event event) {
+        String email = event.getEventData().getEmail();
+
+        String rawToken = UUID.randomUUID().toString();
+
+        try {
+            userService.createPasswordResetToken(email, encoder.encodePassword(rawToken, null), 60);
+        } catch (UserNotFoundException e){
+            event.getBinder().clear();
+            throw e;
+        }
+
+        String baseUrl = Page.getCurrent().getLocation().getScheme() + ":" + Page.getCurrent().getLocation().getSchemeSpecificPart();
+        String url = baseUrl + "#!" + ResetPasswordStep2View.NAME + "/" + "?token=" + rawToken;
+
+        mailer.sendMail(email, "Password Reset", "To reset your password click the link below: \n" +
+                url);
+
+        event.getBinder().clear();
+        NotificationUtils.notifySuccessCloseable("Password Reset",
+                "We sent an email to "+email+". Please, follow an instructions in the letter");
+    }
+
+    @Subscribe
+    private void passwordReset(ResetPwdStep2Event event){
+        userService.resetPassword(event.getEventData());
+        getNavigator().navigateTo(SignInView.NAME);
+        NotificationUtils.notifySuccess("Password Reset", "Password updated. Please, use your new credentials to login");
     }
 
     private void applyUserPreferences() {
@@ -163,35 +207,6 @@ public class CurrencyUI extends UI implements SessionDestroyListener {
     public void sessionDestroy(SessionDestroyEvent event) {
         userPreferencesDao.update(VaadinSessionUtils.getAttribute(UserPreferences.class));
         log.debug("Session destroyed, {}", event.getSession());
-    }
-
-    @WebServlet(urlPatterns = "/*", name = "vaadinServlet", asyncSupported = true)
-    @VaadinServletConfiguration(
-            ui = CurrencyUI.class,
-            productionMode = false,
-            heartbeatInterval = 15,
-            closeIdleSessions = true
-    )
-    public static class AppServlet extends SpringVaadinServlet {
-
-        private static final long serialVersionUID = -2328685994490607984L;
-
-        @Override
-        protected void servletInitialized() throws ServletException {
-            super.servletInitialized();
-            SecurityContextHolder.setStrategyName(VaadinSessionSecurityContextHolderStrategy.class.getName());
-            getService().setSystemMessagesProvider(systemMessagesInfo -> {
-                CustomizedSystemMessages systemMessages = new CustomizedSystemMessages();
-                systemMessages.setSessionExpiredNotificationEnabled(false);
-                systemMessages.setCommunicationErrorNotificationEnabled(false);
-                return systemMessages;
-            });
-            getService().addSessionInitListener(new AppSessionInitListener());
-        }
-    }
-
-    @WebListener
-    public static class AppContextLoaderListener extends ContextLoaderListener {
     }
 
 }

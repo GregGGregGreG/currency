@@ -8,8 +8,10 @@ import com.vaadin.spring.annotation.SpringComponent;
 import com.vaadin.spring.navigator.SpringViewProvider;
 import com.vaadin.ui.UI;
 import org.baddev.currency.ui.component.view.AccessDeniedView;
-import org.baddev.currency.ui.component.view.ErrorView;
+import org.baddev.currency.ui.component.view.base.AbstractErrorView;
+import org.baddev.currency.ui.listener.AppViewChangeListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.Assert;
 
 /**
  * Created by IPotapchuk on 10/5/2016.
@@ -17,13 +19,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 @SpringComponent
 public class NavigatorFactory {
 
+    private final SpringViewProvider viewProvider;
+    private final AbstractErrorView errorView;
+    private final AppViewChangeListener viewChangeListener;
+
     @Autowired
-    private SpringViewProvider viewProvider;
-    @Autowired
-    private ErrorView errorView;
+    public NavigatorFactory(SpringViewProvider viewProvider, AbstractErrorView errorView, AppViewChangeListener viewChangeListener) {
+        Assert.notNull(viewProvider, "viewProvider can't be null");
+        Assert.notNull(errorView, "errorView can't be null");
+        Assert.notNull(viewChangeListener, "viewChangeListener can't be null");
+        this.viewProvider = viewProvider;
+        this.errorView = errorView;
+        this.viewChangeListener = viewChangeListener;
+    }
 
     public Navigator create(UI ui, ViewDisplay display){
-        Navigator navigator = new Navigator(UI.getCurrent(), display);
+        Navigator navigator = new Navigator(ui, display);
         navigator.setErrorProvider(new ViewProvider() {
             @Override
             public String getViewName(String viewAndParameters) {
@@ -37,6 +48,7 @@ public class NavigatorFactory {
         });
         viewProvider.setAccessDeniedViewClass(AccessDeniedView.class);
         navigator.addProvider(viewProvider);
+        navigator.addViewChangeListener(viewChangeListener);
         return navigator;
     }
 }

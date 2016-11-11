@@ -19,8 +19,4 @@ public final class Navigator {
         return get().getNavigator().getCurrentView();
     }
 
-    public static String getState(){
-        return get().getNavigator().getState();
-    }
-
 }

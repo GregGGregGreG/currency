@@ -56,4 +56,8 @@ $v-grid-cell-focused-border: none;
     }
   }
 
+  .v-grid-cell.highlighted-warn {
+    background-color: $v-warn-color !important;
+  }
+
 }

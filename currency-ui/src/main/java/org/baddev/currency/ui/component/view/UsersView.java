@@ -12,20 +12,21 @@ import org.baddev.currency.core.api.UserService;
 import org.baddev.currency.core.dto.UserDetailsDTO;
 import org.baddev.currency.core.dto.UserPasswordChangeDTO;
 import org.baddev.currency.core.exception.ServiceException;
-import org.baddev.currency.core.util.RoleEnum;
+import org.baddev.currency.core.security.RoleEnum;
+import org.baddev.currency.core.security.utils.SecurityUtils;
 import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
 import org.baddev.currency.jooq.schema.tables.interfaces.IRole;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUser;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.baddev.currency.jooq.schema.tables.pojos.User;
 import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
-import org.baddev.currency.security.utils.SecurityUtils;
 import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
 import org.baddev.currency.ui.component.toolbar.GridButtonToolbar;
-import org.baddev.currency.ui.component.view.base.AbstractCcyGridView;
+import org.baddev.currency.ui.component.view.base.AbstractGridView;
 import org.baddev.currency.ui.component.window.form.FormWindow;
 import org.baddev.currency.ui.util.Navigator;
 import org.baddev.currency.ui.util.NotificationUtils;
+import org.baddev.currency.ui.util.Styles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.dialogs.ConfirmDialog;
 
@@ -33,6 +34,7 @@ import javax.annotation.security.DeclareRoles;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.baddev.currency.jooq.schema.tables.pojos.User.*;
 import static org.baddev.currency.ui.util.FormatUtils.bold;
 import static org.baddev.currency.ui.util.FormatUtils.boldInQuotes;
 
@@ -41,30 +43,26 @@ import static org.baddev.currency.ui.util.FormatUtils.boldInQuotes;
  */
 @SpringView(name = UsersView.NAME)
 @DeclareRoles({RoleEnum.ADMIN})
-public final class UsersView extends AbstractCcyGridView<IUser> {
+public final class UsersView extends AbstractGridView<IUser> {
 
     private static final long serialVersionUID = 6755374220474749056L;
+
     public static final String NAME = "users";
 
-    @Autowired
-    private RoleDao roleDao;
-    private final UserService userService;
-    private final GridButtonToolbar toolbar = new GridButtonToolbar(grid);
+    @Autowired private RoleDao     roleDao;
+    @Autowired private UserService userService;
 
-    @Autowired
-    public UsersView(UserService userService) {
-        this.userService = userService;
-    }
+    private final GridButtonToolbar toolbar = new GridButtonToolbar(grid);
 
     @Override
     protected void postInit(VerticalSpacedLayout rootLayout) {
-        setup(IUser.class, userService.findAll(), User.P_PASSWORD);
+        setup(IUser.class, userService.findAll(), P_PASSWORD);
 
         List<Grid.Column> iconRenderedColumns = new ArrayList<>();
-        iconRenderedColumns.add(grid.getColumn(User.P_ACC_NON_LOCKED).setHeaderCaption("Account Lock Status"));
-        iconRenderedColumns.add(grid.getColumn(User.P_ACC_NON_EXPIRED).setHeaderCaption("Account Expiration Status"));
-        iconRenderedColumns.add(grid.getColumn(User.P_ENABLED).setHeaderCaption("Account Enabled"));
-        iconRenderedColumns.add(grid.getColumn(User.P_CRED_NON_EXPIRED).setHeaderCaption("Password Expiration Status"));
+        iconRenderedColumns.add(grid.getColumn(P_ACC_NON_LOCKED).setHeaderCaption("Account Lock Status"));
+        iconRenderedColumns.add(grid.getColumn(P_ACC_NON_EXPIRED).setHeaderCaption("Account Expiration Status"));
+        iconRenderedColumns.add(grid.getColumn(P_ENABLED).setHeaderCaption("Account Enabled"));
+        iconRenderedColumns.add(grid.getColumn(P_CRED_NON_EXPIRED).setHeaderCaption("Password Expiration Status"));
 
         iconRenderedColumns.forEach(c -> c.setRenderer(
                 new HtmlRenderer(),
@@ -91,47 +89,58 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
                 }
         ));
 
+        grid.setCellStyleGenerator(cell -> {
+            Object pid = cell.getPropertyId();
+            if ((P_ENABLED.equals(pid) || P_ACC_NON_LOCKED.equals(pid)
+                    || P_ACC_NON_EXPIRED.equals(pid) || P_CRED_NON_EXPIRED.equals(pid))
+                    && Boolean.FALSE.equals(cell.getValue())) {
+                return Styles.GRID_CELL_WARN;
+            } else return null;
+        });
+
         grid.setCellDescriptionGenerator(cell -> {
-            if (User.P_ENABLED.equals(cell.getPropertyId())) {
+            if (P_ENABLED.equals(cell.getPropertyId())) {
                 return ((Boolean) cell.getValue()) ? "Enabled" : "Disabled";
-            } else if (User.P_ACC_NON_EXPIRED.equals(cell.getPropertyId()) || User.P_CRED_NON_EXPIRED.equals(cell.getPropertyId())) {
+            } else if (P_ACC_NON_EXPIRED.equals(cell.getPropertyId()) || P_CRED_NON_EXPIRED.equals(cell.getPropertyId())) {
                 return ((Boolean) cell.getValue()) ? "Not Expired" : "Expired";
-            } else if (User.P_ACC_NON_LOCKED.equals(cell.getPropertyId())) {
+            } else if (P_ACC_NON_LOCKED.equals(cell.getPropertyId())) {
                 return ((Boolean) cell.getValue()) ? "Not Locked" : "Locked";
             }
             return "";
         });
 
         grid.setColumnOrder(
-                User.P_ID,
-                User.P_USERNAME,
-                User.P_ENABLED,
-                User.P_ACC_NON_LOCKED,
-                User.P_ACC_NON_EXPIRED,
-                User.P_CRED_NON_EXPIRED);
+                P_ID,
+                P_USERNAME,
+                P_ENABLED,
+                P_ACC_NON_LOCKED,
+                P_ACC_NON_EXPIRED,
+                P_CRED_NON_EXPIRED);
 
-        grid.sort(User.P_ID, SortDirection.ASCENDING);
+        grid.sort(P_ID, SortDirection.ASCENDING);
     }
 
     @Override
     protected void postRefresh(Collection<? extends IUser> data) {
         addRowFilter(new FilterConfig()
-                .setPropId(User.P_USERNAME)
-                .setKind(FilterKind.TEXT));
+                .setPropId(P_USERNAME)
+                .setKind(FilterKind.TEXT)
+                .setTextAutocomplete(true)
+                .setSelectOptions(data.stream().map(IUser::getUsername).collect(Collectors.toList())));
         addRowFilter(new FilterConfig()
-                .setPropId(User.P_ENABLED)
+                .setPropId(P_ENABLED)
                 .setKind(FilterKind.SELECT)
                 .setSelectOptions(data.stream().map(user -> user.getEnabled().toString()).collect(Collectors.toList())));
         addRowFilter(new FilterConfig()
-                .setPropId(User.P_ACC_NON_LOCKED)
+                .setPropId(P_ACC_NON_LOCKED)
                 .setKind(FilterKind.SELECT)
                 .setSelectOptions(data.stream().map(user -> user.getAccNonLocked().toString()).collect(Collectors.toList())));
         addRowFilter(new FilterConfig()
-                .setPropId(User.P_ACC_NON_EXPIRED)
+                .setPropId(P_ACC_NON_EXPIRED)
                 .setKind(FilterKind.SELECT)
                 .setSelectOptions(data.stream().map(user -> user.getAccNonExpired().toString()).collect(Collectors.toList())));
         addRowFilter(new FilterConfig()
-                .setPropId(User.P_CRED_NON_EXPIRED)
+                .setPropId(P_CRED_NON_EXPIRED)
                 .setKind(FilterKind.SELECT)
                 .setSelectOptions(data.stream().map(user -> user.getCredNonExpired().toString()).collect(Collectors.toList())));
     }
@@ -180,22 +189,22 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
             IUser user = ((Set<IUser>) selectedUsers).iterator().next();
             FormWindow.show(new FormWindow.Config<IUser>(FormWindow.Mode.EDIT)
                     .setBeanClass(IUser.class)
-                    .setFormBean(user)
+                    .setFormBean(user.into(new User()))
                     .setCaptionToPropertyIdMap(ImmutableMap.of(
-                            "Account Enabled", User.P_ENABLED,
-                            "Account Not Expired", User.P_ACC_NON_EXPIRED,
-                            "Account Not Locked", User.P_ACC_NON_LOCKED,
-                            "Credentials Not Expired", User.P_CRED_NON_EXPIRED))
+                            "Account Enabled", P_ENABLED,
+                            "Account Not Expired", P_ACC_NON_EXPIRED,
+                            "Account Not Locked", P_ACC_NON_LOCKED,
+                            "Credentials Not Expired", P_CRED_NON_EXPIRED))
                     .setPropertyIdToFieldTypeMap(ImmutableMap.of(
-                            User.P_ENABLED, CheckBox.class,
-                            User.P_ACC_NON_EXPIRED, CheckBox.class,
-                            User.P_ACC_NON_LOCKED, CheckBox.class,
-                            User.P_CRED_NON_EXPIRED, CheckBox.class))
+                            P_ENABLED, CheckBox.class,
+                            P_ACC_NON_EXPIRED, CheckBox.class,
+                            P_ACC_NON_LOCKED, CheckBox.class,
+                            P_CRED_NON_EXPIRED, CheckBox.class))
                     .setCaption("Account Restrictions - " + bold(user.getUsername()))
                     .setWidth(400f)
                     .setOnCommitSuccess((Set<IUser> userSet) -> {
                         userService.update(userSet.iterator().next(), null);
-                        refresh(userService.findAll(), User.P_ID, SortDirection.ASCENDING);
+                        refresh(userService.findAll(), P_ID, SortDirection.ASCENDING);
                     }));
         }).withButton("Change Password", selectedUsers -> {
             IUser user = ((Set<IUser>) selectedUsers).iterator().next();
@@ -216,7 +225,7 @@ public final class UsersView extends AbstractCcyGridView<IUser> {
                     dialog -> {
                         if (dialog.isConfirmed()) {
                             userService.delete(uname);
-                            refresh(userService.findAll(), User.P_ID, SortDirection.ASCENDING);
+                            refresh(userService.findAll(), P_ID, SortDirection.ASCENDING);
                             NotificationUtils.notifySuccess("User Removal",
                                     "User " + boldInQuotes(uname) + " successfully removed");
                         }

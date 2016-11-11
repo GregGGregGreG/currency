@@ -7,8 +7,7 @@ import org.baddev.currency.core.dto.SignUpDTO;
 import org.baddev.currency.core.exception.PasswordsMismatchException;
 import org.baddev.currency.core.exception.RoleNotFoundException;
 import org.baddev.currency.core.exception.SuchUserExistsException;
-
-import javax.naming.AuthenticationException;
+import org.springframework.security.core.AuthenticationException;
 
 /**
  * Created by IPotapchuk on 9/16/2016.

@@ -8,10 +8,13 @@ import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.util.filter.UnsupportedFilterException;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 import org.baddev.currency.fetcher.iso4217.IsoEntityParam;
+import org.springframework.util.Assert;
 
 import java.util.List;
 
 public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
+
+    private static final long serialVersionUID = 6263289958954941787L;
 
     private final IsoEntityParam param;
     private final IsoEntityParam keyParam;
@@ -19,6 +22,9 @@ public class Iso4217PropertyValGen extends PropertyValueGenerator<String> {
 
     public Iso4217PropertyValGen(IsoEntityParam param, IsoEntityParam keyParam,
                                  Iso4217CcyService service) {
+        Assert.notNull(param, "param can't be null");
+        Assert.notNull(keyParam, "keyParam can't be null");
+        Assert.notNull(service, "service can't be null");
         this.service = service;
         this.param = param;
         this.keyParam = keyParam;

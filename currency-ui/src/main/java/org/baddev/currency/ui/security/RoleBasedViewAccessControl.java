@@ -6,11 +6,12 @@ import com.vaadin.ui.UI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.annotation.security.DeclareRoles;
 
-import static org.baddev.currency.security.utils.SecurityUtils.hasAnyRole;
-import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
+import static org.baddev.currency.core.security.utils.SecurityUtils.hasAnyRole;
+import static org.baddev.currency.core.security.utils.SecurityUtils.isLoggedIn;
 
 /**
  * Created by IPotapchuk on 7/1/2016.
@@ -18,8 +19,13 @@ import static org.baddev.currency.security.utils.SecurityUtils.isLoggedIn;
 @Component
 public class RoleBasedViewAccessControl implements ViewAccessControl {
 
+    private final ApplicationContext ctx;
+
     @Autowired
-    private ApplicationContext ctx;
+    public RoleBasedViewAccessControl(ApplicationContext ctx) {
+        Assert.notNull(ctx, "ctx can't be null");
+        this.ctx = ctx;
+    }
 
     @Override
     public boolean isAccessGranted(UI ui, String beanName) {

@@ -1,7 +1,7 @@
 package org.baddev.currency.core.api;
 
-import org.baddev.currency.core.action.DeleteAction;
-import org.baddev.currency.core.action.FindAction;
+import org.baddev.common.action.DeleteAction;
+import org.baddev.common.action.FindAction;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeRate;
 
 import java.util.Collection;
