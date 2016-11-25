@@ -15,5 +15,4 @@ public class CurrencyAppInitializer implements WebApplicationInitializer {
         ctx.register(CurrencyAppConfig.class);
         servletContext.addListener(new ContextLoaderListener(ctx));
     }
-
 }

@@ -1,5 +1,6 @@
 package org.baddev.common.schedulling.task;
 
+import org.baddev.common.CommonErrorHandler;
 import org.baddev.common.utils.AssertUtils;
 
 /**
@@ -7,27 +8,24 @@ import org.baddev.common.utils.AssertUtils;
  */
 public abstract class AbstractTask implements Runnable {
 
-    private Long id;
-    private boolean running;
-    private boolean done;
+    private Long               id;
+    private boolean            running;
+    private boolean            done;
+    private CommonErrorHandler errorHandler;
 
-    @Override
-    public void run() {
-        running = true;
-        doJob();
-        done = true;
+    protected void setId(Long id) {
+        AssertUtils.notNull(id, "id must be a non-null value");
+        this.id = id;
     }
 
     public Long getId() {
         return id;
     }
 
-    protected void setId(Long id){
-        AssertUtils.notNull(id, "id must be a non-null value");
-        this.id = id;
+    public void setErrorHandler(CommonErrorHandler errorHandler) {
+        AssertUtils.notNull(errorHandler, "errorHandler must be a non-null value");
+        this.errorHandler = errorHandler;
     }
-
-    protected abstract void doJob();
 
     public boolean isRunning() {
         return running && !done;
@@ -36,4 +34,19 @@ public abstract class AbstractTask implements Runnable {
     public boolean isDone() {
         return done;
     }
+
+    @Override
+    public void run() {
+        running = true;
+        try {
+            doJob();
+        } catch (Exception e) {
+            done = false;
+            if (errorHandler != null) errorHandler.handle(e);
+            else throw e;
+        }
+        done = true;
+    }
+
+    protected abstract void doJob();
 }

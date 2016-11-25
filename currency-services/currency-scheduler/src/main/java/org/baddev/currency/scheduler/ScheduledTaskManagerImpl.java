@@ -1,11 +1,12 @@
 package org.baddev.currency.scheduler;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.baddev.common.schedulling.ScheduledTaskManager;
 import org.baddev.common.schedulling.task.AbstractTask;
 import org.slf4j.Logger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
-import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -13,28 +14,19 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * Created by IPotapchuk on 10/20/2016.
  */
+@RequiredArgsConstructor
 public class ScheduledTaskManagerImpl implements ScheduledTaskManager {
 
     private static final long serialVersionUID = -1532514615699072681L;
 
-    private Logger log;
-
-    private ThreadPoolTaskScheduler scheduler;
+    private final Logger log;
+    private final ThreadPoolTaskScheduler scheduler;
 
     private Map<Long, ScheduledFuture> taskIdToFutureMap = Collections.synchronizedMap(new HashMap<>());
     private Set<AbstractTask> tasks = Collections.synchronizedSet(new HashSet<>());
 
-    public ScheduledTaskManagerImpl(ThreadPoolTaskScheduler scheduler, Logger log) {
-        Assert.notNull(scheduler, "scheduler can't be null");
-        Assert.notNull(log, "logger can't be null");
-        this.scheduler = scheduler;
-        this.log = log;
-    }
-
     @Override
-    public void schedule(AbstractTask task, String cron) {
-        Assert.notNull(task, "task can't be null");
-        Assert.notNull(cron, "cron can't be null");
+    public void schedule(@NonNull AbstractTask task, @NonNull String cron) {
         if (taskIdToFutureMap.containsKey(task.getId())) {
             throw new IllegalArgumentException("Task with given ID already scheduled: " + task.getId());
         }
@@ -44,14 +36,13 @@ public class ScheduledTaskManagerImpl implements ScheduledTaskManager {
     }
 
     @Override
-    public void execute(AbstractTask task) {
-        Assert.notNull("task can't be null");
+    public void execute(@NonNull AbstractTask task) {
         scheduler.execute(task);
         log.debug("Task {} executed", task.getId());
     }
 
     @Override
-    public void terminate(Long taskId) {
+    public void terminate(@NonNull Long taskId) {
         if (taskIdToFutureMap.containsKey(taskId)) {
             ScheduledFuture future = taskIdToFutureMap.remove(taskId);
             future.cancel(false);
@@ -72,7 +63,7 @@ public class ScheduledTaskManagerImpl implements ScheduledTaskManager {
     }
 
     @Override
-    public boolean isScheduled(Long id) {
+    public boolean isScheduled(@NonNull Long id) {
         return taskIdToFutureMap.containsKey(id);
     }
 
@@ -82,7 +73,7 @@ public class ScheduledTaskManagerImpl implements ScheduledTaskManager {
     }
 
     @Override
-    public Optional<ScheduledFuture> getFuture(Long taskId) {
+    public Optional<ScheduledFuture> getFuture(@NonNull Long taskId) {
         return Optional.ofNullable(taskIdToFutureMap.get(taskId));
     }
 

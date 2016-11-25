@@ -1,5 +1,8 @@
 package org.baddev.currency.core.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
 import org.hibernate.validator.constraints.Email;
 
@@ -9,6 +12,7 @@ import javax.validation.constraints.Size;
 /**
  * Created by IPotapchuk on 10/31/2016.
  */
+@Data @AllArgsConstructor @NoArgsConstructor
 public class UserDetailsDTO implements IUserDetails {
 
     private Long userId;
@@ -21,46 +25,6 @@ public class UserDetailsDTO implements IUserDetails {
     private String lastName;
     @Email
     private String email;
-
-    @Override
-    public void setUserId(Long value) {
-        this.userId = value;
-    }
-
-    @Override
-    public Long getUserId() {
-        return userId;
-    }
-
-    @Override
-    public void setFirstName(String value) {
-        this.firstName = value;
-    }
-
-    @Override
-    public String getFirstName() {
-        return firstName;
-    }
-
-    @Override
-    public void setLastName(String value) {
-        this.lastName = value;
-    }
-
-    @Override
-    public String getLastName() {
-        return lastName;
-    }
-
-    @Override
-    public void setEmail(String value) {
-        this.email = value;
-    }
-
-    @Override
-    public String getEmail() {
-        return email;
-    }
 
     @Override
     public void from(IUserDetails from) {

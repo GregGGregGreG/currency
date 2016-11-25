@@ -1,5 +1,6 @@
 package org.baddev.currency.scheduler;
 
+import lombok.RequiredArgsConstructor;
 import org.baddev.common.schedulling.ScheduledTaskManager;
 import org.baddev.common.schedulling.task.AbstractTask;
 import org.baddev.currency.core.api.ExchangeTaskService;
@@ -10,7 +11,6 @@ import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeTask;
 import org.baddev.currency.jooq.schema.tables.pojos.ExchangeTask;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeTaskRecord;
 import org.jooq.impl.DSL;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,12 +26,11 @@ import static org.baddev.currency.jooq.schema.Tables.EXCHANGE_TASK;
  * Created by IPotapchuk on 9/12/2016.
  */
 @Service
+@RequiredArgsConstructor
 public class ExchangeTaskServiceImpl implements ExchangeTaskService {
 
-    @Autowired
-    private ExchangeTaskDao taskDao;
-    @Autowired
-    private ScheduledTaskManager taskManager;
+    private final ExchangeTaskDao      taskDao;
+    private final ScheduledTaskManager taskManager;
 
     @Override
     @Transactional(readOnly = true)

@@ -2,6 +2,7 @@ package org.baddev.currency.ui;
 
 import com.vaadin.data.Validator;
 import com.vaadin.data.fieldgroup.FieldGroup;
+import com.vaadin.ui.UI;
 import org.baddev.currency.core.CoreErrorHandler;
 import org.baddev.currency.ui.util.NotificationUtils;
 
@@ -25,9 +26,10 @@ public class UIErrorHandler extends CoreErrorHandler {
 
     @Override
     protected void showNotification(String title, String msg, Severity severity) {
+        if (UI.getCurrent() == null) return;
         switch (severity) {
-            case WARN: NotificationUtils.notifyWarn(title, msg); break;
-            case ERROR: NotificationUtils.notifyFailure(title, msg); break;
+            case WARN: UI.getCurrent().access(() -> NotificationUtils.notifyWarn(title, msg)); break;
+            case ERROR: UI.getCurrent().access(() -> NotificationUtils.notifyFailure(title, msg)); break;
         }
     }
 

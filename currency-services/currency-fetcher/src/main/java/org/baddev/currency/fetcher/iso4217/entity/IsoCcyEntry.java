@@ -1,5 +1,9 @@
 package org.baddev.currency.fetcher.iso4217.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -12,23 +16,12 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "CcyNtry")
 @XmlAccessorType(XmlAccessType.FIELD)
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class IsoCcyEntry extends BaseIsoCcyEntry {
 
     @XmlElement(name = Iso4217CcyService.CCY_MNR_UNTS_PARAM)
     private String ccyMnrUnts;
-
-    public String getCcyMnrUnts() {
-        return ccyMnrUnts;
-    }
-
-    public void setCcyMnrUnts(String ccyMnrUnts) {
-        this.ccyMnrUnts = ccyMnrUnts;
-    }
-
-    @Override
-    public String toString() {
-        return "IsoCcyEntry{" +
-                "ccyMnrUnts='" + ccyMnrUnts + '\'' +
-                "} " + super.toString();
-    }
 }

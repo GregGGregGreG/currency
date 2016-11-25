@@ -1,6 +1,9 @@
 package org.baddev.currency.ui.listener;
 
 import com.vaadin.ui.UI;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.baddev.common.event.GenericEventListener;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.fetcher.iso4217.Iso4217CcyService;
@@ -14,28 +17,16 @@ import static org.baddev.currency.ui.util.NotificationUtils.notifyTray;
 /**
  * Created by Ilya on 18.10.2016.
  */
+@RequiredArgsConstructor
+@EqualsAndHashCode
 public class UIExchangeCompletionListener implements GenericEventListener<ExchangeCompletionEvent> {
 
     private static final long serialVersionUID = -4068324837833281874L;
 
-    private Iso4217CcyService ccyService;
+    private final Iso4217CcyService ccyService;
+
+    @Setter(onMethod = @__({@Required}))
     private UI ui;
-
-    public UIExchangeCompletionListener(Iso4217CcyService ccyService) {
-        Assert.notNull(ccyService, "ccyService can't be null");
-        this.ccyService = ccyService;
-    }
-
-    public UIExchangeCompletionListener(Iso4217CcyService ccyService, UI ui) {
-        this(ccyService);
-        setUI(ui);
-    }
-
-    @Required
-    public void setUI(UI ui) {
-        Assert.notNull(ui, "ui can't be null");
-        this.ui = ui;
-    }
 
     @Override
     public void onEvent(ExchangeCompletionEvent event) {
@@ -58,19 +49,4 @@ public class UIExchangeCompletionListener implements GenericEventListener<Exchan
         });
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UIExchangeCompletionListener)) return false;
-
-        UIExchangeCompletionListener that = (UIExchangeCompletionListener) o;
-
-        return ui != null ? ui.equals(that.ui) : that.ui == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        return ui != null ? ui.hashCode() : 0;
-    }
 }

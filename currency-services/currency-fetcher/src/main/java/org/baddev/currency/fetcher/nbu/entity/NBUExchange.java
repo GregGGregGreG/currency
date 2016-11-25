@@ -1,5 +1,9 @@
 package org.baddev.currency.fetcher.nbu.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElementRef;
@@ -11,23 +15,11 @@ import java.util.List;
  */
 @XmlRootElement(name = "exchange")
 @XmlAccessorType(XmlAccessType.FIELD)
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class NBUExchange {
+
     @XmlElementRef
     private List<NBUExchangeRate> exchangeRates;
-
-    public List<NBUExchangeRate> getExchangeRates() {
-        return exchangeRates;
-    }
-
-    public void setExchangeRates(List<NBUExchangeRate> exchangeRates) {
-        this.exchangeRates = exchangeRates;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("NBUExchange{");
-        sb.append("exchangeRates=").append(exchangeRates);
-        sb.append('}');
-        return sb.toString();
-    }
 }

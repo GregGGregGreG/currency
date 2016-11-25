@@ -1,5 +1,6 @@
 package org.baddev.currency.fetcher;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -11,7 +12,6 @@ import org.baddev.currency.fetcher.iso4217.entity.IsoCcyEntry;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntries;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
@@ -33,10 +33,11 @@ import static org.baddev.common.utils.Safe.trySupply;
         @PropertySource("classpath:fetcher_policy.properties"),
         @PropertySource("classpath:proxy.properties")
 })
+@RequiredArgsConstructor
 public class FetcherConfig {
 
-    @Autowired private Logger      log;
-    @Autowired private Environment env;
+    private final Logger      log;
+    private final Environment env;
 
     @Bean(name = "NBUClient")
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)

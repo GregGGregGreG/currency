@@ -1,8 +1,10 @@
 package org.baddev.currency.ui.component.window;
 
+import com.vaadin.ui.Window;
+
 /**
  * Created by IPotapchuk on 11/11/2016.
  */
 public interface Showable {
-    void show(String caption);
+    Window show(String caption);
 }

@@ -1,14 +1,12 @@
 package org.baddev.currency.ui.util;
 
+import org.baddev.common.event.BaseDataEvent;
 import org.baddev.currency.ui.CurrencyUI;
 
 /**
  * Created by IPotapchuk on 10/5/2016.
  */
 public final class EventBus {
-
-    private EventBus() {
-    }
 
     public static void register(Object obj) {
         CurrencyUI.get().getEventBus().register(obj);
@@ -18,7 +16,7 @@ public final class EventBus {
         CurrencyUI.get().getEventBus().unregister(obj);
     }
 
-    public static void post(Object event) {
+    public static <T extends BaseDataEvent> void post(T event) {
         CurrencyUI.get().getEventBus().post(event);
     }
 

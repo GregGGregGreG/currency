@@ -3,6 +3,7 @@ package org.baddev.currency.ui.config;
 import com.google.common.eventbus.EventBus;
 import com.vaadin.server.ErrorEvent;
 import com.vaadin.spring.annotation.EnableVaadin;
+import com.vaadin.spring.annotation.EnableVaadinNavigation;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.spring.annotation.VaadinSessionScope;
 import com.vaadin.ui.UI;
@@ -21,6 +22,7 @@ import org.baddev.currency.mail.MailConfig;
 import org.baddev.currency.mail.listener.MailExchangeCompletionListener;
 import org.baddev.currency.scheduler.ScheduledTaskManagerImpl;
 import org.baddev.currency.scheduler.SchedulerConfig;
+import org.baddev.currency.ui.UIErrorHandler;
 import org.baddev.currency.ui.listener.UIExchangeCompletionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,7 @@ import static org.springframework.context.annotation.ScopedProxyMode.INTERFACES;
         SchedulerConfig.class
 })
 @EnableVaadin
+@EnableVaadinNavigation
 @PropertySource("classpath:currency_app.properties")
 public class CurrencyAppConfig {
 
@@ -58,12 +61,13 @@ public class CurrencyAppConfig {
     @Scope(value = VAADIN_SESSION_SCOPE_NAME, proxyMode = INTERFACES)
     @Primary
     ScheduledTaskManager taskManager(ThreadPoolTaskScheduler scheduler, Logger log) {
-        return new ScheduledTaskManagerImpl(scheduler, log);
+        return new ScheduledTaskManagerImpl(log, scheduler);
     }
 
     @Bean
     @VaadinSessionScope
     MailExchangeCompletionListener mailListener(ApplicationMailer mailer) {
+        mailer.setErrorHandler(new UIErrorHandler());
         return new MailExchangeCompletionListener(mailer);
     }
 
@@ -82,8 +86,12 @@ public class CurrencyAppConfig {
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     NotifiableExchangeTask exchangeTask(ExchangeRateService exchangeRateService,
-                                        ExchangerService exchangerService) {
-        return new NotifiableExchangeTask(exchangerService, exchangeRateService);
+                                        ExchangerService exchangerService,
+                                        EventPublisher publisher) {
+        NotifiableExchangeTask task = new NotifiableExchangeTask(exchangerService, exchangeRateService);
+        task.setErrorHandler(new UIErrorHandler());
+        task.setEventPublisher(publisher);
+        return task;
     }
 
     @Bean
@@ -91,5 +99,7 @@ public class CurrencyAppConfig {
     Logger logger(InjectionPoint injectionPoint){
         return LoggerFactory.getLogger(injectionPoint.getMember().getDeclaringClass());
     }
+
+
 
 }

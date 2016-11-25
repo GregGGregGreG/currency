@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
 
+import javax.annotation.security.RolesAllowed;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -74,6 +75,14 @@ public final class SecurityUtils {
     public static String loggedInUserName() {
         return safeAuth().flatMap(auth -> Optional.ofNullable(((UserDetails) auth.getPrincipal()).getUsername()))
                 .orElse("");
+    }
+
+    public static boolean isAccessGranted(RolesAllowed annotation){
+        return annotation == null || (isLoggedIn() && hasAnyRole(annotation.value()));
+    }
+
+    public static boolean isAccessGranted(Class<?> clazz){
+        return isAccessGranted(clazz.getAnnotation(RolesAllowed.class));
     }
 
     private static Supplier<? extends BadCredentialsException> notAuthorized() {

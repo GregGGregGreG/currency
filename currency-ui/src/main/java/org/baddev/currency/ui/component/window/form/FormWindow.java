@@ -1,10 +1,13 @@
 package org.baddev.currency.ui.component.window.form;
 
-import com.vaadin.data.fieldgroup.BeanFieldGroup;
+import com.vaadin.data.Validator;
+import com.vaadin.server.Resource;
 import com.vaadin.ui.Field;
-import com.vaadin.ui.TextField;
+import org.baddev.currency.ui.component.view.base.AbstractFormView;
+import org.baddev.currency.ui.component.view.base.AbstractView;
 import org.baddev.currency.ui.component.window.Showable;
-import org.baddev.currency.ui.exception.WrappedUIException;
+import org.baddev.currency.ui.model.fieldgroup.FieldConfig;
+import org.baddev.currency.ui.util.FieldGroupUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -14,8 +17,6 @@ import java.util.function.Function;
  * Created by IPotapchuk on 10/3/2016.
  */
 public final class FormWindow {
-
-    private static final Class DEFAULT_FIELD_TYPE = TextField.class;
 
     public enum Mode {
         NEW, EDIT, READONLY
@@ -29,8 +30,16 @@ public final class FormWindow {
         try {
             formWindow.show(config.caption);
         } catch (Exception e) {
-            throw new WrappedUIException("Failed to show FormWindow", e);
+            throw new RuntimeException("Failed to show FormWindow", e);
         }
+    }
+
+    public static void show(AbstractFormView formView) {
+        new SimpleFormWindow(formView).show(formView.getNameCaption());
+    }
+
+    public static void showTabs(String caption, AbstractView... views) {
+        new TabsheetFormWindow(views).show(caption);
     }
 
     private static <T> Showable configure(Config<T> config) {
@@ -38,9 +47,7 @@ public final class FormWindow {
 
         if (config.beanClass != null) {
             formWindow = new BindableFormWindow<>(config.mode,
-                    createBeanFieldGroup(config.beanClass, config.formBean,
-                            config.captionToPropertyIdMap,
-                            config.propertyIdToFieldTypeMap));
+                    FieldGroupUtils.create(config.beanClass, config.formBean, config.fieldConfigs));
         } else if (!config.lhs.isEmpty() || !config.rhs.isEmpty()) {
             formWindow = new TwincolSelectWindow<>(config.lhs, config.rhs, config.itemCaptionProducer);
         }
@@ -57,32 +64,17 @@ public final class FormWindow {
         return formWindow;
     }
 
-    private static <T> BeanFieldGroup<T> createBeanFieldGroup(Class<T> beanClass,
-                                                              T formBean,
-                                                              Map<String, String> captionToPropertyMap,
-                                                              Map<String, Class<? extends Field>> propertyToFieldTypeMap) {
-        BeanFieldGroup<T> bfg = new BeanFieldGroup<>(beanClass);
-        bfg.setItemDataSource(formBean);
-        captionToPropertyMap.entrySet().forEach(en -> {
-            Class<? extends Field> fieldType = propertyToFieldTypeMap.get(en.getValue());
-            fieldType = (fieldType == null) ? DEFAULT_FIELD_TYPE : fieldType;
-            bfg.buildAndBind(en.getKey(), en.getValue(), fieldType);
-        });
-        return bfg;
-    }
-
     public static class Config<T> {
 
         private Mode mode;
         private String caption = "";
         private Consumer onCommitSuccess;
         private Consumer onCommitError;
-        private Float width = 600f;
+        private Float width;
         private Float height;
         private Class<T> beanClass;
         private T formBean;
-        private Map<String, String> captionToPropertyIdMap = Collections.emptyMap();
-        private Map<String, Class<? extends Field>> propertyIdToFieldTypeMap = Collections.emptyMap();
+        private Set<FieldConfig> fieldConfigs = new LinkedHashSet<>();
         private boolean resizable;
         private boolean modal = true;
         private Collection<? extends T> rhs = Collections.emptyList();
@@ -132,13 +124,48 @@ public final class FormWindow {
             return this;
         }
 
-        public Config<T> setCaptionToPropertyIdMap(Map<String, String> captionToPropertyIdMap) {
-            this.captionToPropertyIdMap = captionToPropertyIdMap;
+        public Config<T> setFieldConfigs(Collection<FieldConfig> fieldConfigs) {
+            this.fieldConfigs = new LinkedHashSet<>(fieldConfigs);
             return this;
         }
 
-        public Config<T> setPropertyIdToFieldTypeMap(Map<String, Class<? extends Field>> propertyIdToFieldTypeMap) {
-            this.propertyIdToFieldTypeMap = propertyIdToFieldTypeMap;
+        public Config<T> addFieldConfig(String propId, String caption, Resource icon, Class<? extends Field> type){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption, icon, type));
+            return this;
+        }
+
+        public Config<T> addFieldConfig(String propId, String caption, Resource icon){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption, icon));
+            return this;
+        }
+
+        public Config<T> addFieldConfig(String propId, String caption){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption));
+            return this;
+        }
+
+        public Config<T> addFieldConfig(String propId, String caption, Class<? extends Field> type){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption, type));
+            return this;
+        }
+
+        public Config<T> addFieldConfig(String propId, String caption, Resource icon, Class<? extends Field> type, Validator validator){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption, icon, type, validator));
+            return this;
+        }
+
+        public Config<T> addFieldConfig(String propId, String caption, Resource icon, Validator validator){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption, icon, validator));
+            return this;
+        }
+
+        public Config<T> addFieldConfig(String propId, String caption, Validator validator){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption, validator));
+            return this;
+        }
+
+        public Config<T> addFieldConfig(String propId, String caption, Class<? extends Field> type, Validator validator){
+            this.fieldConfigs.add(FieldGroupUtils.fConf(propId, caption, type, validator));
             return this;
         }
 

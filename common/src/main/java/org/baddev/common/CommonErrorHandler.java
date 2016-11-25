@@ -50,7 +50,7 @@ public class CommonErrorHandler {
     private boolean handleCommon(Exception e) {
         if (e instanceof SQLException) {
             log.error("Error executing sql : {}; {}; {};", e.getMessage(), ((SQLException) e).getErrorCode(), ((SQLException) e).getSQLState());
-            setNotificationParams("System Error", "System Error Occurred", Severity.ERROR);
+            setNotificationParams("System Error", "System error occurred", Severity.ERROR);
             return true;
         }
         return false;
@@ -58,7 +58,7 @@ public class CommonErrorHandler {
 
     private void handleUnexpected(Exception e) {
         log.error("Unexpected error", e);
-        setNotificationParams("Unexpected error", "Unexpected Error Occurred", Severity.ERROR);
+        setNotificationParams("Unexpected Error", "Unexpected error occurred", Severity.ERROR);
         handled(e);
     }
 

@@ -1,5 +1,6 @@
 package org.baddev.currency.fetcher.nbu;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.baddev.currency.core.api.ExchangeRateFetcher;
 import org.baddev.currency.core.meta.Prod;
@@ -26,7 +27,9 @@ import java.util.stream.Collectors;
 /**
  * Created by IPotapchuk on 3/14/2016.
  */
-@Prod @Service("NBUFetcher")
+@Service("NBUFetcher")
+@Prod
+@RequiredArgsConstructor
 @Transactional(noRollbackFor = NBURateFetcher.NoRatesLocallyFoundException.class)
 public class NBURateFetcher implements ExchangeRateFetcher {
 
@@ -42,15 +45,6 @@ public class NBURateFetcher implements ExchangeRateFetcher {
     private final Logger                    log;
     private final ObjectProvider<WebClient> webClienProvider;
     private final ExtendedExchangeRateDao   rateDao;
-
-    public NBURateFetcher(Logger log, ExtendedExchangeRateDao rateDao, ObjectProvider<WebClient> webClienProvider) {
-        Assert.notNull(log, "logger can't be null");
-        Assert.notNull(rateDao, "rateDao can't be null");
-        Assert.notNull(webClienProvider, "webClientProvider can't be null");
-        this.log = log;
-        this.rateDao = rateDao;
-        this.webClienProvider = webClienProvider;
-    }
 
     @PostConstruct
     public void init(){

@@ -1,32 +1,28 @@
 package org.baddev.currency.mail.listener;
 
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.baddev.common.event.GenericEventListener;
 import org.baddev.common.mail.ApplicationMailer;
 import org.baddev.currency.core.event.ExchangeCompletionEvent;
 import org.baddev.currency.jooq.schema.tables.interfaces.IExchangeOperation;
 import org.springframework.beans.factory.annotation.Required;
-import org.springframework.util.Assert;
 
 /**
  * Created by IPotapchuk on 6/22/2016.
  */
+@RequiredArgsConstructor
+@EqualsAndHashCode
 public class MailExchangeCompletionListener implements GenericEventListener<ExchangeCompletionEvent> {
 
     private static final long serialVersionUID = 2586601749325354904L;
 
-    private ApplicationMailer mailer;
+    private final ApplicationMailer mailer;
+
+    @Setter(onMethod = @__({@Required}), onParam = @__({@NonNull}))
     private String email;
-
-    public MailExchangeCompletionListener(ApplicationMailer mailer) {
-        Assert.notNull(mailer, "mailer can't be null");
-        this.mailer = mailer;
-    }
-
-    @Required
-    public void setEmail(String email) {
-        Assert.notNull(email, "email can't be null");
-        this.email = email;
-    }
 
     @Override
     public void onEvent(ExchangeCompletionEvent e) {
@@ -38,21 +34,5 @@ public class MailExchangeCompletionListener implements GenericEventListener<Exch
                 operation.getToAmount(),
                 operation.getToCcy());
         mailer.sendMail(email, "Currency Exchange Task Completion", exchInfo);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MailExchangeCompletionListener)) return false;
-
-        MailExchangeCompletionListener that = (MailExchangeCompletionListener) o;
-
-        return email != null ? email.equals(that.email) : that.email == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        return email != null ? email.hashCode() : 0;
     }
 }

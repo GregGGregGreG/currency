@@ -1,11 +1,11 @@
 package org.baddev.currency.security.user;
 
-import org.baddev.common.utils.AssertUtils;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.baddev.currency.core.api.UserService;
 import org.baddev.currency.core.dto.*;
 import org.baddev.currency.core.exception.*;
 import org.baddev.currency.core.security.RoleEnum;
-import org.baddev.currency.core.security.utils.SecurityUtils;
 import org.baddev.currency.jooq.schema.tables.daos.RoleDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDao;
 import org.baddev.currency.jooq.schema.tables.daos.UserDetailsDao;
@@ -20,8 +20,7 @@ import org.baddev.currency.jooq.schema.tables.records.UserRecord;
 import org.baddev.currency.jooq.schema.tables.records.UserRoleRecord;
 import org.joda.time.LocalDateTime;
 import org.jooq.DSLContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,56 +37,43 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.baddev.currency.core.security.utils.SecurityUtils.getIdentityUserPrincipal;
+import static org.baddev.currency.core.security.utils.SecurityUtils.loggedInUserName;
 import static org.baddev.currency.jooq.schema.Tables.*;
 
 /**
  * Created by IPotapchuk on 9/12/2016.
  */
 @Service("userService")
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private final Logger                       log;
     private final MessageDigestPasswordEncoder encoder;
-    private final AuthenticationManager manager;
-    private final DSLContext dsl;
-    private final UserDetailsDao detailsDao;
-    private final UserDao userDao;
-    private final RoleDao roleDao;
-    private final UserPreferencesDao preferencesDao;
-
-    @Autowired
-    public UserServiceImpl(AuthenticationManager manager,
-                           @Qualifier("md5") MessageDigestPasswordEncoder encoder,
-                           DSLContext dsl,
-                           UserDao userDao,
-                           UserDetailsDao detailsDao,
-                           RoleDao roleDao,
-                           UserPreferencesDao preferencesDao) {
-        AssertUtils.objectsNotNull(manager, encoder, dsl, userDao, detailsDao, roleDao, preferencesDao);
-        this.manager = manager;
-        this.encoder = encoder;
-        this.dsl = dsl;
-        this.userDao = userDao;
-        this.detailsDao = detailsDao;
-        this.roleDao = roleDao;
-        this.preferencesDao = preferencesDao;
-    }
+    private final AuthenticationManager        manager;
+    private final DSLContext                   dsl;
+    private final UserDetailsDao               detailsDao;
+    private final UserDao                      userDao;
+    private final RoleDao                      roleDao;
+    private final UserPreferencesDao           preferencesDao;
 
     @Override
     @Transactional(readOnly = true)
     public void authenticate(SignInDTO signInDTO) throws AuthenticationException {
         authenticate(signInDTO.getUsername(), signInDTO.getPassword());
+        log.info("User authenticated: \"{}\"", signInDTO.getUsername());
     }
 
-    private void authenticate(String username, String password) {
+    private void authenticate(@NonNull String username, @NonNull String password) {
         Authentication auth = manager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         SecurityContextHolder.getContext().setAuthentication(auth);
-        findUserDetailsByUsername(SecurityUtils.loggedInUserName())
+        findUserDetailsByUsername(loggedInUserName())
                 .ifPresent(((AbstractAuthenticationToken) auth)::setDetails);
     }
 
     @Override
     @Transactional
-    public void signUp(SignUpDTO signUpDTO, String... roleNames) throws SuchUserExistsException, RoleNotFoundException {
+    public void signUp(@NonNull SignUpDTO signUpDTO, String... roleNames) throws SuchUserExistsException, RoleNotFoundException {
         User user = userDao.fetchOneByUsername(signUpDTO.getUsername());
 
         if (user != null)
@@ -127,15 +113,16 @@ public class UserServiceImpl implements UserService {
             }
         } else throw new RoleNotFoundException();
 
-        preferencesDao.insert(new UserPreferences(created.getId(), true, false, null));
+        preferencesDao.insert(new UserPreferences(created.getId(), true, false, null, false, true));
+        log.info("Account created: \"{}\"", signUpDTO.getUsername());
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN, RoleEnum.USER})
-    public void changePassword(PasswordChangeDTO dto) throws AuthenticationException, PasswordsMismatchException {
-        String userName = SecurityUtils.loggedInUserName();
-        Long currentUserId = SecurityUtils.getIdentityUserPrincipal().getId();
+    public void changePassword(@NonNull PasswordChangeDTO dto) throws AuthenticationException, PasswordsMismatchException {
+        String userName = loggedInUserName();
+        Long currentUserId = getIdentityUserPrincipal().getId();
         if (!Objects.equals(dto.getPassword(), dto.getPasswordConfirm()))
             throw new PasswordsMismatchException(currentUserId);
         User user = userDao.fetchOneById(currentUserId);
@@ -146,13 +133,14 @@ public class UserServiceImpl implements UserService {
         user.setPassword(newPwdEnc);
         userDao.update(user);
         savePwdHist(currentUserId, oldPwd);
-        authenticate(userName, newPwdEnc);
+        authenticate(userName, dto.getPassword());
+        log.info("User \"{}\" has changed password", userName);
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void changeUserPassword(UserPasswordChangeDTO dto) {
+    public void changeUserPassword(@NonNull UserPasswordChangeDTO dto) {
         User user = userDao.fetchOneById(dto.getUserId());
         String oldPwd = user.getPassword();
         String newPwdEnc = encoder.encodePassword(dto.getNewPassword(), null);
@@ -171,7 +159,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN})
-    public Collection<IRole> findUserRoles(Long userId) {
+    public Collection<IRole> findUserRoles(@NonNull Long userId) {
         return dsl.select(ROLE.fields())
                 .from(USER)
                 .leftOuterJoin(USER_ROLE).on(USER.ID.eq(USER_ROLE.USER_ID))
@@ -183,7 +171,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void assignToRoles(Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException {
+    public void assignToRoles(@NonNull Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException {
         validateRoles(userId, roleIds);
         List<Number> assigned = dsl.selectFrom(USER_ROLE)
                 .where(USER_ROLE.USER_ID.eq(userId))
@@ -209,7 +197,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void unassignFromRoles(Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException{
+    public void unassignFromRoles(@NonNull Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException{
         validateRoles(userId, roleIds);
         List<Number> assigned = dsl.selectFrom(USER_ROLE)
                 .where(USER_ROLE.USER_ID.eq(userId))
@@ -230,7 +218,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void updateUserRoles(Long userId, Collection<Long> allUserRoleIds) throws RoleNotFoundException, UserNotFoundException {
+    public void updateUserRoles(@NonNull Long userId, Collection<Long> allUserRoleIds) throws RoleNotFoundException, UserNotFoundException {
         validateRoles(userId, allUserRoleIds);
         dsl.deleteFrom(USER_ROLE).where(USER_ROLE.USER_ID.eq(userId)).execute();
         dsl.batchInsert(allUserRoleIds.stream()
@@ -241,6 +229,9 @@ public class UserServiceImpl implements UserService {
                     return rec;
                 }).collect(Collectors.toList()))
                 .execute();
+        if(getIdentityUserPrincipal().getId().equals(userId)){
+            //todo self case
+        }
     }
 
     private void validateRoles(Long userId, Collection<Long> roleIds){
@@ -266,7 +257,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Optional<IUserDetails> findUserDetailsByUsername(String userName) {
+    public Optional<IUserDetails> findUserDetailsByUsername(@NonNull String userName) {
         UserDetails details = dsl.select(USER_DETAILS.fields())
                 .from(USER)
                 .leftOuterJoin(USER_DETAILS).on(USER.ID.eq(USER_DETAILS.USER_ID))
@@ -278,14 +269,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Collection<? extends IUser> findUserByUsername(String... userNames) {
+    public Collection<? extends IUser> findUserByUsername(@NonNull String... userNames) {
         return userDao.fetchByUsername(userNames);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public Optional<IUser> findOneUserByUserName(String userName) {
+    public Optional<IUser> findOneUserByUserName(@NonNull String userName) {
         return Optional.ofNullable(userDao.fetchOneByUsername(userName));
     }
 
@@ -312,34 +303,34 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.USER, RoleEnum.ADMIN})
-    public void update(IUser entity) {
+    public void update(@NonNull IUser entity) {
         userDao.update(entity.into(new User()));
     }
 
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void delete(String... strings) {
-        dsl.deleteFrom(USER).where(USER.USERNAME.in(strings)).execute();
+    public void delete(@NonNull String... userNames) {
+        dsl.deleteFrom(USER).where(USER.USERNAME.in(userNames)).execute();
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN, RoleEnum.USER})
-    public Collection<? extends IUser> findById(Long... ids) {
+    public Collection<? extends IUser> findById(@NonNull Long... ids) {
         return userDao.fetchById(ids);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Secured({RoleEnum.ADMIN, RoleEnum.USER})
-    public Optional<IUser> findOneById(Long id) {
+    public Optional<IUser> findOneById(@NonNull Long id) {
         return Optional.ofNullable(userDao.fetchOneById(id));
     }
 
     @Override
     @Transactional
-    public void createPasswordResetToken(String userEmail, String token, int expirationDuration) {
+    public void createPasswordResetToken(@NonNull String userEmail, @NonNull String token, int expirationDuration) {
         UserDetails userDetails = detailsDao.fetchOneByEmail(userEmail);
 
         if (userDetails == null || !userDao.existsById(userDetails.getUserId())) {
@@ -357,7 +348,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isPasswordResetTokenValid(String token) {
+    public boolean isPasswordResetTokenValid(@NonNull String token) {
         return isTokenValid(findToken(token));
     }
 
@@ -374,7 +365,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
+    public void resetPassword(@NonNull ResetPasswordDTO resetPasswordDTO) {
         PasswordResetTokenRecord tokenRecord = findToken(resetPasswordDTO.getToken());
 
         if (!isTokenValid(tokenRecord))

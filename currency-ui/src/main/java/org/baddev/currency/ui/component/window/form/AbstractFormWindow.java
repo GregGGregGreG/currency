@@ -6,7 +6,6 @@ import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import org.baddev.currency.ui.CurrencyUI;
 import org.baddev.currency.ui.component.window.Showable;
-import org.baddev.currency.ui.exception.WrappedUIException;
 import org.baddev.currency.ui.util.NotificationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +27,8 @@ abstract class AbstractFormWindow<T, E extends Exception> extends Window impleme
     private String commitErrorCaption = "Submit Error";
     private String commitErrorMsg = "Check the fields and try again";
 
-    private String successMsg = "Changes Submit";
-    private String successCaption = "Changes successfully saved";
+    private String successCaption = "Changes Submit";
+    private String successMsg = "Changes successfully saved";
 
     protected Consumer<E> errorActionProvider = e -> log.warn("Form submit error", e);
     private Consumer<T> successActionProvider = obj -> log.warn("Using default success actions. Please, specify your own successActionProvider");
@@ -67,7 +66,7 @@ abstract class AbstractFormWindow<T, E extends Exception> extends Window impleme
                     if (!uiErrorHandlingMode) {
                         errorActionProvider.accept((E) e);
                         NotificationUtils.notifyWarn(commitErrorCaption, commitErrorMsg);
-                    } else throw new WrappedUIException(e);
+                    } else throw new RuntimeException(e);
                 }
             });
         }
@@ -132,7 +131,7 @@ abstract class AbstractFormWindow<T, E extends Exception> extends Window impleme
         return this;
     }
 
-    final void show(String caption, Consumer<T> onCommitSuccess, Consumer<E> onCommitError) {
+    private void show(String caption, Consumer<T> onCommitSuccess, Consumer<E> onCommitError) {
         Objects.requireNonNull(onCommitSuccess);
         Objects.requireNonNull(onCommitError);
         Objects.requireNonNull(caption);
@@ -148,8 +147,9 @@ abstract class AbstractFormWindow<T, E extends Exception> extends Window impleme
 
     protected abstract void postInit(FormLayout form, Consumer<T> onCommitSuccess);
 
-    public final void show(String caption) {
+    public final Window show(String caption) {
         show(caption, successActionProvider, errorActionProvider);
+        return this;
     }
 
 }

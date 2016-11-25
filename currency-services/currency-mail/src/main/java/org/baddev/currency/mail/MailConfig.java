@@ -1,6 +1,6 @@
 package org.baddev.currency.mail;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
@@ -20,10 +20,10 @@ import java.util.Properties;
         @PropertySource("classpath:mail.pool.properties")
 })
 @ComponentScan("org.baddev.currency.mail")
+@RequiredArgsConstructor
 public class MailConfig {
 
-    @Autowired
-    private Environment env;
+    private final Environment env;
 
     @Bean
     ThreadPoolTaskExecutor mailerPool(){

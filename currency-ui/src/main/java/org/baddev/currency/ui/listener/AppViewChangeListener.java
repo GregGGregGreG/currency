@@ -2,13 +2,13 @@ package org.baddev.currency.ui.listener;
 
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.spring.annotation.SpringComponent;
+import lombok.RequiredArgsConstructor;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.baddev.currency.core.api.UserService;
-import org.baddev.currency.ui.component.view.ResetPasswordStep2View;
+import org.baddev.currency.ui.component.view.user.ResetPasswordStep2View;
 import org.baddev.currency.ui.util.Navigator;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -17,12 +17,13 @@ import java.util.List;
  * Created by IPotapchuk on 11/8/2016.
  */
 @SpringComponent
+@RequiredArgsConstructor
 public class AppViewChangeListener implements ViewChangeListener {
 
-    @Autowired
-    private Logger log;
-    @Autowired
-    private UserService userService;
+    private static final long serialVersionUID = 2714534731341237431L;
+
+    private final Logger log;
+    private final UserService userService;
 
     @Override
     public boolean beforeViewChange(ViewChangeEvent event) {

@@ -21,7 +21,7 @@ public class CoreErrorHandler extends CommonErrorHandler {
             setNotificationParams("Service Error", e.getMessage(), Severity.ERROR);
             return true;
         } else if (e instanceof AuthenticationException) {
-            log.info("Failed to authenticate - {}", e.getMessage());
+            log.warn("Failed to authenticate", e);
             setNotificationParams("Authentication Error", e.getMessage(), Severity.ERROR);
             return true;
         }

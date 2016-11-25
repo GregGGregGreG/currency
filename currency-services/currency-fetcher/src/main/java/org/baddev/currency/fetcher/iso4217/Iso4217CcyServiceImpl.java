@@ -1,13 +1,11 @@
 package org.baddev.currency.fetcher.iso4217;
 
+import lombok.RequiredArgsConstructor;
 import org.baddev.currency.fetcher.iso4217.entity.BaseIsoCcyEntry;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyEntry;
 import org.baddev.currency.fetcher.iso4217.entity.IsoCcyHistEntry;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,25 +18,12 @@ import java.util.stream.Stream;
  * Created by Ilya on 15.04.2016.
  */
 @Service("Iso4217Service")
+@RequiredArgsConstructor
 public class Iso4217CcyServiceImpl implements Iso4217CcyService {
 
-    private final Logger log;
-    private final List<IsoCcyEntry> isoCurCcyEntries;
+    private final Logger                log;
+    private final List<IsoCcyEntry>     isoCurCcyEntries;
     private final List<IsoCcyHistEntry> isoHistCcyEntries;
-
-    @Autowired
-    public Iso4217CcyServiceImpl(@Qualifier("IsoCurCcys") List<IsoCcyEntry> isoCurCcyEntries,
-                                 @Qualifier("IsoHistCcys") List<IsoCcyHistEntry> isoHistCcyEntries,
-                                 Logger log) {
-        if (isoHistCcyEntries.isEmpty() || isoHistCcyEntries.isEmpty()) {
-            String msg = "Currency info service is currently unavailable. Check web client config or try again later.";
-            log.warn(msg);
-        }
-        Assert.notNull(log, "logger can't be null");
-        this.isoCurCcyEntries = isoCurCcyEntries;
-        this.isoHistCcyEntries = isoHistCcyEntries;
-        this.log = log;
-    }
 
     @Override
     public List<String> findCcyParamValues(IsoEntityParam target,

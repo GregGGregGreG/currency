@@ -47,9 +47,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = dsl.selectFrom(USER)
                 .where(USER.USERNAME.eq(username))
                 .fetchOptionalInto(User.class)
-                .orElse(dsl.select(USER.fields())
-                        .from(USER.leftOuterJoin(USER_DETAILS).on(USER.ID.eq(USER_DETAILS.USER_ID)))
-                        .where(USER_DETAILS.EMAIL.eq(username))
+                .orElseGet(() -> dsl.select(USER.fields())
+                        .from(USER
+                                .leftOuterJoin(USER_DETAILS).on(USER.ID.eq(USER_DETAILS.USER_ID))
+                                .leftOuterJoin(USER_PREFERENCES).on(USER_PREFERENCES.USER_ID.eq(USER.ID)))
+                        .where(USER_DETAILS.EMAIL.eq(username)
+                                .and(USER_PREFERENCES.EMAIL_SIGN_IN.eq(true)))
                         .fetchOneInto(User.class));
 
         if (user == null) notFound(username);

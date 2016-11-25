@@ -1,55 +1,51 @@
 package org.baddev.currency.ui.component.view;
 
-import com.google.common.collect.ImmutableMap;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewDisplay;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.Sizeable;
-import com.vaadin.spring.annotation.SpringComponent;
-import com.vaadin.spring.annotation.UIScope;
+import com.vaadin.spring.annotation.SpringViewDisplay;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.VerticalLayout;
-import org.baddev.currency.core.api.UserService;
-import org.baddev.currency.core.dto.UserDetailsDTO;
-import org.baddev.currency.core.exception.ServiceException;
+import lombok.RequiredArgsConstructor;
 import org.baddev.currency.core.security.RoleEnum;
 import org.baddev.currency.core.security.utils.SecurityUtils;
-import org.baddev.currency.jooq.schema.tables.interfaces.IUserDetails;
-import org.baddev.currency.jooq.schema.tables.pojos.UserDetails;
 import org.baddev.currency.ui.component.view.base.AbstractView;
-import org.baddev.currency.ui.component.window.SettingsWindow;
+import org.baddev.currency.ui.component.view.settings.AppearanceSettingsView;
+import org.baddev.currency.ui.component.view.settings.NotificationSettingsView;
+import org.baddev.currency.ui.component.view.settings.SecuritySettingsView;
+import org.baddev.currency.ui.component.view.user.AccountDetailsView;
+import org.baddev.currency.ui.component.view.user.admin.UsersView;
 import org.baddev.currency.ui.component.window.form.FormWindow;
-import org.baddev.currency.ui.security.event.LogoutEvent;
+import org.baddev.currency.ui.event.LogoutEvent;
 import org.baddev.currency.ui.util.EventBus;
-import org.baddev.currency.ui.util.FormatUtils;
 import org.baddev.currency.ui.util.Navigator;
 import org.baddev.currency.ui.util.Styles;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.Set;
-
-import static org.baddev.currency.ui.CurrencyUI.get;
+import java.util.UUID;
 
 /**
  * Created by IPotapchuk on 9/27/2016.
  */
-@SpringComponent
-@UIScope
+@SpringViewDisplay
+@RequiredArgsConstructor
 public class MainView extends VerticalLayout implements ViewDisplay {
 
     private static final long serialVersionUID = -1222163377764852965L;
 
     private AbstractView currentView;
     private MenuBar menuBar;
-    @Autowired
-    private SettingsWindow settingsWindow;
-    @Value("${app.title}")
-    private String appTitle;
-    @Autowired
-    private UserService userService;
+
+    @Value("${app.title}") private String appTitle;
+
+    private final ObjectProvider<NotificationSettingsView> notifSettingsViewProvider;
+    private final ObjectProvider<AppearanceSettingsView>   appearanceSettingsViewProvider;
+    private final ObjectProvider<SecuritySettingsView>     securitySettingsViewProvider;
+    private final ObjectProvider<AccountDetailsView>       accountDetailsViewProvider;
 
     @PostConstruct
     private void init() {
@@ -78,28 +74,19 @@ public class MainView extends VerticalLayout implements ViewDisplay {
                 dropDownParent.addItem("Users", FontAwesome.USERS, item -> Navigator.navigate(UsersView.NAME));
                 dropDownParent.addSeparator();
             }
-            dropDownParent.addItem("Account Details", FontAwesome.EDIT, menuItem -> {
-                FormWindow.show(new FormWindow.Config<UserDetailsDTO>(FormWindow.Mode.EDIT)
-                        .setBeanClass(UserDetailsDTO.class)
-                        .setFormBean(userService.findUserDetailsByUsername(loggedIn)
-                                .map(ud -> ud.into(new UserDetailsDTO()))
-                                .orElseThrow(() -> new ServiceException("User Details not found for user " + loggedIn)))
-                        .setCaption("Account Details - "+ FormatUtils.bold(loggedIn))
-                        .setOnCommitSuccess((Set<UserDetailsDTO> detailsSet) -> {
-                            if (detailsSet.iterator().hasNext()) {
-                                IUserDetails details = detailsSet.iterator().next();
-                                userService.update(null, details);
-                                SecurityUtils.setUserDetails(details);
-                            }
-                        }).setCaptionToPropertyIdMap(ImmutableMap.of(
-                                "First Name", UserDetails.P_FIRST_NAME,
-                                "Last Name", UserDetails.P_LAST_NAME,
-                                "Email", UserDetails.P_EMAIL))
-                );
+            dropDownParent.addItem("Account Details...", FontAwesome.EDIT, menuItem -> {
+                FormWindow.show(accountDetailsViewProvider.getIfAvailable()
+                        .withUserName(SecurityUtils.loggedInUserName()));
             });
-            dropDownParent.addItem("Settings", FontAwesome.GEAR, selectedItem -> get().addWindow(settingsWindow));
+            dropDownParent.addItem("Settings...", FontAwesome.GEAR, selectedItem -> {
+                FormWindow.showTabs("Settings",
+                        notifSettingsViewProvider.getIfAvailable(),
+                        appearanceSettingsViewProvider.getIfAvailable(),
+                        securitySettingsViewProvider.getIfAvailable());
+            });
             dropDownParent.addSeparator();
-            dropDownParent.addItem("Logout", FontAwesome.SIGN_OUT, selectedItem -> EventBus.post(new LogoutEvent(this)));
+            dropDownParent.addItem("Logout", FontAwesome.SIGN_OUT, selectedItem -> EventBus.post(
+                    new LogoutEvent(UUID.randomUUID(), this, SecurityUtils.loggedInUserName())));
             dropDownParent.setStyleName(Styles.MENUBAR_PUSH_RIGHT);
         }
         MenuBar.MenuItem titleItem = menuBar.addItem(appTitle + " | " + currentView.getNameCaption(), null);

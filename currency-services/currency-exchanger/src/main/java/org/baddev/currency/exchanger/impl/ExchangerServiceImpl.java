@@ -1,5 +1,6 @@
 package org.baddev.currency.exchanger.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.baddev.currency.core.action.ExchangeAction;
 import org.baddev.currency.core.api.ExchangerService;
 import org.baddev.currency.core.security.RoleEnum;
@@ -11,11 +12,9 @@ import org.baddev.currency.jooq.schema.tables.pojos.ExchangeOperation;
 import org.baddev.currency.jooq.schema.tables.records.ExchangeOperationRecord;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -24,21 +23,12 @@ import java.util.Optional;
  * Created by IPotapchuk on 3/14/2016.
  */
 @Service
+@RequiredArgsConstructor
 public class ExchangerServiceImpl implements ExchangerService {
 
     private final Logger               log;
     private final ExchangeOperationDao exchangeDao;
     private final ExchangeAction       exchangeAction;
-
-    @Autowired
-    public ExchangerServiceImpl(ExchangeOperationDao exchangeDao, ExchangeAction exchangeAction, Logger log) {
-        Assert.notNull(exchangeDao, "exchangeDao can't be null");
-        Assert.notNull(exchangeAction, "exchangeAction can't be null");
-        Assert.notNull(log, "logger can't be null");
-        this.exchangeDao = exchangeDao;
-        this.exchangeAction = exchangeAction;
-        this.log = log;
-    }
 
     @Override
     @Transactional

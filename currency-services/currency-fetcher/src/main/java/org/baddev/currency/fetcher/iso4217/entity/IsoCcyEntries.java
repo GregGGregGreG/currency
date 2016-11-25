@@ -1,5 +1,9 @@
 package org.baddev.currency.fetcher.iso4217.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.xml.bind.annotation.*;
 import java.util.List;
 
@@ -8,25 +12,12 @@ import java.util.List;
  */
 @XmlRootElement(name = "ISO_4217")
 @XmlAccessorType(XmlAccessType.FIELD)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class IsoCcyEntries {
 
     @XmlElementWrapper(name="CcyTbl")
     @XmlElementRef
     private List<IsoCcyEntry> entries;
-
-    public List<IsoCcyEntry> getEntries() {
-        return entries;
-    }
-
-    public void setEntries(List<IsoCcyEntry> entries) {
-        this.entries = entries;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("IsoCcyEntries{");
-        sb.append("entries=").append(entries);
-        sb.append('}');
-        return sb.toString();
-    }
 }

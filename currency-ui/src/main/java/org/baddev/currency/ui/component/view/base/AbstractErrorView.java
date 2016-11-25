@@ -4,20 +4,17 @@ import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.themes.ValoTheme;
+import lombok.AccessLevel;
+import lombok.Setter;
 import org.baddev.currency.ui.component.base.VerticalSpacedLayout;
-import org.springframework.util.Assert;
 
 import java.util.IllegalFormatException;
 
 public abstract class AbstractErrorView extends AbstractView {
 
     private Label msgLabel;
+    @Setter(AccessLevel.PROTECTED)
     private String errorMsg = "";
-
-    protected void setErrorMsg(String errorMsg) {
-        Assert.notNull(errorMsg, "errorMsg can't be null");
-        this.errorMsg = errorMsg;
-    }
 
     @Override
     protected void init(VerticalSpacedLayout rootLayout) {

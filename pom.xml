@@ -16,8 +16,8 @@
         <joda.version>2.9.4</joda.version>
         <spring.version>4.3.4.RELEASE</spring.version>
         <spring.security.version>4.1.3.RELEASE</spring.security.version>
-        <vaadin.version>7.7.3</vaadin.version>
-        <vaadin.spring.version>1.0.2</vaadin.spring.version>
+        <vaadin.version>7.7.5</vaadin.version>
+        <vaadin.spring.version>1.1.0</vaadin.spring.version>
         <cron.parser.version>2.9</cron.parser.version>
         <slf4j.version>1.7.21</slf4j.version>
         <logback.version>1.1.7</logback.version>
@@ -42,6 +42,9 @@
         <plugin.war>2.6</plugin.war>
         <plugin.source>2.4</plugin.source>
         <plugin.clean>2.6.1</plugin.clean>
+        <lombok.version>1.16.10</lombok.version>
+        <javax.annot-api>1.2</javax.annot-api>
+        <table.export.version>1.6.2</table.export.version>
     </properties>
 
     <dependencyManagement>
@@ -87,6 +90,11 @@
                 <scope>import</scope>
             </dependency>
 
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax.annot-api}</version>
+            </dependency>
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
@@ -216,8 +224,22 @@
                 <artifactId>vaadin-autocompletetextfield</artifactId>
                 <version>${autocompl.txf.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.vaadin.addon</groupId>
+                <artifactId>tableexport-for-vaadin</artifactId>
+                <version>${table.export.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.10</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <pluginManagement>

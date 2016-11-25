@@ -1,6 +1,7 @@
 package org.baddev.currency.ui.converter;
 
 import com.vaadin.data.util.converter.Converter;
+import com.vaadin.ui.UI;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -18,7 +19,7 @@ public class DoubleAmountToStringConverter implements Converter<String, Double> 
 
     @Override
     public String convertToPresentation(Double value, Class<? extends String> targetType, Locale locale) throws ConversionException {
-        NumberFormat f = NumberFormat.getInstance(Locale.US);
+        NumberFormat f = NumberFormat.getInstance(UI.getCurrent().getLocale());
         BigDecimal d = new BigDecimal(value);
         int fractions = d.precision();
         if (value % 2 == 0)
