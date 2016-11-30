@@ -7,6 +7,7 @@ import com.vaadin.spring.annotation.EnableVaadinNavigation;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.spring.annotation.VaadinSessionScope;
 import com.vaadin.ui.UI;
+import org.baddev.common.ErrorHandlerAware;
 import org.baddev.common.event.EventPublisher;
 import org.baddev.common.event.impl.SynchronizedEventPublisher;
 import org.baddev.common.mail.ApplicationMailer;
@@ -54,6 +55,8 @@ public class CurrencyAppConfig {
     @Bean
     @VaadinSessionScope
     EventPublisher eventPublisher(Logger log) {
+        SynchronizedEventPublisher publisher = new SynchronizedEventPublisher(log);
+        publisher.setErrorHandler(new UIErrorHandler());
         return new SynchronizedEventPublisher(log);
     }
 
@@ -67,7 +70,8 @@ public class CurrencyAppConfig {
     @Bean
     @VaadinSessionScope
     MailExchangeCompletionListener mailListener(ApplicationMailer mailer) {
-        mailer.setErrorHandler(new UIErrorHandler());
+        if(mailer instanceof ErrorHandlerAware)
+            ((ErrorHandlerAware) mailer).setErrorHandler(new UIErrorHandler());
         return new MailExchangeCompletionListener(mailer);
     }
 
@@ -99,7 +103,5 @@ public class CurrencyAppConfig {
     Logger logger(InjectionPoint injectionPoint){
         return LoggerFactory.getLogger(injectionPoint.getMember().getDeclaringClass());
     }
-
-
 
 }

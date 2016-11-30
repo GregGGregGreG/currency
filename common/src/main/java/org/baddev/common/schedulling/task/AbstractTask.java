@@ -1,17 +1,18 @@
 package org.baddev.common.schedulling.task;
 
 import org.baddev.common.CommonErrorHandler;
+import org.baddev.common.ErrorHandlerAware;
 import org.baddev.common.utils.AssertUtils;
 
 /**
  * Created by IPotapchuk on 10/7/2016.
  */
-public abstract class AbstractTask implements Runnable {
+public abstract class AbstractTask implements Runnable, ErrorHandlerAware {
 
     private Long               id;
     private boolean            running;
     private boolean            done;
-    private CommonErrorHandler errorHandler;
+    private CommonErrorHandler errorHandler = new CommonErrorHandler();
 
     protected void setId(Long id) {
         AssertUtils.notNull(id, "id must be a non-null value");
@@ -22,6 +23,7 @@ public abstract class AbstractTask implements Runnable {
         return id;
     }
 
+    @Override
     public void setErrorHandler(CommonErrorHandler errorHandler) {
         AssertUtils.notNull(errorHandler, "errorHandler must be a non-null value");
         this.errorHandler = errorHandler;
@@ -42,8 +44,7 @@ public abstract class AbstractTask implements Runnable {
             doJob();
         } catch (Exception e) {
             done = false;
-            if (errorHandler != null) errorHandler.handle(e);
-            else throw e;
+            errorHandler.handle(e);
         }
         done = true;
     }

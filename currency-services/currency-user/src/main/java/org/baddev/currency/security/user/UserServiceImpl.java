@@ -101,11 +101,8 @@ public class UserServiceImpl implements UserService {
                         .execute();
             } else if (roleNames.length > 1) {
                 List<Long> roleIds = findRoleIds(roleNames);
-                if (roleIds.isEmpty()) {
-                    StringBuilder sb = new StringBuilder();
-                    Arrays.asList(roleNames).forEach(rn -> sb.append(rn).append(" "));
-                    throw new RoleNotFoundException(sb.toString());
-                }
+                if (roleIds.isEmpty())
+                    throw new RoleNotFoundException(Arrays.stream(roleNames).collect(Collectors.joining(" ")));
                 dsl.batchInsert(roleIds.stream()
                         .map(roleId -> new UserRoleRecord(created.getId(), roleId))
                         .collect(Collectors.toList()))

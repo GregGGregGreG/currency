@@ -1,5 +1,6 @@
 package org.baddev.currency.exchanger.impl;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.baddev.currency.core.action.ExchangeAction;
 import org.baddev.currency.core.api.ExchangerService;
@@ -32,8 +33,7 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     @Override
     @Transactional
-    public IExchangeOperation exchange(IExchangeOperation operation,
-                                                 Collection<? extends IExchangeRate> rates) {
+    public IExchangeOperation exchange(@NonNull IExchangeOperation operation, Collection<? extends IExchangeRate> rates) {
         IExchangeOperation exchanged = exchangeAction.exchange(operation, rates);
         IExchangeOperation saved = DSL.using(exchangeDao.configuration())
                 .insertInto(Tables.EXCHANGE_OPERATION)

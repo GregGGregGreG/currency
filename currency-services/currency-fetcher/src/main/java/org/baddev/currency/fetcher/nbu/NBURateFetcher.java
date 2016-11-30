@@ -43,12 +43,11 @@ public class NBURateFetcher implements ExchangeRateFetcher {
     private String dateFormat;
 
     private final Logger                    log;
-    private final ObjectProvider<WebClient> webClienProvider;
+    private final ObjectProvider<WebClient> webClientProvider;
     private final ExtendedExchangeRateDao   rateDao;
 
     @PostConstruct
     public void init(){
-        Assert.notNull(dateFormat, "dateFormat can't be null");
         fmt = DateTimeFormat.forPattern(dateFormat);
     }
 
@@ -72,7 +71,7 @@ public class NBURateFetcher implements ExchangeRateFetcher {
         try {
             rates = searchLocally(new LocalDate());
         } catch (NoRatesLocallyFoundException ex) {
-            rates = convert(webClienProvider.getObject()
+            rates = convert(webClientProvider.getObject()
                     .accept(MediaType.TEXT_XML_TYPE)
                     .get(NBUExchange.class));
             if (!rates.isEmpty()) rateDao.insert(rates);
@@ -86,7 +85,7 @@ public class NBURateFetcher implements ExchangeRateFetcher {
         try {
             rates = searchLocally(date);
         } catch (NoRatesLocallyFoundException ex) {
-            rates = convert(webClienProvider.getObject()
+            rates = convert(webClientProvider.getObject()
                     .accept(MediaType.TEXT_XML_TYPE)
                     .query(dateParam, date.toString(fmt))
                     .get(NBUExchange.class));
@@ -102,7 +101,7 @@ public class NBURateFetcher implements ExchangeRateFetcher {
             ExchangeRate rate = filter(currency, searchLocally(date));
             return Optional.ofNullable(rate);
         } catch (NoRatesLocallyFoundException ex) {
-            Optional<ExchangeRate> maybeFetched = convert(webClienProvider.getObject()
+            Optional<ExchangeRate> maybeFetched = convert(webClientProvider.getObject()
                     .accept(MediaType.TEXT_XML_TYPE)
                     .query(currencyParam, currency.getCurrencyCode())
                     .query(dateParam, date.toString(fmt))

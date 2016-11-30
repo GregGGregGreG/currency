@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by IPotapchuk on 10/31/2016.
  */
 @Dev @Component
-public class FakeFetcher implements ExchangeRateFetcher {
+public class DummyFetcher implements ExchangeRateFetcher {
 
     @Override
     public Collection<? extends IExchangeRate> fetchCurrent() {

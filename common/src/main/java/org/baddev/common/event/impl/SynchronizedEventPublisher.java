@@ -1,8 +1,12 @@
 package org.baddev.common.event.impl;
 
+import org.baddev.common.CommonErrorHandler;
+import org.baddev.common.ErrorHandlerAware;
 import org.baddev.common.event.BaseDataEvent;
 import org.baddev.common.event.EventPublisher;
 import org.baddev.common.event.GenericEventListener;
+import org.baddev.common.utils.AssertUtils;
+import org.baddev.common.utils.Safe;
 import org.slf4j.Logger;
 
 import java.util.Collection;
@@ -13,10 +17,10 @@ import java.util.Set;
 /**
  * Created by IPotapchuk on 6/17/2016.
  */
-public class SynchronizedEventPublisher implements EventPublisher {
+public class SynchronizedEventPublisher implements EventPublisher, ErrorHandlerAware {
 
     private final Logger log;
-
+    private CommonErrorHandler errorHandler = new CommonErrorHandler();
     private Set<GenericEventListener> listeners = Collections.synchronizedSet(new HashSet<>());
 
     public SynchronizedEventPublisher(Logger log) {
@@ -26,7 +30,7 @@ public class SynchronizedEventPublisher implements EventPublisher {
     @Override
     public synchronized void publish(BaseDataEvent event) {
         log.debug("Event published to {} subscribers", listeners.size());
-        listeners.forEach(l -> l.onEvent(event));
+        Safe.tryCall(errorHandler, () -> listeners.parallelStream().forEach(l -> l.onEvent(event)));
     }
 
     @Override
@@ -42,5 +46,11 @@ public class SynchronizedEventPublisher implements EventPublisher {
     @Override
     public Collection<GenericEventListener> getSubscribers() {
         return listeners;
+    }
+
+    @Override
+    public void setErrorHandler(CommonErrorHandler errorHandler) {
+        AssertUtils.notNull(errorHandler);
+        this.errorHandler = errorHandler;
     }
 }

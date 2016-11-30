@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Dev @Configuration
 @ComponentScan("org.baddev.currency.fetcher")
-public class FakeFetcherConfig {
+public class DummyFetcherConfig {
 
     @Bean(name = "IsoCurCcys")
     public List<IsoCcyEntry> isoCurCcyEntryList() {

@@ -3,6 +3,7 @@ package org.baddev.currency.mail;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.baddev.common.CommonErrorHandler;
+import org.baddev.common.ErrorHandlerAware;
 import org.baddev.common.mail.ApplicationMailer;
 import org.baddev.common.utils.Safe;
 import org.baddev.currency.core.meta.Prod;
@@ -23,7 +24,7 @@ import java.util.Date;
 @Prod
 @Primary
 @RequiredArgsConstructor
-public class AsyncMailer implements ApplicationMailer {
+public class AsyncMailer implements ApplicationMailer, ErrorHandlerAware {
 
     private final Logger                            log;
     private final MailSender                        sender;
