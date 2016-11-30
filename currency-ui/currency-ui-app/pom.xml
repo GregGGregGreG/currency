@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <artifactId>currency-root</artifactId>
+        <artifactId>currency-ui</artifactId>
         <groupId>org.baddev</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
@@ -160,24 +160,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        <profile>
-            <id>vaadin-prerelease</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <repositories>
-                <repository>
-                    <id>vaadin-prereleases</id>
-                    <url>http://maven.vaadin.com/vaadin-prereleases</url>
-                </repository>
-            </repositories>
-            <pluginRepositories>
-                <pluginRepository>
-                    <id>vaadin-prereleases</id>
-                    <url>http://maven.vaadin.com/vaadin-prereleases</url>
-                </pluginRepository>
-            </pluginRepositories>
         </profile>
     </profiles>
 
