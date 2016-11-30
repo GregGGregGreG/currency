@@ -11,26 +11,30 @@
 
     <artifactId>schema-gen</artifactId>
 
+    <properties>
+        <db.name>mysql</db.name>
+        <db.config.dir>../database/${db.name}</db.config.dir>
+        <db.sql.dir>${db.config.dir}/sql</db.sql.dir>
+        <db.props>${db.config.dir}/db.properties</db.props>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
-            <artifactId>jooq-meta</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jooq</groupId>
             <artifactId>jooq-codegen</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>commons-dbcp</groupId>
             <artifactId>commons-dbcp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -54,7 +58,80 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>${db.props}</file>
+                            </files>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
+        <profile>
+            <id>dev</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>${db.config.dir}</directory>
+                        <includes>
+                            <include>**/*.properties</include>
+                        </includes>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+        <profile>
+            <id>db-init</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>initialize-db</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <driver>${db.driver}</driver>
+                                    <url>${db.url}</url>
+                                    <username>${db.user}</username>
+                                    <password>${db.password}</password>
+                                    <autocommit>true</autocommit>
+                                    <srcFiles>
+                                        <srcFile>${db.sql.dir}/ddl.sql</srcFile>
+                                        <srcFile>${db.sql.dir}/initial-data.sql</srcFile>
+                                    </srcFiles>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>mysql</groupId>
+                                <artifactId>mysql-connector-java</artifactId>
+                                <version>${mysql.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>schema-gen</id>
             <pluginRepositories>
@@ -63,7 +140,6 @@
                     <url>http://jitpack.io</url>
                 </pluginRepository>
             </pluginRepositories>
-
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -73,34 +149,15 @@
                     </dependency>
                 </dependencies>
             </dependencyManagement>
-
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>properties-maven-plugin</artifactId>
-                        <version>1.0.0</version>
-                        <executions>
-                            <execution>
-                                <phase>initialize</phase>
-                                <goals>
-                                    <goal>read-project-properties</goal>
-                                </goals>
-                                <configuration>
-                                    <files>
-                                        <file>src/main/resources/db.properties</file>
-                                    </files>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>org.jooq</groupId>
                         <artifactId>jooq-codegen-maven</artifactId>
-                        <version>${jooq.version}</version>
                         <executions>
                             <execution>
-                                <id>generate-mysql</id>
+                                <id>generate-schema-sources</id>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>generate</goal>
                                 </goals>
@@ -112,10 +169,8 @@
                                         <password>${db.password}</password>
                                     </jdbc>
                                     <generator>
-                                        <!--<name>org.jooq.util.JavaGenerator</name>-->
                                         <name>org.baddev.jooq.CustomGenerator</name>
                                         <strategy>
-                                            <!--<name>org.baddev.jooq.CustomGeneratorStrategy</name>-->
                                             <name>org.jooq.util.DefaultGeneratorStrategy</name>
                                         </strategy>
                                         <database>
@@ -170,7 +225,7 @@
                                         </generate>
                                         <target>
                                             <packageName>org.baddev.currency.jooq.schema</packageName>
-                                            <directory>${project.basedir}/target/generated-sources/jooq</directory>
+                                            <directory>${project.basedir}\target\generated-sources\jooq</directory>
                                         </target>
                                     </generator>
                                 </configuration>

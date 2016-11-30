@@ -1,5 +1,8 @@
 package org.baddev.currency.core.security;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
@@ -8,8 +11,11 @@ import java.util.Collection;
 /**
  * Created by IPotapchuk on 9/13/2016.
  */
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class IdentityUser extends User {
 
+    @Getter
     private Long id;
 
     public IdentityUser(Long id, String username, String password, Collection<? extends GrantedAuthority> authorities) {
@@ -22,34 +28,4 @@ public class IdentityUser extends User {
         this.id = id;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof IdentityUser)) return false;
-        if (!super.equals(o)) return false;
-
-        IdentityUser that = (IdentityUser) o;
-
-        return id.equals(that.id);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + id.hashCode();
-        return result;
-    }
-
-
-    @Override
-    public String toString() {
-        return "IdentityUser{" +
-                "id=" + id +
-                "} " + super.toString();
-    }
 }
