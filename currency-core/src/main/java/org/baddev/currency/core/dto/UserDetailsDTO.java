@@ -14,7 +14,6 @@ import javax.validation.constraints.Size;
  */
 @Data @AllArgsConstructor @NoArgsConstructor
 public class UserDetailsDTO implements IUserDetails {
-
     private Long userId;
     @Size(min = 2, max = 50)
     @Pattern(regexp = "[A-Z][a-zA-Z]*",

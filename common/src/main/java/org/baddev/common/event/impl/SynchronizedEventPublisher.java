@@ -45,7 +45,7 @@ public class SynchronizedEventPublisher implements EventPublisher, ErrorHandlerA
 
     @Override
     public Collection<GenericEventListener> getSubscribers() {
-        return listeners;
+        return Collections.unmodifiableSet(listeners);
     }
 
     @Override

@@ -16,10 +16,12 @@ public final class ButtonFactory {
 
     public static Button create(@NonNull Mode mode, boolean dialogue){
         Button button = new Button();
+
         switch (mode){
             case CREATE:{
                 button.setCaption("Create");
                 button.setIcon(FontAwesome.PLUS_CIRCLE);
+                button.setStyleName(ValoTheme.BUTTON_PRIMARY);
                 break;
             }
             case REMOVE:{
@@ -31,6 +33,7 @@ public final class ButtonFactory {
             case EDIT:{
                 button.setCaption("Edit");
                 button.setIcon(FontAwesome.EDIT);
+                button.setStyleName(ValoTheme.BUTTON_PRIMARY);
                 break;
             }
             default:{
@@ -40,11 +43,11 @@ public final class ButtonFactory {
                 break;
             }
         }
+
         if(dialogue){
             button.setCaption(button.getCaption().concat("..."));
-        } else if(mode != Mode.REMOVE) {
-            button.setStyleName(ValoTheme.BUTTON_PRIMARY);
         }
+
         button.setImmediate(true);
         return button;
     }

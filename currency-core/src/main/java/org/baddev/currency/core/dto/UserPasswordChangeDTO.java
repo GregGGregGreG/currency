@@ -11,7 +11,6 @@ import javax.validation.constraints.Size;
  */
 @Data @AllArgsConstructor @NoArgsConstructor
 public class UserPasswordChangeDTO {
-
     private Long userId;
     @Size(min = 1, max = 50)
     private String newPassword;

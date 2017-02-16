@@ -14,7 +14,6 @@ import org.springframework.util.Assert;
 import javax.annotation.security.RolesAllowed;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -27,19 +26,19 @@ public final class SecurityUtils {
     private SecurityUtils() {
     }
 
-    private static Optional<Authentication> safeAuth() {
+    private static Optional<Authentication> auth() {
         SecurityContext ctx = SecurityContextHolder.getContext();
-        Objects.requireNonNull(ctx, "Security Context not found");
+        Assert.notNull(ctx);
         return Optional.ofNullable(ctx.getAuthentication());
     }
 
     public static boolean isLoggedIn() {
-        return safeAuth().map(Authentication::isAuthenticated).orElse(false);
+        return auth().map(Authentication::isAuthenticated).orElse(false);
     }
 
     public static boolean hasAnyRole(String... roles) {
         Assert.notEmpty(roles);
-        return safeAuth().map(Authentication::getAuthorities)
+        return auth().map(Authentication::getAuthorities)
                 .flatMap(grAuthorities -> {
                     List<SimpleGrantedAuthority> expected =
                             Arrays.stream(roles).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
@@ -47,9 +46,8 @@ public final class SecurityUtils {
                 }).orElse(false);
     }
 
-    public static <T extends UserDetails> T getPrincipal(Class<T> clazz) {
-        return safeAuth().flatMap(auth -> Optional.ofNullable((T) auth.getPrincipal()))
-                .orElseThrow(notAuthorized());
+    private static <T extends UserDetails> T getPrincipal(Class<T> clazz) {
+        return auth().map(auth -> (T) auth.getPrincipal()).orElseThrow(notAuthorized());
     }
 
     public static IdentityUser getIdentityUserPrincipal() {
@@ -61,11 +59,11 @@ public final class SecurityUtils {
     }
 
     public static <T extends IUserDetails> T getUserDetails() {
-        return safeAuth().flatMap(auth -> Optional.of((T) auth.getDetails())).orElseThrow(notAuthorized());
+        return auth().map(auth -> (T) auth.getDetails()).orElseThrow(notAuthorized());
     }
 
     public static void setUserDetails(Object details){
-        safeAuth().map(a -> ((AbstractAuthenticationToken)a)).ifPresent(a -> a.setDetails(details));
+        auth().map(a -> ((AbstractAuthenticationToken)a)).ifPresent(a -> a.setDetails(details));
     }
 
     public static void clearUserDetails(){
@@ -73,8 +71,7 @@ public final class SecurityUtils {
     }
 
     public static String loggedInUserName() {
-        return safeAuth().flatMap(auth -> Optional.ofNullable(((UserDetails) auth.getPrincipal()).getUsername()))
-                .orElse("");
+        return auth().map(auth -> (((UserDetails) auth.getPrincipal()).getUsername())).orElse("");
     }
 
     public static boolean isAccessGranted(RolesAllowed annotation){

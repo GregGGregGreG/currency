@@ -168,7 +168,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void assignToRoles(@NonNull Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException {
+    public void assignUserToRoles(@NonNull Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException {
         validateRoles(userId, roleIds);
         List<Number> assigned = dsl.selectFrom(USER_ROLE)
                 .where(USER_ROLE.USER_ID.eq(userId))
@@ -194,7 +194,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Secured({RoleEnum.ADMIN})
-    public void unassignFromRoles(@NonNull Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException{
+    public void unassignUserFromRoles(@NonNull Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException{
         validateRoles(userId, roleIds);
         List<Number> assigned = dsl.selectFrom(USER_ROLE)
                 .where(USER_ROLE.USER_ID.eq(userId))

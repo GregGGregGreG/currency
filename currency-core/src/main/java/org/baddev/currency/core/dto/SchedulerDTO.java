@@ -7,9 +7,7 @@ import org.hibernate.validator.constraints.Range;
 
 import javax.validation.constraints.Size;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Data @NoArgsConstructor @AllArgsConstructor
 public class SchedulerDTO {
     @Range(min = 0, max = 9999999999L)
     private double amount;

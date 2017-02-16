@@ -35,7 +35,7 @@
             <groupId>com.vaadin.addon</groupId>
             <artifactId>tableexport-for-vaadin</artifactId>
         </dependency>
-        <!-- need as a dependency to tableexport-for-vaadin -->
+        <!-- need as a dependency for tableexport-for-vaadin -->
         <dependency>
             <groupId>org.vaadin.addons</groupId>
             <artifactId>filteringtable</artifactId>

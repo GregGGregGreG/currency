@@ -26,8 +26,8 @@ public interface UserService extends FindAction<IUser, Long>, UpdateAction<IUser
     Optional<IUser> findOneUserByUserName(String userName);
     void update(IUser user, IUserDetails userDetails);
     Collection<IRole> findUserRoles(Long userId);
-    void assignToRoles(Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException;
-    void unassignFromRoles(Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException;
+    void assignUserToRoles(Long userId, Long... roleIds) throws RoleAlreadyAssignedException, RoleNotFoundException, UserNotFoundException;
+    void unassignUserFromRoles(Long userId, Long... roleIds) throws RoleNotFoundException, UserNotFoundException;
     void updateUserRoles(Long userId, Collection<Long> allUserRoles) throws RoleNotFoundException, UserNotFoundException;
     void changeUserPassword(UserPasswordChangeDTO dto);
     void createPasswordResetToken(String userEmail, String token, int expirationDuration);

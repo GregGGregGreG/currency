@@ -10,7 +10,6 @@ import org.hibernate.validator.constraints.Email;
  */
 @Data @AllArgsConstructor @NoArgsConstructor
 public class ResetPasswordRequestDTO {
-
     @Email
     private String email = "";
 }
